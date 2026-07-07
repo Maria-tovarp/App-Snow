@@ -1,33 +1,64 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'tarea_model.dart';
-
 import 'package:helloworld/features/tareas/domain/repositories/tarea_repository_port.dart';
+
 class TareaRepository implements TareaRepositoryPort {
   final SupabaseClient _client = Supabase.instance.client;
 
-  Future<List<TareaModel>> getTareas() async {
+  /// ==========================================
+  /// MATERIAS
+  /// ==========================================
+
+  Future<List<Map<String, dynamic>>> getMaterias() async {
     final user = _client.auth.currentUser;
+
     if (user == null) return [];
 
-    final response = await _client.from('tareas').select('''
-        id,
-        titulo,
-        descripcion,
-        fecha_vencimiento,
-        duracion_estimada,
-        tipo,
-        prioridad,
-        dificultad,
-        estado,
-        materia_id,
-        user_id,
-        materias!tareas_materia_id_fkey(nombre)
-      ''').eq('user_id', user.id).order('created_at', ascending: false);
+    final response = await _client
+        .from('materias')
+        .select('id,nombre')
+        .eq('user_id', user.id)
+        .order('nombre');
 
-    return (response as List).map((e) => TareaModel.fromJson(e)).toList();
+    return List<Map<String, dynamic>>.from(response);
   }
 
+  /// ==========================================
+  /// TAREAS
+  /// ==========================================
+
+  @override
+  Future<List<TareaModel>> getTareas() async {
+    final user = _client.auth.currentUser;
+
+    if (user == null) return [];
+
+    final response = await _client
+        .from('tareas')
+        .select('''
+          id,
+          titulo,
+          descripcion,
+          fecha_vencimiento,
+          duracion_estimada,
+          tipo,
+          prioridad,
+          dificultad,
+          estado,
+          materia_id,
+          user_id,
+          materias!tareas_materia_id_fkey(nombre)
+        ''')
+        .eq('user_id', user.id)
+        .order('created_at', ascending: false);
+
+    return (response as List)
+        .map((e) => TareaModel.fromJson(e))
+        .toList();
+  }
+
+  @override
   Future<void> createTarea({
     required String titulo,
     String? descripcion,
@@ -40,6 +71,7 @@ class TareaRepository implements TareaRepositoryPort {
     String? materiaId,
   }) async {
     final user = _client.auth.currentUser;
+
     if (user == null) {
       throw Exception('No hay usuario autenticado');
     }
@@ -58,6 +90,7 @@ class TareaRepository implements TareaRepositoryPort {
     });
   }
 
+  @override
   Future<void> updateTarea({
     required String id,
     required String titulo,
@@ -79,10 +112,12 @@ class TareaRepository implements TareaRepositoryPort {
     }).eq('id', id);
   }
 
+  @override
   Future<void> deleteTarea(String id) async {
     await _client.from('tareas').delete().eq('id', id);
   }
 
+  @override
   Future<void> updateEstado({
     required String id,
     required String estado,

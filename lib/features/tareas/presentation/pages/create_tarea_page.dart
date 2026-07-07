@@ -11,18 +11,31 @@ class CreateTareaPage extends StatefulWidget {
 
 class _CreateTareaPageState extends State<CreateTareaPage> {
   final _formKey = GlobalKey<FormState>();
+
   final _tituloCtrl = TextEditingController();
   final _descripcionCtrl = TextEditingController();
-  final _duracionCtrl = TextEditingController();
+  final _duracionCtrl = TextEditingController(text: '60');
 
   final TareaRepository _repository = TareaRepository();
+
+  List<Map<String, dynamic>> materias = [];
+
+  String? materiaId;
 
   String tipo = 'tarea';
   String prioridad = 'media';
   String dificultad = 'media';
   String estado = 'pendiente';
+
   bool isLoading = false;
+
   DateTime? fechaVencimiento;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMaterias();
+  }
 
   @override
   void dispose() {
@@ -32,11 +45,23 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
     super.dispose();
   }
 
+  Future<void> _loadMaterias() async {
+    try {
+      final data = await _repository.getMaterias();
+
+      if (!mounted) return;
+
+      setState(() {
+        materias = data;
+      });
+    } catch (_) {}
+  }
+
   Future<void> _pickFecha() async {
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2024),
+      firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
 
@@ -50,7 +75,20 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => isLoading = true);
+    if (fechaVencimiento == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Seleccione la fecha de vencimiento',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
 
     try {
       await _repository.createTarea(
@@ -58,25 +96,34 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
         descripcion: _descripcionCtrl.text.trim().isEmpty
             ? null
             : _descripcionCtrl.text.trim(),
-        fechaVencimiento: fechaVencimiento?.toIso8601String().split('T').first,
-        duracionEstimada: int.tryParse(_duracionCtrl.text.trim()) ?? 0,
+        fechaVencimiento: fechaVencimiento!.toIso8601String(),
+        duracionEstimada:
+            int.tryParse(_duracionCtrl.text.trim()) ?? 60,
         tipo: tipo,
         prioridad: prioridad,
         dificultad: dificultad,
         estado: estado,
-        materiaId: null,
+        materiaId: materiaId,
       );
 
       if (!mounted) return;
+
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar tarea: $e')),
+        SnackBar(
+          content: Text(
+            'Error al guardar la tarea\n$e',
+          ),
+        ),
       );
     } finally {
       if (mounted) {
-        setState(() => isLoading = false);
+        setState(() {
+          isLoading = false;
+        });
       }
     }
   }
@@ -99,7 +146,9 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
           .map(
             (item) => DropdownMenuItem(
               value: item,
-              child: Text(item),
+              child: Text(
+                item[0].toUpperCase() + item.substring(1),
+              ),
             ),
           )
           .toList(),
@@ -112,109 +161,157 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
       appBar: AppBar(
-        title: const Text('Nueva tarea'),
-        backgroundColor: const Color(0xFFF7F7FB),
+        title: const Text("Nueva tarea"),
         elevation: 0,
+        backgroundColor: const Color(0xFFF7F7FB),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFE4E4EC)),
+            border: Border.all(
+              color: const Color(0xFFE4E4EC),
+            ),
           ),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
+
                 TextFormField(
                   controller: _tituloCtrl,
                   decoration: InputDecoration(
-                    labelText: 'Título',
+                    labelText: "Título",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Ingresa el título';
+                      return "Ingrese un título";
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 14),
+
+                const SizedBox(height: 16),
+
                 TextFormField(
                   controller: _descripcionCtrl,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: 'Descripción',
+                    labelText: "Descripción",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
+
+                const SizedBox(height: 16),
+
+                DropdownButtonFormField<String>(
+                  value: materiaId,
+                  decoration: InputDecoration(
+                    labelText: "Materia",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  items: materias.map((materia) {
+                    return DropdownMenuItem<String>(
+                      value: materia["id"] as String,
+                      child: Text(
+                        materia["nombre"] as String,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      materiaId = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
                 TextFormField(
                   controller: _duracionCtrl,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Duración estimada (minutos)',
+                    labelText: "Duración estimada (minutos)",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
+
+                const SizedBox(height: 16),
+
                 _buildDropdown(
-                  label: 'Tipo',
+                  label: "Tipo",
                   value: tipo,
-                  items: const ['tarea', 'examen'],
+                  items: const [
+                    "tarea",
+                    "examen",
+                  ],
                   onChanged: (value) {
-                    setState(() => tipo = value!);
+                    setState(() {
+                      tipo = value!;
+                    });
                   },
                 ),
-                const SizedBox(height: 14),
+
+                const SizedBox(height: 16),
+
                 _buildDropdown(
-                  label: 'Prioridad',
+                  label: "Prioridad",
                   value: prioridad,
-                  items: const ['baja', 'media', 'alta'],
+                  items: const [
+                    "baja",
+                    "media",
+                    "alta",
+                  ],
                   onChanged: (value) {
-                    setState(() => prioridad = value!);
+                    setState(() {
+                      prioridad = value!;
+                    });
                   },
                 ),
-                const SizedBox(height: 14),
+
+                const SizedBox(height: 16),
+
                 _buildDropdown(
-                  label: 'Dificultad',
+                  label: "Dificultad",
                   value: dificultad,
-                  items: const ['baja', 'media', 'alta'],
+                  items: const [
+                    "baja",
+                    "media",
+                    "alta",
+                  ],
                   onChanged: (value) {
-                    setState(() => dificultad = value!);
+                    setState(() {
+                      dificultad = value!;
+                    });
                   },
                 ),
-                const SizedBox(height: 14),
-                _buildDropdown(
-                  label: 'Estado',
-                  value: estado,
-                  items: const ['pendiente', 'completada'],
-                  onChanged: (value) {
-                    setState(() => estado = value!);
-                  },
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _pickFecha,
-                    child: Text(
-                      fechaVencimiento == null
-                          ? 'Seleccionar fecha de vencimiento'
-                          : 'Vence: ${fechaVencimiento!.toIso8601String().split('T').first}',
-                    ),
+
+                const SizedBox(height: 16),
+
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.calendar_month),
+                  label: Text(
+                    fechaVencimiento == null
+                        ? "Seleccionar fecha de vencimiento"
+                        : "${fechaVencimiento!.day}/${fechaVencimiento!.month}/${fechaVencimiento!.year}",
                   ),
+                  onPressed: _pickFecha,
                 ),
-                const SizedBox(height: 24),
+
+                const SizedBox(height: 30),
+
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -224,8 +321,10 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     ),
                     onPressed: isLoading ? null : _save,
                     child: isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Guardar tarea'),
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                        : const Text("Guardar tarea"),
                   ),
                 ),
               ],
