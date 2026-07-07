@@ -61,11 +61,7 @@ class TareaCard extends StatelessWidget {
         )
         .inDays;
 
-    if (dias < 0) {
-      return Colors.red;
-    }
-
-    if (dias == 0) {
+    if (dias <= 0) {
       return Colors.red;
     }
 
@@ -141,18 +137,15 @@ class TareaCard extends StatelessWidget {
       'sep',
       'oct',
       'nov',
-      'dic'
+      'dic',
     ];
 
     return '${f.day} ${meses[f.month - 1]} ${f.year}';
   }
 
   String get materia {
-    if (tarea.materiaNombre == null) {
-      return 'Sin materia';
-    }
-
-    if (tarea.materiaNombre!.isEmpty) {
+    if (tarea.materiaNombre == null ||
+        tarea.materiaNombre!.isEmpty) {
       return 'Sin materia';
     }
 
@@ -190,9 +183,13 @@ class TareaCard extends StatelessWidget {
                   height: 24,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: completada ? Colors.green : Colors.white,
+                    color: completada
+                        ? Colors.green
+                        : Colors.white,
                     border: Border.all(
-                      color: completada ? Colors.green : Colors.grey,
+                      color: completada
+                          ? Colors.green
+                          : Colors.grey,
                       width: 2,
                     ),
                   ),
@@ -205,17 +202,22 @@ class TareaCard extends StatelessWidget {
                       : null,
                 ),
               ),
+
               const SizedBox(width: 12),
+
               Expanded(
                 child: Text(
                   tarea.titulo,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    decoration: completada ? TextDecoration.lineThrough : null,
+                    decoration: completada
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
               ),
+
               PopupMenuButton<String>(
                 onSelected: (value) {
                   switch (value) {
@@ -241,6 +243,7 @@ class TareaCard extends StatelessWidget {
               ),
             ],
           ),
+
           if ((tarea.descripcion ?? '').isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
@@ -251,7 +254,9 @@ class TareaCard extends StatelessWidget {
               ),
             ),
           ],
+
           const SizedBox(height: 18),
+
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -275,7 +280,9 @@ class TareaCard extends StatelessWidget {
               ),
             ],
           ),
+
           const SizedBox(height: 18),
+
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -289,10 +296,13 @@ class TareaCard extends StatelessWidget {
                   color: fechaColor,
                   size: 22,
                 ),
+
                 const SizedBox(width: 12),
+
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
                       Text(
                         fechaBonita,
@@ -301,7 +311,9 @@ class TareaCard extends StatelessWidget {
                           fontSize: 14,
                         ),
                       ),
+
                       const SizedBox(height: 4),
+
                       Text(
                         diasRestantes,
                         style: TextStyle(
@@ -312,34 +324,6 @@ class TareaCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (tarea.duracionEstimada > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.indigo.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.timer_outlined,
-                          size: 16,
-                          color: Colors.indigo,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${tarea.duracionEstimada} min',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
               ],
             ),
           ),
