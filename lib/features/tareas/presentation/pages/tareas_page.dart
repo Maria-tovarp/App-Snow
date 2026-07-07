@@ -61,107 +61,70 @@ class _TareasPageState extends State<TareasPage> {
     }
   }
 
-  List<TareaModel> get pendientes =>
-      tareas
-          .where(
-            (t) =>
-                t.estado.toLowerCase() !=
-                'completada',
-          )
-          .toList();
+  List<TareaModel> get pendientes => tareas
+      .where(
+        (t) => t.estado.toLowerCase() != 'completada',
+      )
+      .toList();
 
-  List<TareaModel> get completadas =>
-      tareas
-          .where(
-            (t) =>
-                t.estado.toLowerCase() ==
-                'completada',
-          )
-          .toList();
-            @override
+  List<TareaModel> get completadas => tareas
+      .where(
+        (t) => t.estado.toLowerCase() == 'completada',
+      )
+      .toList();
+  @override
   Widget build(BuildContext context) {
-    final currentList =
-        tabIndex == 0 ? pendientes : completadas;
+    final currentList = tabIndex == 0 ? pendientes : completadas;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
-
       body: RefreshIndicator(
         onRefresh: load,
-
         child: ListView(
-          physics:
-              const AlwaysScrollableScrollPhysics(),
-
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
-
           children: [
-
             TareasHeader(
               pendientes: pendientes.length,
               onBack: () => context.go('/home'),
             ),
-
             Padding(
               padding: const EdgeInsets.all(16),
-
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.stretch,
-
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-
                   SizedBox(
                     height: 48,
-
                     child: FilledButton.icon(
-                      style:
-                          FilledButton.styleFrom(
+                      style: FilledButton.styleFrom(
                         backgroundColor: primary,
                       ),
-
-                      onPressed:
-                          _openCreateModal,
-
-                      icon:
-                          const Icon(Icons.add),
-
+                      onPressed: _openCreateModal,
+                      icon: const Icon(Icons.add),
                       label: const Text(
                         'Nueva tarea',
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 18),
-
                   TareasTabs(
-                    pendientes:
-                        pendientes.length,
-
-                    completadas:
-                        completadas.length,
-
-                    currentIndex:
-                        tabIndex,
-
+                    pendientes: pendientes.length,
+                    completadas: completadas.length,
+                    currentIndex: tabIndex,
                     onChanged: (value) {
                       setState(() {
                         tabIndex = value;
                       });
                     },
                   ),
-
                   const SizedBox(height: 18),
-
                   if (loading)
                     const Padding(
-                      padding:
-                          EdgeInsets.only(
+                      padding: EdgeInsets.only(
                         top: 80,
                       ),
                       child: Center(
-                        child:
-                            CircularProgressIndicator(),
+                        child: CircularProgressIndicator(),
                       ),
                     )
                   else if (currentList.isEmpty)
@@ -170,55 +133,43 @@ class _TareasPageState extends State<TareasPage> {
                     ...currentList.map(
                       (t) => TareaCard(
                         tarea: t,
-
-                        onCompleted:
-                            () async {
-                          await repo
-                              .updateEstado(
+                        onCompleted: () async {
+                          await repo.updateEstado(
                             id: t.id,
-                            estado:
-                                'completada',
+                            estado: 'completada',
                           );
 
                           await load();
                         },
-
                         onEdit: () {
                           _openEditModal(
                             t,
                           );
                         },
-
                         onDelete: () async {
-                          final ok =
-                              await _confirmDeleteDialog();
+                          final ok = await _confirmDeleteDialog();
 
                           if (ok == true) {
-                            await repo
-                                .deleteTarea(
-                                    t.id);
+                            await repo.deleteTarea(t.id);
 
                             await load();
                           }
                         },
                       ),
                     ),
-
                 ],
               ),
             ),
-
           ],
         ),
       ),
-
-      bottomNavigationBar:
-          const BottomNav(
+      bottomNavigationBar: const BottomNav(
         currentIndex: 2,
       ),
     );
   }
-    Widget _emptyState() {
+
+  Widget _emptyState() {
     return Container(
       padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(

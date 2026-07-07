@@ -34,9 +34,7 @@ class TareaRepository implements TareaRepositoryPort {
 
     if (user == null) return [];
 
-    final response = await _client
-        .from('tareas')
-        .select('''
+    final response = await _client.from('tareas').select('''
           id,
           titulo,
           descripcion,
@@ -49,13 +47,9 @@ class TareaRepository implements TareaRepositoryPort {
           materia_id,
           user_id,
           materias!tareas_materia_id_fkey(nombre)
-        ''')
-        .eq('user_id', user.id)
-        .order('created_at', ascending: false);
+        ''').eq('user_id', user.id).order('created_at', ascending: false);
 
-    return (response as List)
-        .map((e) => TareaModel.fromJson(e))
-        .toList();
+    return (response as List).map((e) => TareaModel.fromJson(e)).toList();
   }
 
   @override
@@ -116,10 +110,7 @@ class TareaRepository implements TareaRepositoryPort {
 
   @override
   Future<void> deleteTarea(String id) async {
-    await _client
-        .from('tareas')
-        .delete()
-        .eq('id', id);
+    await _client.from('tareas').delete().eq('id', id);
   }
 
   @override
@@ -127,11 +118,8 @@ class TareaRepository implements TareaRepositoryPort {
     required String id,
     required String estado,
   }) async {
-    await _client
-        .from('tareas')
-        .update({
-          'estado': estado,
-        })
-        .eq('id', id);
+    await _client.from('tareas').update({
+      'estado': estado,
+    }).eq('id', id);
   }
 }

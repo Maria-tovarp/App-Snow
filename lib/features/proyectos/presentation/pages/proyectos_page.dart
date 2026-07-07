@@ -129,40 +129,40 @@ class _ProyectosPageState extends State<ProyectosPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
       body: RefreshIndicator(
-              onRefresh: load,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
+        onRefresh: load,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          children: [
+            _header(),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _header(),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _newProjectButton(),
-                        const SizedBox(height: 18),
-                        if (loading)
-                          const SizedBox(height: 250)
-                        else if (proyectos.isEmpty)
-                          _emptyState()
-                        else ...[
-                          Text(
-                            'En Progreso',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 14),
-                          ...proyectos.map(_projectCard),
-                        ],
-                      ],
+                  _newProjectButton(),
+                  const SizedBox(height: 18),
+                  if (loading)
+                    const SizedBox(height: 250)
+                  else if (proyectos.isEmpty)
+                    _emptyState()
+                  else ...[
+                    Text(
+                      'En Progreso',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
-                  ),
+                    const SizedBox(height: 14),
+                    ...proyectos.map(_projectCard),
+                  ],
                 ],
               ),
             ),
+          ],
+        ),
+      ),
     );
   }
 

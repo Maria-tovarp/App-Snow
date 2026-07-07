@@ -12,22 +12,17 @@ class CreateTareaDialog extends StatefulWidget {
   });
 
   @override
-  State<CreateTareaDialog> createState() =>
-      _CreateTareaDialogState();
+  State<CreateTareaDialog> createState() => _CreateTareaDialogState();
 }
 
-class _CreateTareaDialogState
-    extends State<CreateTareaDialog> {
-
+class _CreateTareaDialogState extends State<CreateTareaDialog> {
   final repo = TareaRepository();
 
   final tituloCtrl = TextEditingController();
 
-  final descripcionCtrl =
-      TextEditingController();
+  final descripcionCtrl = TextEditingController();
 
-  final duracionCtrl =
-      TextEditingController(text: '60');
+  final duracionCtrl = TextEditingController(text: '60');
 
   bool loading = false;
 
@@ -71,11 +66,9 @@ class _CreateTareaDialogState
 
     tituloCtrl.text = t.titulo;
 
-    descripcionCtrl.text =
-        t.descripcion ?? '';
+    descripcionCtrl.text = t.descripcion ?? '';
 
-    duracionCtrl.text =
-        t.duracionEstimada.toString();
+    duracionCtrl.text = t.duracionEstimada.toString();
 
     materiaId = t.materiaId;
 
@@ -86,8 +79,7 @@ class _CreateTareaDialogState
     dificultad = t.dificultad;
 
     if (t.fechaVencimiento != null) {
-      fechaVencimiento =
-          DateTime.tryParse(
+      fechaVencimiento = DateTime.tryParse(
         t.fechaVencimiento!,
       );
     }
@@ -103,7 +95,8 @@ class _CreateTareaDialogState
 
     super.dispose();
   }
-    Future<void> _pickFecha() async {
+
+  Future<void> _pickFecha() async {
     final picked = await showDatePicker(
       context: context,
       initialDate: fechaVencimiento ?? DateTime.now(),
@@ -119,7 +112,6 @@ class _CreateTareaDialogState
   }
 
   Future<void> save() async {
-
     if (tituloCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -154,55 +146,42 @@ class _CreateTareaDialogState
     });
 
     try {
-
       if (isEdit) {
-
         await repo.updateTarea(
-  id: widget.tarea!.id,
-  titulo: tituloCtrl.text.trim(),
-  descripcion: descripcionCtrl.text.trim().isEmpty
-      ? null
-      : descripcionCtrl.text.trim(),
-  fechaVencimiento: fechaVencimiento!
-      .toIso8601String()
-      .split('T')
-      .first,
-  duracionEstimada:
-      int.tryParse(duracionCtrl.text.trim()) ?? 60,
-  tipo: tipo,
-  prioridad: prioridad,
-  dificultad: dificultad,
-  materiaId: materiaId,
-);
-
+          id: widget.tarea!.id,
+          titulo: tituloCtrl.text.trim(),
+          descripcion: descripcionCtrl.text.trim().isEmpty
+              ? null
+              : descripcionCtrl.text.trim(),
+          fechaVencimiento:
+              fechaVencimiento!.toIso8601String().split('T').first,
+          duracionEstimada: int.tryParse(duracionCtrl.text.trim()) ?? 60,
+          tipo: tipo,
+          prioridad: prioridad,
+          dificultad: dificultad,
+          materiaId: materiaId,
+        );
       } else {
-
         await repo.createTarea(
           titulo: tituloCtrl.text.trim(),
           descripcion: descripcionCtrl.text.trim().isEmpty
               ? null
               : descripcionCtrl.text.trim(),
-          fechaVencimiento: fechaVencimiento!
-              .toIso8601String()
-              .split('T')
-              .first,
-          duracionEstimada:
-              int.tryParse(duracionCtrl.text) ?? 60,
+          fechaVencimiento:
+              fechaVencimiento!.toIso8601String().split('T').first,
+          duracionEstimada: int.tryParse(duracionCtrl.text) ?? 60,
           tipo: tipo,
           prioridad: prioridad,
           dificultad: dificultad,
           estado: 'pendiente',
           materiaId: materiaId,
         );
-
       }
 
       if (!mounted) return;
 
       Navigator.pop(context, true);
-
     } catch (e) {
-
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -212,15 +191,12 @@ class _CreateTareaDialogState
           ),
         ),
       );
-
     } finally {
-
       if (mounted) {
         setState(() {
           loading = false;
         });
       }
-
     }
   }
 
@@ -232,7 +208,8 @@ class _CreateTareaDialogState
       ),
     );
   }
-    @override
+
+  @override
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(
@@ -250,49 +227,37 @@ class _CreateTareaDialogState
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
               Row(
                 children: [
-
                   Expanded(
                     child: Text(
-                      isEdit
-                          ? 'Editar tarea'
-                          : 'Nueva tarea',
+                      isEdit ? 'Editar tarea' : 'Nueva tarea',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-
                   IconButton(
                     onPressed: () {
                       Navigator.pop(context);
                     },
                     icon: const Icon(Icons.close),
                   ),
-
                 ],
               ),
-
               const SizedBox(height: 20),
-
               TextField(
                 controller: tituloCtrl,
                 decoration: decoration('Título *'),
               ),
-
               const SizedBox(height: 16),
-
               TextField(
                 controller: descripcionCtrl,
                 maxLines: 3,
                 decoration: decoration('Descripción'),
               ),
-
               const SizedBox(height: 16),
-
               DropdownButtonFormField<String>(
                 value: materiaId,
                 decoration: decoration('Materia *'),
@@ -308,9 +273,7 @@ class _CreateTareaDialogState
                   });
                 },
               ),
-
               const SizedBox(height: 16),
-
               TextField(
                 controller: duracionCtrl,
                 keyboardType: TextInputType.number,
@@ -318,24 +281,19 @@ class _CreateTareaDialogState
                   'Duración estimada (minutos)',
                 ),
               ),
-
               const SizedBox(height: 16),
-
               DropdownButtonFormField<String>(
                 value: tipo,
                 decoration: decoration('Tipo'),
                 items: const [
-
                   DropdownMenuItem(
                     value: 'tarea',
                     child: Text('Tarea'),
                   ),
-
                   DropdownMenuItem(
                     value: 'examen',
                     child: Text('Examen'),
                   ),
-
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -343,29 +301,23 @@ class _CreateTareaDialogState
                   });
                 },
               ),
-
               const SizedBox(height: 16),
-
               DropdownButtonFormField<String>(
                 value: prioridad,
                 decoration: decoration('Prioridad'),
                 items: const [
-
                   DropdownMenuItem(
                     value: 'baja',
                     child: Text('Baja'),
                   ),
-
                   DropdownMenuItem(
                     value: 'media',
                     child: Text('Media'),
                   ),
-
                   DropdownMenuItem(
                     value: 'alta',
                     child: Text('Alta'),
                   ),
-
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -373,29 +325,23 @@ class _CreateTareaDialogState
                   });
                 },
               ),
-
               const SizedBox(height: 16),
-
               DropdownButtonFormField<String>(
                 value: dificultad,
                 decoration: decoration('Dificultad'),
                 items: const [
-
                   DropdownMenuItem(
                     value: 'baja',
                     child: Text('Baja'),
                   ),
-
                   DropdownMenuItem(
                     value: 'media',
                     child: Text('Media'),
                   ),
-
                   DropdownMenuItem(
                     value: 'alta',
                     child: Text('Alta'),
                   ),
-
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -403,9 +349,7 @@ class _CreateTareaDialogState
                   });
                 },
               ),
-
               const SizedBox(height: 20),
-
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -420,9 +364,7 @@ class _CreateTareaDialogState
                   ),
                 ),
               ),
-
               const SizedBox(height: 26),
-
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -433,15 +375,11 @@ class _CreateTareaDialogState
                           color: Colors.white,
                         )
                       : Text(
-                          isEdit
-                              ? 'Guardar cambios'
-                              : 'Crear tarea',
+                          isEdit ? 'Guardar cambios' : 'Crear tarea',
                         ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -452,7 +390,6 @@ class _CreateTareaDialogState
                   child: const Text('Cancelar'),
                 ),
               ),
-
             ],
           ),
         ),

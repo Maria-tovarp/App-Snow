@@ -10,7 +10,8 @@ class SharedPreferencesSessionStorage implements SessionStorage {
   const SharedPreferencesSessionStorage();
 
   @override
-  Future<void> saveSession({required String userId, String? accessToken}) async {
+  Future<void> saveSession(
+      {required String userId, String? accessToken}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_isLoggedInKey, true);
     await prefs.setString(_userIdKey, userId);

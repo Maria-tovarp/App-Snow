@@ -166,146 +166,146 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
-              children: [
-                Expanded(
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: _Header(onEdit: _toggleEditForm),
+        children: [
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _Header(onEdit: _toggleEditForm),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: _ProfileCard(
+                      initials: _initials,
+                      name: _name,
+                      career: _career,
+                      semester: _semester,
+                    ),
+                  ),
+                ),
+                if (showEditForm)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+                      child: _EditProfileCard(
+                        name: _name,
+                        idNumber: _identification,
+                        career: _career,
+                        semester: _semester,
+                        university: _university,
+                        onSave: _saveProfile,
+                        onCancel: () {
+                          setState(() {
+                            showEditForm = false;
+                          });
+                        },
                       ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                          child: _ProfileCard(
-                            initials: _initials,
-                            name: _name,
-                            career: _career,
-                            semester: _semester,
+                    ),
+                  ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Estadísticas Académicas',
+                          style: TextStyle(
+                            color: textMuted,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ),
-                      if (showEditForm)
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-                            child: _EditProfileCard(
-                              name: _name,
-                              idNumber: _identification,
-                              career: _career,
-                              semester: _semester,
-                              university: _university,
-                              onSave: _saveProfile,
-                              onCancel: () {
-                                setState(() {
-                                  showEditForm = false;
-                                });
-                              },
+                        const SizedBox(height: 12),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          childAspectRatio: 2.15,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          children: [
+                            _StatCard(
+                              icon: Icons.menu_book_outlined,
+                              value: '$materias',
+                              label: 'Materias',
+                              iconColor: const Color(0xFF2F80ED),
+                              iconBg: const Color(0xFFEAF3FF),
+                            ),
+                            _StatCard(
+                              icon: Icons.check_circle_outline,
+                              value: '$tareasCompletadas',
+                              label: 'Completadas',
+                              iconColor: const Color(0xFF00C853),
+                              iconBg: const Color(0xFFE9FFF2),
+                            ),
+                            _StatCard(
+                              icon: Icons.work_outline,
+                              value: '$proyectos',
+                              label: 'Proyectos',
+                              iconColor: const Color(0xFFFF6D00),
+                              iconBg: const Color(0xFFFFF0E3),
+                            ),
+                            _StatCard(
+                              icon: Icons.track_changes_outlined,
+                              value: '$metas',
+                              label: 'Metas',
+                              iconColor: const Color(0xFF9C27B0),
+                              iconBg: const Color(0xFFF7E8FF),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        _PerformanceCard(
+                          minutes: minutosEstudio,
+                          pending: tareasPendientes,
+                          sessions: sesionesPomodoro,
+                        ),
+                        const SizedBox(height: 18),
+                        _AccountInfoCard(
+                          email: _email,
+                          university: _university,
+                        ),
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: _logout,
+                            icon: const Icon(
+                              Icons.logout,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              'Cerrar sesión',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE11445),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Estadísticas Académicas',
-                                style: TextStyle(
-                                  color: textMuted,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              GridView.count(
-                                crossAxisCount: 2,
-                                childAspectRatio: 2.15,
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                padding: EdgeInsets.zero,
-                                mainAxisSpacing: 10,
-                                crossAxisSpacing: 10,
-                                children: [
-                                  _StatCard(
-                                    icon: Icons.menu_book_outlined,
-                                    value: '$materias',
-                                    label: 'Materias',
-                                    iconColor: const Color(0xFF2F80ED),
-                                    iconBg: const Color(0xFFEAF3FF),
-                                  ),
-                                  _StatCard(
-                                    icon: Icons.check_circle_outline,
-                                    value: '$tareasCompletadas',
-                                    label: 'Completadas',
-                                    iconColor: const Color(0xFF00C853),
-                                    iconBg: const Color(0xFFE9FFF2),
-                                  ),
-                                  _StatCard(
-                                    icon: Icons.work_outline,
-                                    value: '$proyectos',
-                                    label: 'Proyectos',
-                                    iconColor: const Color(0xFFFF6D00),
-                                    iconBg: const Color(0xFFFFF0E3),
-                                  ),
-                                  _StatCard(
-                                    icon: Icons.track_changes_outlined,
-                                    value: '$metas',
-                                    label: 'Metas',
-                                    iconColor: const Color(0xFF9C27B0),
-                                    iconBg: const Color(0xFFF7E8FF),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 18),
-                              _PerformanceCard(
-                                minutes: minutosEstudio,
-                                pending: tareasPendientes,
-                                sessions: sesionesPomodoro,
-                              ),
-                              const SizedBox(height: 18),
-                              _AccountInfoCard(
-                                email: _email,
-                                university: _university,
-                              ),
-                              const SizedBox(height: 18),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: ElevatedButton.icon(
-                                  onPressed: _logout,
-                                  icon: const Icon(
-                                    Icons.logout,
-                                    color: Colors.white,
-                                  ),
-                                  label: const Text(
-                                    'Cerrar sesión',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFE11445),
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
                 ),
-                const _ProfileBottomNav(),
               ],
             ),
+          ),
+          const _ProfileBottomNav(),
+        ],
+      ),
     );
   }
 }

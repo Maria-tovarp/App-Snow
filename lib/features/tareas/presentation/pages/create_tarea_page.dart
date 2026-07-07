@@ -96,12 +96,8 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
         descripcion: _descripcionCtrl.text.trim().isEmpty
             ? null
             : _descripcionCtrl.text.trim(),
-        fechaVencimiento: fechaVencimiento!
-            .toIso8601String()
-            .split('T')
-            .first,
-        duracionEstimada:
-            int.tryParse(_duracionCtrl.text.trim()) ?? 60,
+        fechaVencimiento: fechaVencimiento!.toIso8601String().split('T').first,
+        duracionEstimada: int.tryParse(_duracionCtrl.text.trim()) ?? 60,
         tipo: tipo,
         prioridad: prioridad,
         dificultad: dificultad,
@@ -158,7 +154,8 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
       onChanged: onChanged,
     );
   }
-    @override
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
@@ -182,7 +179,6 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
             key: _formKey,
             child: Column(
               children: [
-
                 TextFormField(
                   controller: _tituloCtrl,
                   decoration: InputDecoration(
@@ -198,9 +194,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 16),
-
                 TextFormField(
                   controller: _descripcionCtrl,
                   maxLines: 3,
@@ -211,9 +205,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 DropdownButtonFormField<String>(
                   value: materiaId,
                   decoration: InputDecoration(
@@ -242,9 +234,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     });
                   },
                 ),
-
                 const SizedBox(height: 16),
-
                 TextFormField(
                   controller: _duracionCtrl,
                   keyboardType: TextInputType.number,
@@ -268,9 +258,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 16),
-
                 _buildDropdown(
                   label: "Tipo",
                   value: tipo,
@@ -284,9 +272,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     });
                   },
                 ),
-
                 const SizedBox(height: 16),
-
                 _buildDropdown(
                   label: "Prioridad",
                   value: prioridad,
@@ -301,9 +287,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     });
                   },
                 ),
-
                 const SizedBox(height: 16),
-
                 _buildDropdown(
                   label: "Dificultad",
                   value: dificultad,
@@ -318,9 +302,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     });
                   },
                 ),
-
                 const SizedBox(height: 16),
-
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 52),
@@ -333,14 +315,13 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     fechaVencimiento == null
                         ? "Seleccionar fecha de vencimiento"
                         : "${fechaVencimiento!.day.toString().padLeft(2, '0')}/"
-                          "${fechaVencimiento!.month.toString().padLeft(2, '0')}/"
-                          "${fechaVencimiento!.year}",
+                            "${fechaVencimiento!.month.toString().padLeft(2, '0')}/"
+                            "${fechaVencimiento!.year}",
                   ),
                   onPressed: _pickFecha,
                 ),
-
                 const SizedBox(height: 30),
-                                SizedBox(
+                SizedBox(
                   width: double.infinity,
                   height: 52,
                   child: FilledButton(

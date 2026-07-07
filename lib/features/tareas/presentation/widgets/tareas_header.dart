@@ -42,8 +42,7 @@ class TareasHeader extends StatelessWidget {
             ),
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'Tareas y Exámenes',
@@ -69,8 +68,7 @@ class TareasHeader extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: Colors.white24,
-                borderRadius:
-                    BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: const Icon(
                 Icons.assignment_outlined,

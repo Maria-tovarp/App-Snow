@@ -145,37 +145,37 @@ class _CalendarioPageState extends State<CalendarioPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
       body: RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                padding: EdgeInsets.zero,
+        onRefresh: _load,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            _HeaderCalendario(onBack: () => context.go('/home')),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              child: Column(
                 children: [
-                  _HeaderCalendario(onBack: () => context.go('/home')),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                    child: Column(
-                      children: [
-                        _CalendarMonth(
-                          month: visibleMonth,
-                          eventos: eventos,
-                          onPrevious: _prevMonth,
-                          onNext: _nextMonth,
-                        ),
-                        const SizedBox(height: 18),
-                        if (loading)
-                          const SizedBox(height: 120)
-                        else
-                          _UpcomingEventsCard(
-                            eventos: _eventos30Dias,
-                            formatFecha: _formatFechaCorta,
-                          ),
-                        const SizedBox(height: 18),
-                        const _LegendCard(),
-                      ],
-                    ),
+                  _CalendarMonth(
+                    month: visibleMonth,
+                    eventos: eventos,
+                    onPrevious: _prevMonth,
+                    onNext: _nextMonth,
                   ),
+                  const SizedBox(height: 18),
+                  if (loading)
+                    const SizedBox(height: 120)
+                  else
+                    _UpcomingEventsCard(
+                      eventos: _eventos30Dias,
+                      formatFecha: _formatFechaCorta,
+                    ),
+                  const SizedBox(height: 18),
+                  const _LegendCard(),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
     );
   }
 }

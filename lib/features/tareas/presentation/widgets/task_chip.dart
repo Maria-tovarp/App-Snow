@@ -22,9 +22,8 @@ class TaskChip extends StatelessWidget {
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: outlined
-            ? Colors.white
-            : (background ?? const Color(0xFFF2F2F7)),
+        color:
+            outlined ? Colors.white : (background ?? const Color(0xFFF2F2F7)),
         borderRadius: BorderRadius.circular(18),
         border: outlined
             ? Border.all(

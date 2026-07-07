@@ -27,7 +27,8 @@ class AuthRemoteDataSource {
     );
   }
 
-  Future<AuthResponse> signIn({required String email, required String password}) {
+  Future<AuthResponse> signIn(
+      {required String email, required String password}) {
     return client.auth.signInWithPassword(email: email, password: password);
   }
 

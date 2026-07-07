@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'meta_model.dart';
 
 import 'package:helloworld/features/metas/domain/repositories/meta_repository_port.dart';
+
 class MetaRepository implements MetaRepositoryPort {
   final SupabaseClient _client = Supabase.instance.client;
 

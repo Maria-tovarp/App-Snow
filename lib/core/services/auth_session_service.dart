@@ -8,7 +8,8 @@ class LocalUser {
   final String email;
   final String nombre;
 
-  const LocalUser({required this.id, required this.email, required this.nombre});
+  const LocalUser(
+      {required this.id, required this.email, required this.nombre});
 }
 
 class AuthResponse {
@@ -22,10 +23,13 @@ class AuthSessionService {
   AuthSessionService._();
   static final AuthSessionService instance = AuthSessionService._();
 
-  final ValueNotifier<LocalUser?> sessionNotifier = ValueNotifier<LocalUser?>(null);
+  final ValueNotifier<LocalUser?> sessionNotifier =
+      ValueNotifier<LocalUser?>(null);
   final _sessionStorage = const SharedPreferencesSessionStorage();
 
-  LocalUser? get currentUser => sessionNotifier.value ?? _fromSupabaseUser(Supabase.instance.client.auth.currentUser);
+  LocalUser? get currentUser =>
+      sessionNotifier.value ??
+      _fromSupabaseUser(Supabase.instance.client.auth.currentUser);
   bool get isLoggedIn => currentUser != null;
 
   LocalUser? _fromSupabaseUser(User? user) {
@@ -38,11 +42,15 @@ class AuthSessionService {
     );
   }
 
-  Future<AuthResponse> signIn({required String email, required String password}) async {
-    final response = await Supabase.instance.client.auth.signInWithPassword(email: email, password: password);
+  Future<AuthResponse> signIn(
+      {required String email, required String password}) async {
+    final response = await Supabase.instance.client.auth
+        .signInWithPassword(email: email, password: password);
     final user = _fromSupabaseUser(response.user);
     if (response.session != null && response.user != null) {
-      await _sessionStorage.saveSession(userId: response.user!.id, accessToken: response.session!.accessToken);
+      await _sessionStorage.saveSession(
+          userId: response.user!.id,
+          accessToken: response.session!.accessToken);
     }
     sessionNotifier.value = user;
     return AuthResponse(user: user, session: user);
@@ -70,13 +78,16 @@ class AuthSessionService {
     );
     final user = _fromSupabaseUser(response.user);
     if (response.session != null && response.user != null) {
-      await _sessionStorage.saveSession(userId: response.user!.id, accessToken: response.session!.accessToken);
+      await _sessionStorage.saveSession(
+          userId: response.user!.id,
+          accessToken: response.session!.accessToken);
     }
     sessionNotifier.value = user;
     return AuthResponse(user: user, session: user);
   }
 
-  Future<String> resetPassword({required String email, required String identificacion}) async {
+  Future<String> resetPassword(
+      {required String email, required String identificacion}) async {
     await Supabase.instance.client.auth.resetPasswordForEmail(email.trim());
     return 'Se envió un enlace de recuperación a $email';
   }

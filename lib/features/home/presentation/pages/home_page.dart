@@ -145,51 +145,51 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: RefreshIndicator(
-              color: _primary,
-              onRefresh: _loadData,
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: _Header(
-                      nombre: primerNombre,
-                      onProfile: () => context.go('/perfil'),
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(18, 14, 18, 22),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        _StatsGrid(
-                          materiasActivas: materiasActivas,
-                          tareasPendientes: tareasPendientes,
-                          proyectosActivos: proyectosActivos,
-                          metasCompletadas: metasCompletadas,
-                          metasTotales: metasTotales,
-                        ),
-                        const SizedBox(height: 18),
-                        _ProgressCard(
-                          completadas: tareasCompletadas,
-                          total: totalTareas,
-                          progreso: progreso,
-                        ),
-                        const SizedBox(height: 18),
-                        _WeeklyLoadCard(values: tareasPorDia),
-                        const SizedBox(height: 18),
-                        if (isLoading)
-                          const SizedBox(height: 0)
-                        else
-                          _DeliveriesCard(entregas: proximasEntregas),
-                        const SizedBox(height: 18),
-                        _ShortcutsGrid(
-                          onTap: (route) => context.go(route),
-                        ),
-                      ]),
-                    ),
-                  ),
-                ],
+        color: _primary,
+        onRefresh: _loadData,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: _Header(
+                nombre: primerNombre,
+                onProfile: () => context.go('/perfil'),
               ),
             ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 22),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _StatsGrid(
+                    materiasActivas: materiasActivas,
+                    tareasPendientes: tareasPendientes,
+                    proyectosActivos: proyectosActivos,
+                    metasCompletadas: metasCompletadas,
+                    metasTotales: metasTotales,
+                  ),
+                  const SizedBox(height: 18),
+                  _ProgressCard(
+                    completadas: tareasCompletadas,
+                    total: totalTareas,
+                    progreso: progreso,
+                  ),
+                  const SizedBox(height: 18),
+                  _WeeklyLoadCard(values: tareasPorDia),
+                  const SizedBox(height: 18),
+                  if (isLoading)
+                    const SizedBox(height: 0)
+                  else
+                    _DeliveriesCard(entregas: proximasEntregas),
+                  const SizedBox(height: 18),
+                  _ShortcutsGrid(
+                    onTap: (route) => context.go(route),
+                  ),
+                ]),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

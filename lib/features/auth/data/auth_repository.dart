@@ -15,7 +15,8 @@ class AuthRepository implements AuthRepositoryPort {
     SessionStorage? sessionStorage,
   })  : _remoteDataSource = remoteDataSource ??
             AuthRemoteDataSource(SupabaseClientProvider.client),
-        _sessionStorage = sessionStorage ?? const SharedPreferencesSessionStorage();
+        _sessionStorage =
+            sessionStorage ?? const SharedPreferencesSessionStorage();
 
   @override
   Future<AuthResponse> signUp({
@@ -54,7 +55,8 @@ class AuthRepository implements AuthRepositoryPort {
     required String email,
     required String password,
   }) async {
-    final response = await _remoteDataSource.signIn(email: email, password: password);
+    final response =
+        await _remoteDataSource.signIn(email: email, password: password);
     final session = response.session;
     final user = response.user;
     if (session != null && user != null) {

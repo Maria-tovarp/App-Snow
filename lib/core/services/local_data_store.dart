@@ -28,38 +28,62 @@ class LocalDataStore {
     profile['email'] = user.email ?? '';
     final metadata = user.userMetadata ?? <String, dynamic>{};
     profile['nombre'] = (metadata['nombre'] ?? profile['nombre']).toString();
-    profile['identificacion'] = (metadata['identificacion'] ?? profile['identificacion']).toString();
+    profile['identificacion'] =
+        (metadata['identificacion'] ?? profile['identificacion']).toString();
     profile['carrera'] = (metadata['carrera'] ?? profile['carrera']).toString();
-    profile['semestre'] = (metadata['semestre'] ?? profile['semestre']).toString();
-    profile['universidad'] = (metadata['universidad'] ?? profile['universidad']).toString();
+    profile['semestre'] =
+        (metadata['semestre'] ?? profile['semestre']).toString();
+    profile['universidad'] =
+        (metadata['universidad'] ?? profile['universidad']).toString();
 
     try {
-      final row = await _client.from('profiles').select().eq('id', user.id).maybeSingle();
+      final row = await _client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
       if (row != null) {
         profile
           ..['nombre'] = (row['nombre'] ?? profile['nombre']).toString()
-          ..['identificacion'] = (row['identificacion'] ?? profile['identificacion']).toString()
+          ..['identificacion'] =
+              (row['identificacion'] ?? profile['identificacion']).toString()
           ..['carrera'] = (row['carrera'] ?? profile['carrera']).toString()
           ..['semestre'] = (row['semestre'] ?? profile['semestre']).toString()
-          ..['universidad'] = (row['universidad'] ?? profile['universidad']).toString()
+          ..['universidad'] =
+              (row['universidad'] ?? profile['universidad']).toString()
           ..['email'] = (row['email'] ?? profile['email']).toString();
       }
     } catch (_) {}
   }
 
-  List<Map<String, dynamic>> _rows(dynamic response) => List<Map<String, dynamic>>.from(response as List);
+  List<Map<String, dynamic>> _rows(dynamic response) =>
+      List<Map<String, dynamic>>.from(response as List);
 
   Future<List<Map<String, dynamic>>> getMaterias() async {
     final userId = _userId;
     if (userId == null) return [];
-    final response = await _client.from('materias').select().eq('user_id', userId).order('created_at', ascending: false);
+    final response = await _client
+        .from('materias')
+        .select()
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
     return _rows(response);
   }
 
-  Future<void> createMateria({required String nombre, required String profesor, required int creditos, required String color}) async {
+  Future<void> createMateria(
+      {required String nombre,
+      required String profesor,
+      required int creditos,
+      required String color}) async {
     final userId = _userId;
     if (userId == null) throw Exception('No hay usuario autenticado');
-    await _client.from('materias').insert({'nombre': nombre, 'profesor': profesor, 'creditos': creditos, 'color': color, 'user_id': userId});
+    await _client.from('materias').insert({
+      'nombre': nombre,
+      'profesor': profesor,
+      'creditos': creditos,
+      'color': color,
+      'user_id': userId
+    });
   }
 
   Future<void> updateMateria(String id, Map<String, dynamic> data) async {
@@ -67,8 +91,12 @@ class LocalDataStore {
   }
 
   Future<void> deleteMateria(String id) async {
-    await _client.from('tareas').update({'materia_id': null}).eq('materia_id', id);
-    await _client.from('proyectos').update({'materia_id': null}).eq('materia_id', id);
+    await _client
+        .from('tareas')
+        .update({'materia_id': null}).eq('materia_id', id);
+    await _client
+        .from('proyectos')
+        .update({'materia_id': null}).eq('materia_id', id);
     await _client.from('materias').delete().eq('id', id);
   }
 
@@ -82,7 +110,11 @@ class LocalDataStore {
     ''').eq('user_id', userId).order('created_at', ascending: false);
     return _rows(response).map((row) {
       final materia = row['materias'];
-      return {...row, 'materia_nombre': materia is Map<String, dynamic> ? materia['nombre'] : null};
+      return {
+        ...row,
+        'materia_nombre':
+            materia is Map<String, dynamic> ? materia['nombre'] : null
+      };
     }).toList();
   }
 
@@ -104,7 +136,9 @@ class LocalDataStore {
   }
 
   Future<void> updateTarea(String id, Map<String, dynamic> data) async {
-    final payload = Map<String, dynamic>.from(data)..remove('materia_nombre')..remove('materias');
+    final payload = Map<String, dynamic>.from(data)
+      ..remove('materia_nombre')
+      ..remove('materias');
     await _client.from('tareas').update(payload).eq('id', id);
   }
 
@@ -115,14 +149,25 @@ class LocalDataStore {
   Future<List<Map<String, dynamic>>> getMetas() async {
     final userId = _userId;
     if (userId == null) return [];
-    final response = await _client.from('metas').select().eq('user_id', userId).order('created_at', ascending: false);
+    final response = await _client
+        .from('metas')
+        .select()
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
     return _rows(response);
   }
 
-  Future<void> createMeta({required String titulo, String? descripcion, String? periodo}) async {
+  Future<void> createMeta(
+      {required String titulo, String? descripcion, String? periodo}) async {
     final userId = _userId;
     if (userId == null) throw Exception('No hay usuario autenticado');
-    await _client.from('metas').insert({'titulo': titulo, 'descripcion': descripcion, 'periodo': periodo, 'estado': 'pendiente', 'user_id': userId});
+    await _client.from('metas').insert({
+      'titulo': titulo,
+      'descripcion': descripcion,
+      'periodo': periodo,
+      'estado': 'pendiente',
+      'user_id': userId
+    });
   }
 
   Future<void> updateMeta(String id, Map<String, dynamic> data) async {
@@ -142,7 +187,11 @@ class LocalDataStore {
     ''').eq('user_id', userId).order('created_at', ascending: false);
     return _rows(response).map((row) {
       final materia = row['materias'];
-      return {...row, 'materia_nombre': materia is Map<String, dynamic> ? materia['nombre'] : null};
+      return {
+        ...row,
+        'materia_nombre':
+            materia is Map<String, dynamic> ? materia['nombre'] : null
+      };
     }).toList();
   }
 
@@ -161,7 +210,9 @@ class LocalDataStore {
   }
 
   Future<void> updateProyecto(String id, Map<String, dynamic> data) async {
-    final payload = Map<String, dynamic>.from(data)..remove('materia_nombre')..remove('materias');
+    final payload = Map<String, dynamic>.from(data)
+      ..remove('materia_nombre')
+      ..remove('materias');
     await _client.from('proyectos').update(payload).eq('id', id);
   }
 
@@ -169,10 +220,19 @@ class LocalDataStore {
     await _client.from('proyectos').delete().eq('id', id);
   }
 
-  Future<void> savePomodoroSession({required String tipo, required int duracionMinutos, String? materiaId}) async {
+  Future<void> savePomodoroSession(
+      {required String tipo,
+      required int duracionMinutos,
+      String? materiaId}) async {
     final userId = _userId;
     if (userId == null) throw Exception('No hay usuario autenticado');
-    await _client.from('pomodoro_sessions').insert({'user_id': userId, 'materia_id': materiaId, 'tipo': tipo, 'duracion_minutos': duracionMinutos, 'completada': true});
+    await _client.from('pomodoro_sessions').insert({
+      'user_id': userId,
+      'materia_id': materiaId,
+      'tipo': tipo,
+      'duracion_minutos': duracionMinutos,
+      'completada': true
+    });
   }
 
   Future<Map<String, int>> getTodayPomodoroStats() async {
@@ -180,8 +240,14 @@ class LocalDataStore {
     if (userId == null) return {'sesionesEstudio': 0, 'minutosEstudio': 0};
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day).toIso8601String();
-    final end = DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
-    final response = await _client.from('pomodoro_sessions').select('tipo, duracion_minutos').eq('user_id', userId).gte('created_at', start).lte('created_at', end);
+    final end =
+        DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+    final response = await _client
+        .from('pomodoro_sessions')
+        .select('tipo, duracion_minutos')
+        .eq('user_id', userId)
+        .gte('created_at', start)
+        .lte('created_at', end);
     int sesiones = 0;
     int minutos = 0;
     for (final row in _rows(response)) {

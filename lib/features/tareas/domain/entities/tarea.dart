@@ -35,8 +35,7 @@ class Tarea {
       titulo: json['titulo'] as String,
       descripcion: json['descripcion'] as String?,
       fechaVencimiento: json['fecha_vencimiento']?.toString(),
-      duracionEstimada:
-        (json['duracion_estimada'] as num?)?.toInt() ?? 60,
+      duracionEstimada: (json['duracion_estimada'] as num?)?.toInt() ?? 60,
       tipo: (json['tipo'] ?? 'tarea') as String,
       prioridad: (json['prioridad'] ?? 'media') as String,
       dificultad: (json['dificultad'] ?? 'media') as String,

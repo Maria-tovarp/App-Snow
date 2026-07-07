@@ -54,9 +54,7 @@ class TareasTabs extends StatelessWidget {
             vertical: 11,
           ),
           decoration: BoxDecoration(
-            color: active
-                ? Colors.white
-                : Colors.transparent,
+            color: active ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(30),
           ),
           child: Center(
@@ -64,9 +62,7 @@ class TareasTabs extends StatelessWidget {
               text,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: active
-                    ? Colors.black87
-                    : Colors.grey,
+                color: active ? Colors.black87 : Colors.grey,
               ),
             ),
           ),

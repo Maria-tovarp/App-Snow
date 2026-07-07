@@ -18,8 +18,7 @@ class TareaCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  bool get completada =>
-      tarea.estado.toLowerCase() == 'completada';
+  bool get completada => tarea.estado.toLowerCase() == 'completada';
 
   Color get prioridadColor {
     switch (tarea.prioridad.toLowerCase()) {
@@ -52,13 +51,15 @@ class TareaCard extends StatelessWidget {
       fecha.year,
       fecha.month,
       fecha.day,
-    ).difference(
-      DateTime(
-        hoy.year,
-        hoy.month,
-        hoy.day,
-      ),
-    ).inDays;
+    )
+        .difference(
+          DateTime(
+            hoy.year,
+            hoy.month,
+            hoy.day,
+          ),
+        )
+        .inDays;
 
     if (dias < 0) {
       return Colors.red;
@@ -90,13 +91,15 @@ class TareaCard extends StatelessWidget {
       fecha.year,
       fecha.month,
       fecha.day,
-    ).difference(
-      DateTime(
-        hoy.year,
-        hoy.month,
-        hoy.day,
-      ),
-    ).inDays;
+    )
+        .difference(
+          DateTime(
+            hoy.year,
+            hoy.month,
+            hoy.day,
+          ),
+        )
+        .inDays;
 
     if (dias > 1) {
       return 'Faltan $dias días';
@@ -155,7 +158,8 @@ class TareaCard extends StatelessWidget {
 
     return tarea.materiaNombre!;
   }
-    @override
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -177,26 +181,18 @@ class TareaCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           Row(
             children: [
-
               GestureDetector(
-                onTap: completada
-                    ? null
-                    : onCompleted,
+                onTap: completada ? null : onCompleted,
                 child: Container(
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: completada
-                        ? Colors.green
-                        : Colors.white,
+                    color: completada ? Colors.green : Colors.white,
                     border: Border.all(
-                      color: completada
-                          ? Colors.green
-                          : Colors.grey,
+                      color: completada ? Colors.green : Colors.grey,
                       width: 2,
                     ),
                   ),
@@ -209,27 +205,20 @@ class TareaCard extends StatelessWidget {
                       : null,
                 ),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Text(
                   tarea.titulo,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    decoration: completada
-                        ? TextDecoration.lineThrough
-                        : null,
+                    decoration: completada ? TextDecoration.lineThrough : null,
                   ),
                 ),
               ),
-
               PopupMenuButton<String>(
                 onSelected: (value) {
-
                   switch (value) {
-
                     case 'editar':
                       onEdit();
                       break;
@@ -237,32 +226,23 @@ class TareaCard extends StatelessWidget {
                     case 'eliminar':
                       onDelete();
                       break;
-
                   }
-
                 },
                 itemBuilder: (_) => const [
-
                   PopupMenuItem(
                     value: 'editar',
                     child: Text('Editar'),
                   ),
-
                   PopupMenuItem(
                     value: 'eliminar',
                     child: Text('Eliminar'),
                   ),
-
                 ],
               ),
-
             ],
           ),
-
           if ((tarea.descripcion ?? '').isNotEmpty) ...[
-
             const SizedBox(height: 12),
-
             Text(
               tarea.descripcion!,
               style: const TextStyle(
@@ -270,42 +250,33 @@ class TareaCard extends StatelessWidget {
                 height: 1.45,
               ),
             ),
-
           ],
-
           const SizedBox(height: 18),
-
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-
               TaskChip(
                 text: materia,
                 outlined: true,
               ),
-
               TaskChip(
                 text: tarea.tipo,
                 background: const Color(0xFFECECF5),
               ),
-
               TaskChip(
                 text: tarea.prioridad,
                 background: prioridadColor,
                 textColor: Colors.white,
               ),
-
               TaskChip(
                 text: tarea.dificultad,
                 background: const Color(0xFFECECF5),
               ),
-
             ],
           ),
-
           const SizedBox(height: 18),
-                    Container(
+          Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: fechaColor.withOpacity(.10),
@@ -313,21 +284,16 @@ class TareaCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-
                 Icon(
                   Icons.schedule,
                   color: fechaColor,
                   size: 22,
                 ),
-
                 const SizedBox(width: 12),
-
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       Text(
                         fechaBonita,
                         style: const TextStyle(
@@ -335,9 +301,7 @@ class TareaCard extends StatelessWidget {
                           fontSize: 14,
                         ),
                       ),
-
                       const SizedBox(height: 4),
-
                       Text(
                         diasRestantes,
                         style: TextStyle(
@@ -345,11 +309,9 @@ class TareaCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-
                     ],
                   ),
                 ),
-
                 if (tarea.duracionEstimada > 0)
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -358,36 +320,29 @@ class TareaCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.indigo.shade50,
-                      borderRadius:
-                          BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-
                         Icon(
                           Icons.timer_outlined,
                           size: 16,
                           color: Colors.indigo,
                         ),
-
                         const SizedBox(width: 4),
-
                         Text(
                           '${tarea.duracionEstimada} min',
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-
                       ],
                     ),
                   ),
-
               ],
             ),
           ),
-
         ],
       ),
     );

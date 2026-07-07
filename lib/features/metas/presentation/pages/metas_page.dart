@@ -494,117 +494,117 @@ class _MetasPageState extends State<MetasPage> {
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.zero,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
-                  color: const Color(0xFF5B4CF0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
+              color: const Color(0xFF5B4CF0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => context.go('/home'),
-                            icon: const Icon(Icons.arrow_back, color: Colors.white),
-                          ),
-                          const Text(
-                            'Metas Académicas',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
+                      IconButton(
+                        onPressed: () => context.go('/home'),
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12),
-                        child: Text(
-                          '${completadas.length}/${metas.length} completadas',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 15,
-                          ),
+                      const Text(
+                        'Metas Académicas',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton.icon(
-                          onPressed: _showCreateModal,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF5B4CF0),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          icon: const Icon(Icons.add),
-                          label: const Text(
-                            'Nueva Meta',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: Text(
+                      '${completadas.length}/${metas.length} completadas',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 15,
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          _summaryCard('Total', metas.length),
-                          const SizedBox(width: 10),
-                          _summaryCard('Completadas', completadas.length),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE9E9EF),
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        child: Row(
-                          children: [
-                            _tabButton(
-                              label: 'Pendientes (${pendientes.length})',
-                              active: tab == 0,
-                              onTap: () => setState(() => tab = 0),
-                            ),
-                            _tabButton(
-                              label: 'Completadas (${completadas.length})',
-                              active: tab == 1,
-                              onTap: () => setState(() => tab = 1),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      if (loading)
-                        const SizedBox(height: 190)
-                      else if (currentList.isEmpty)
-                        _emptyState()
-                      else
-                        ...currentList.map(_metaCard),
-                      const SizedBox(height: 18),
-                      _ideasCard(),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: _showCreateModal,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5B4CF0),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add),
+                      label: const Text(
+                        'Nueva Meta',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      _summaryCard('Total', metas.length),
+                      const SizedBox(width: 10),
+                      _summaryCard('Completadas', completadas.length),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE9E9EF),
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: Row(
+                      children: [
+                        _tabButton(
+                          label: 'Pendientes (${pendientes.length})',
+                          active: tab == 0,
+                          onTap: () => setState(() => tab = 0),
+                        ),
+                        _tabButton(
+                          label: 'Completadas (${completadas.length})',
+                          active: tab == 1,
+                          onTap: () => setState(() => tab = 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (loading)
+                    const SizedBox(height: 190)
+                  else if (currentList.isEmpty)
+                    _emptyState()
+                  else
+                    ...currentList.map(_metaCard),
+                  const SizedBox(height: 18),
+                  _ideasCard(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 3,
@@ -628,11 +628,15 @@ class _MetasPageState extends State<MetasPage> {
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Materias'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined), label: 'Inicio'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.menu_book), label: 'Materias'),
           BottomNavigationBarItem(icon: Icon(Icons.checklist), label: 'Tareas'),
-          BottomNavigationBarItem(icon: Icon(Icons.track_changes), label: 'Metas'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Perfil'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.track_changes), label: 'Metas'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline), label: 'Perfil'),
         ],
         selectedItemColor: const Color(0xFF5B4CF0),
         unselectedItemColor: const Color(0xFF8B8B9B),
@@ -640,5 +644,4 @@ class _MetasPageState extends State<MetasPage> {
       ),
     );
   }
-
 }

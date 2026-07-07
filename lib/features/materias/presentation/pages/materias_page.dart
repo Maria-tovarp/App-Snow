@@ -162,140 +162,141 @@ class _MateriasPageState extends State<MateriasPage> {
         children: [
           Expanded(
             child: RefreshIndicator(
-                    onRefresh: _loadMaterias,
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.zero,
+              onRefresh: _loadMaterias,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
+                    decoration: const BoxDecoration(
+                      color: primary,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
-                          decoration: const BoxDecoration(
-                            color: primary,
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              InkWell(
-                                onTap: () => context.go('/home'),
-                                borderRadius: BorderRadius.circular(30),
-                                child: const Padding(
-                                  padding: EdgeInsets.only(top: 4, right: 12),
-                                  child: Icon(
-                                    Icons.arrow_back,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                ),
-                              ),
-                              const Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Mis Materias',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                    SizedBox(height: 6),
-                                    Text(
-                                      'Gestiona tus asignaturas',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                        InkWell(
+                          onTap: () => context.go('/home'),
+                          borderRadius: BorderRadius.circular(30),
+                          child: const Padding(
+                            padding: EdgeInsets.only(top: 4, right: 12),
+                            child: Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+                        const Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: ElevatedButton.icon(
-                                  onPressed: _openCreateModal,
-                                  icon: const Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                    size: 22,
-                                  ),
-                                  label: const Text(
-                                    'Agregar Materia',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: primary,
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(9),
-                                    ),
-                                  ),
+                              Text(
+                                'Mis Materias',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
-                              const SizedBox(height: 16),
-                              if (loading)
-                                const SizedBox(height: 420)
-                              else if (materias.isEmpty)
-                                const SizedBox(
-                                  height: 420,
-                                  child: Center(
-                                    child: Text(
-                                      'No tienes materias registradas',
-                                      style: TextStyle(
-                                        color: Color(0xFF7C7C90),
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              else
-                                ...materias.asMap().entries.map(
-                                  (entry) {
-                                    final index = entry.key;
-                                    final materia = entry.value;
-
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 12),
-                                      child: _MateriaCard(
-                                        nombre: materia['nombre']?.toString() ?? '',
-                                        profesor: materia['profesor']?.toString() ?? '',
-                                        creditos: materia['creditos']?.toString() ?? '0',
-                                        color: _parseColor(materia['color']),
-                                        onEdit: () => _openEditModal(index),
-                                        onDelete: () => _deleteMateria(index),
-                                      ),
-                                    );
-                                  },
+                              SizedBox(height: 6),
+                              Text(
+                                'Gestiona tus asignaturas',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
                                 ),
+                              ),
                             ],
                           ),
                         ),
                       ],
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: _openCreateModal,
+                            icon: const Icon(
+                              Icons.add,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                            label: const Text(
+                              'Agregar Materia',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(9),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (loading)
+                          const SizedBox(height: 420)
+                        else if (materias.isEmpty)
+                          const SizedBox(
+                            height: 420,
+                            child: Center(
+                              child: Text(
+                                'No tienes materias registradas',
+                                style: TextStyle(
+                                  color: Color(0xFF7C7C90),
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          ...materias.asMap().entries.map(
+                            (entry) {
+                              final index = entry.key;
+                              final materia = entry.value;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _MateriaCard(
+                                  nombre: materia['nombre']?.toString() ?? '',
+                                  profesor:
+                                      materia['profesor']?.toString() ?? '',
+                                  creditos:
+                                      materia['creditos']?.toString() ?? '0',
+                                  color: _parseColor(materia['color']),
+                                  onEdit: () => _openEditModal(index),
+                                  onDelete: () => _deleteMateria(index),
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           const _BottomNavMaterias(),
         ],
       ),
     );
   }
-
 }
 
 class _MateriaCard extends StatelessWidget {

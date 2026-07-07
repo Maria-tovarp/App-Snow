@@ -55,9 +55,8 @@ class _PomodoroPageState extends State<PomodoroPage> {
 
   Future<void> _loadStats() async {
     try {
-      final stats = await _repo
-          .getTodayStats()
-          .timeout(const Duration(seconds: 5));
+      final stats =
+          await _repo.getTodayStats().timeout(const Duration(seconds: 5));
 
       if (!mounted) return;
 
@@ -87,7 +86,6 @@ class _PomodoroPageState extends State<PomodoroPage> {
       loadingMaterias = false;
     });
   }
-
 
   Future<void> _showExitBlockedMessage() async {
     if (!mounted) return;

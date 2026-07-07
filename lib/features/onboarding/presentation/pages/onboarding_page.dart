@@ -69,7 +69,7 @@ class OnboardingPage extends StatelessWidget {
                           children: [
                             Container(
                               width: 128,
-                                                      decoration: BoxDecoration(
+                              decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.14),
                                 shape: BoxShape.circle,
                               ),

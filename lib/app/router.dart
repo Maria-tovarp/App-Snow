@@ -20,17 +20,27 @@ final appRouter = GoRouter(
   initialLocation: '/onboarding',
   routes: [
     GoRoute(path: '/', builder: (context, state) => const SplashPage()),
-    GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingPage()),
+    GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingPage()),
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
-    GoRoute(path: '/register', builder: (context, state) => const RegisterPage()),
-    GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordPage()),
+    GoRoute(
+        path: '/register', builder: (context, state) => const RegisterPage()),
+    GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordPage()),
     GoRoute(path: '/home', builder: (context, state) => const HomePage()),
-    GoRoute(path: '/materias', builder: (context, state) => const MateriasPage()),
+    GoRoute(
+        path: '/materias', builder: (context, state) => const MateriasPage()),
     GoRoute(path: '/tareas', builder: (context, state) => const TareasPage()),
     GoRoute(path: '/metas', builder: (context, state) => const MetasPage()),
     GoRoute(path: '/perfil', builder: (context, state) => const ProfilePage()),
-    GoRoute(path: '/proyectos', builder: (context, state) => const ProyectosPage()),
-    GoRoute(path: '/pomodoro', builder: (context, state) => const PomodoroPage()),
-    GoRoute(path: '/calendario', builder: (context, state) => const CalendarioPage()),
+    GoRoute(
+        path: '/proyectos', builder: (context, state) => const ProyectosPage()),
+    GoRoute(
+        path: '/pomodoro', builder: (context, state) => const PomodoroPage()),
+    GoRoute(
+        path: '/calendario',
+        builder: (context, state) => const CalendarioPage()),
   ],
 );
