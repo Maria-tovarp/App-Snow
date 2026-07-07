@@ -92,7 +92,6 @@ class LocalDataStore {
     await _client.from('tareas').insert({
       'titulo': tarea['titulo'],
       'descripcion': tarea['descripcion'],
-      'fecha_asignacion': tarea['fecha_asignacion'] ?? DateTime.now().toIso8601String(),
       'fecha_vencimiento': tarea['fecha_vencimiento'],
       'duracion_estimada': tarea['duracion_estimada'] ?? 60,
       'tipo': tarea['tipo'] ?? 'tarea',

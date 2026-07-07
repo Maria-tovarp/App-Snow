@@ -14,7 +14,6 @@ class TareaRepository implements TareaRepositoryPort {
         id,
         titulo,
         descripcion,
-        fecha_asignacion,
         fecha_vencimiento,
         duracion_estimada,
         tipo,
@@ -49,7 +48,6 @@ class TareaRepository implements TareaRepositoryPort {
     await _client.from('tareas').insert({
       'titulo': titulo,
       'descripcion': descripcion,
-      'fecha_asignacion': fechaAsignacion,
       'fecha_vencimiento': fechaVencimiento,
       'duracion_estimada': duracionEstimada,
       'tipo': tipo,
