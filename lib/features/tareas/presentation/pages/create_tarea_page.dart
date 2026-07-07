@@ -14,7 +14,6 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
 
   final _tituloCtrl = TextEditingController();
   final _descripcionCtrl = TextEditingController();
-  final _duracionCtrl = TextEditingController(text: '60');
 
   final TareaRepository _repository = TareaRepository();
 
@@ -41,7 +40,6 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
   void dispose() {
     _tituloCtrl.dispose();
     _descripcionCtrl.dispose();
-    _duracionCtrl.dispose();
     super.dispose();
   }
 
@@ -97,7 +95,6 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
             ? null
             : _descripcionCtrl.text.trim(),
         fechaVencimiento: fechaVencimiento!.toIso8601String().split('T').first,
-        duracionEstimada: int.tryParse(_duracionCtrl.text.trim()) ?? 60,
         tipo: tipo,
         prioridad: prioridad,
         dificultad: dificultad,
@@ -160,7 +157,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
       appBar: AppBar(
-        title: const Text("Nueva tarea"),
+        title: const Text('Nueva tarea'),
         elevation: 0,
         backgroundColor: const Color(0xFFF7F7FB),
       ),
@@ -182,14 +179,14 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                 TextFormField(
                   controller: _tituloCtrl,
                   decoration: InputDecoration(
-                    labelText: "Título",
+                    labelText: 'Título',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return "Ingrese un título";
+                      return 'Ingrese un título';
                     }
                     return null;
                   },
@@ -199,7 +196,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                   controller: _descripcionCtrl,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: "Descripción",
+                    labelText: 'Descripción',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -209,22 +206,22 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                 DropdownButtonFormField<String>(
                   value: materiaId,
                   decoration: InputDecoration(
-                    labelText: "Materia",
+                    labelText: 'Materia',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   validator: (value) {
                     if (value == null) {
-                      return "Seleccione una materia";
+                      return 'Seleccione una materia';
                     }
                     return null;
                   },
                   items: materias.map((materia) {
                     return DropdownMenuItem<String>(
-                      value: materia["id"] as String,
+                      value: materia['id'] as String,
                       child: Text(
-                        materia["nombre"] as String,
+                        materia['nombre'] as String,
                       ),
                     );
                   }).toList(),
@@ -235,36 +232,12 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                   },
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _duracionCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: "Duración estimada (minutos)",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Ingrese la duración";
-                    }
-
-                    final minutos = int.tryParse(value);
-
-                    if (minutos == null || minutos <= 0) {
-                      return "La duración debe ser mayor que 0";
-                    }
-
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
                 _buildDropdown(
-                  label: "Tipo",
+                  label: 'Tipo',
                   value: tipo,
                   items: const [
-                    "tarea",
-                    "examen",
+                    'tarea',
+                    'examen',
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -274,12 +247,12 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                 ),
                 const SizedBox(height: 16),
                 _buildDropdown(
-                  label: "Prioridad",
+                  label: 'Prioridad',
                   value: prioridad,
                   items: const [
-                    "baja",
-                    "media",
-                    "alta",
+                    'baja',
+                    'media',
+                    'alta',
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -289,12 +262,12 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                 ),
                 const SizedBox(height: 16),
                 _buildDropdown(
-                  label: "Dificultad",
+                  label: 'Dificultad',
                   value: dificultad,
                   items: const [
-                    "baja",
-                    "media",
-                    "alta",
+                    'baja',
+                    'media',
+                    'alta',
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -302,23 +275,29 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     });
                   },
                 ),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(
+                        double.infinity,
+                        52,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: _pickFecha,
+                    icon: const Icon(
+                      Icons.calendar_month,
+                    ),
+                    label: Text(
+                      fechaVencimiento == null
+                          ? 'Seleccionar fecha de vencimiento'
+                          : '${fechaVencimiento!.day.toString().padLeft(2, '0')}/${fechaVencimiento!.month.toString().padLeft(2, '0')}/${fechaVencimiento!.year}',
                     ),
                   ),
-                  icon: const Icon(Icons.calendar_month),
-                  label: Text(
-                    fechaVencimiento == null
-                        ? "Seleccionar fecha de vencimiento"
-                        : "${fechaVencimiento!.day.toString().padLeft(2, '0')}/"
-                            "${fechaVencimiento!.month.toString().padLeft(2, '0')}/"
-                            "${fechaVencimiento!.year}",
-                  ),
-                  onPressed: _pickFecha,
                 ),
                 const SizedBox(height: 30),
                 SizedBox(
@@ -334,12 +313,12 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
                               strokeWidth: 2.5,
+                              color: Colors.white,
                             ),
                           )
                         : const Text(
-                            "Guardar tarea",
+                            'Guardar tarea',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

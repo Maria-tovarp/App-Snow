@@ -3,7 +3,6 @@ class Tarea {
   final String titulo;
   final String? descripcion;
   final String? fechaVencimiento;
-  final int duracionEstimada;
   final String tipo;
   final String prioridad;
   final String dificultad;
@@ -17,7 +16,6 @@ class Tarea {
     required this.titulo,
     this.descripcion,
     this.fechaVencimiento,
-    required this.duracionEstimada,
     required this.tipo,
     required this.prioridad,
     required this.dificultad,
@@ -35,7 +33,6 @@ class Tarea {
       titulo: json['titulo'] as String,
       descripcion: json['descripcion'] as String?,
       fechaVencimiento: json['fecha_vencimiento']?.toString(),
-      duracionEstimada: (json['duracion_estimada'] as num?)?.toInt() ?? 60,
       tipo: (json['tipo'] ?? 'tarea') as String,
       prioridad: (json['prioridad'] ?? 'media') as String,
       dificultad: (json['dificultad'] ?? 'media') as String,
@@ -53,7 +50,6 @@ class Tarea {
       'titulo': titulo,
       'descripcion': descripcion,
       'fecha_vencimiento': fechaVencimiento,
-      'duracion_estimada': duracionEstimada,
       'tipo': tipo,
       'prioridad': prioridad,
       'dificultad': dificultad,
@@ -68,7 +64,6 @@ class Tarea {
     String? titulo,
     String? descripcion,
     String? fechaVencimiento,
-    int? duracionEstimada,
     String? tipo,
     String? prioridad,
     String? dificultad,
@@ -82,7 +77,6 @@ class Tarea {
       titulo: titulo ?? this.titulo,
       descripcion: descripcion ?? this.descripcion,
       fechaVencimiento: fechaVencimiento ?? this.fechaVencimiento,
-      duracionEstimada: duracionEstimada ?? this.duracionEstimada,
       tipo: tipo ?? this.tipo,
       prioridad: prioridad ?? this.prioridad,
       dificultad: dificultad ?? this.dificultad,

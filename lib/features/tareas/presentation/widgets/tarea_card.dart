@@ -144,8 +144,7 @@ class TareaCard extends StatelessWidget {
   }
 
   String get materia {
-    if (tarea.materiaNombre == null ||
-        tarea.materiaNombre!.isEmpty) {
+    if (tarea.materiaNombre == null || tarea.materiaNombre!.isEmpty) {
       return 'Sin materia';
     }
 
@@ -183,13 +182,9 @@ class TareaCard extends StatelessWidget {
                   height: 24,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: completada
-                        ? Colors.green
-                        : Colors.white,
+                    color: completada ? Colors.green : Colors.white,
                     border: Border.all(
-                      color: completada
-                          ? Colors.green
-                          : Colors.grey,
+                      color: completada ? Colors.green : Colors.grey,
                       width: 2,
                     ),
                   ),
@@ -202,22 +197,17 @@ class TareaCard extends StatelessWidget {
                       : null,
                 ),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Text(
                   tarea.titulo,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    decoration: completada
-                        ? TextDecoration.lineThrough
-                        : null,
+                    decoration: completada ? TextDecoration.lineThrough : null,
                   ),
                 ),
               ),
-
               PopupMenuButton<String>(
                 onSelected: (value) {
                   switch (value) {
@@ -243,7 +233,6 @@ class TareaCard extends StatelessWidget {
               ),
             ],
           ),
-
           if ((tarea.descripcion ?? '').isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
@@ -254,9 +243,7 @@ class TareaCard extends StatelessWidget {
               ),
             ),
           ],
-
           const SizedBox(height: 18),
-
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -280,9 +267,7 @@ class TareaCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 18),
-
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -296,13 +281,10 @@ class TareaCard extends StatelessWidget {
                   color: fechaColor,
                   size: 22,
                 ),
-
                 const SizedBox(width: 12),
-
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         fechaBonita,
@@ -311,9 +293,7 @@ class TareaCard extends StatelessWidget {
                           fontSize: 14,
                         ),
                       ),
-
                       const SizedBox(height: 4),
-
                       Text(
                         diasRestantes,
                         style: TextStyle(

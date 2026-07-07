@@ -19,7 +19,6 @@ class PomodoroRepository implements PomodoroRepositoryPort {
       'user_id': user.id,
       'materia_id': materiaId,
       'tipo': tipo,
-      'duracion_minutos': duracionMinutos,
       'completada': true,
     });
   }

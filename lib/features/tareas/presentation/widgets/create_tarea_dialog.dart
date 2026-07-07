@@ -16,29 +16,27 @@ class CreateTareaDialog extends StatefulWidget {
 }
 
 class _CreateTareaDialogState extends State<CreateTareaDialog> {
-  final repo = TareaRepository();
+  final _formKey = GlobalKey<FormState>();
 
   final tituloCtrl = TextEditingController();
-
   final descripcionCtrl = TextEditingController();
 
-  final duracionCtrl = TextEditingController(text: '60');
-
-  bool loading = false;
+  final repo = TareaRepository();
 
   List<Map<String, dynamic>> materias = [];
 
   String? materiaId;
 
+  String tipo = 'tarea';
+  String prioridad = 'media';
+  String dificultad = 'media';
+  String estado = 'pendiente';
+
   DateTime? fechaVencimiento;
 
-  String tipo = 'tarea';
+  bool loading = false;
 
-  String prioridad = 'media';
-
-  String dificultad = 'media';
-
-  bool get isEdit => widget.tarea != null;
+  bool get editing => widget.tarea != null;
 
   @override
   void initState() {
@@ -46,54 +44,44 @@ class _CreateTareaDialogState extends State<CreateTareaDialog> {
 
     _loadMaterias();
 
-    if (isEdit) {
-      _loadData();
-    }
-  }
+    if (editing) {
+      final t = widget.tarea!;
 
-  Future<void> _loadMaterias() async {
-    final data = await repo.getMaterias();
+      tituloCtrl.text = t.titulo;
+      descripcionCtrl.text = t.descripcion ?? '';
 
-    if (!mounted) return;
+      materiaId = t.materiaId;
 
-    setState(() {
-      materias = data;
-    });
-  }
+      tipo = t.tipo;
+      prioridad = t.prioridad;
+      dificultad = t.dificultad;
+      estado = t.estado;
 
-  void _loadData() {
-    final t = widget.tarea!;
-
-    tituloCtrl.text = t.titulo;
-
-    descripcionCtrl.text = t.descripcion ?? '';
-
-    duracionCtrl.text = t.duracionEstimada.toString();
-
-    materiaId = t.materiaId;
-
-    tipo = t.tipo;
-
-    prioridad = t.prioridad;
-
-    dificultad = t.dificultad;
-
-    if (t.fechaVencimiento != null) {
-      fechaVencimiento = DateTime.tryParse(
-        t.fechaVencimiento!,
-      );
+      if (t.fechaVencimiento != null) {
+        fechaVencimiento = DateTime.parse(
+          t.fechaVencimiento!,
+        );
+      }
     }
   }
 
   @override
   void dispose() {
     tituloCtrl.dispose();
-
     descripcionCtrl.dispose();
-
-    duracionCtrl.dispose();
-
     super.dispose();
+  }
+
+  Future<void> _loadMaterias() async {
+    try {
+      final data = await repo.getMaterias();
+
+      if (!mounted) return;
+
+      setState(() {
+        materias = data;
+      });
+    } catch (_) {}
   }
 
   Future<void> _pickFecha() async {
@@ -111,24 +99,8 @@ class _CreateTareaDialogState extends State<CreateTareaDialog> {
     }
   }
 
-  Future<void> save() async {
-    if (tituloCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingrese un título'),
-        ),
-      );
-      return;
-    }
-
-    if (materiaId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Seleccione una materia'),
-        ),
-      );
-      return;
-    }
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
 
     if (fechaVencimiento == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -146,16 +118,14 @@ class _CreateTareaDialogState extends State<CreateTareaDialog> {
     });
 
     try {
-      if (isEdit) {
+      if (editing) {
         await repo.updateTarea(
           id: widget.tarea!.id,
           titulo: tituloCtrl.text.trim(),
           descripcion: descripcionCtrl.text.trim().isEmpty
               ? null
               : descripcionCtrl.text.trim(),
-          fechaVencimiento:
-              fechaVencimiento!.toIso8601String().split('T').first,
-          duracionEstimada: int.tryParse(duracionCtrl.text.trim()) ?? 60,
+          fechaVencimiento: fechaVencimiento!.toIso8601String(),
           tipo: tipo,
           prioridad: prioridad,
           dificultad: dificultad,
@@ -167,13 +137,11 @@ class _CreateTareaDialogState extends State<CreateTareaDialog> {
           descripcion: descripcionCtrl.text.trim().isEmpty
               ? null
               : descripcionCtrl.text.trim(),
-          fechaVencimiento:
-              fechaVencimiento!.toIso8601String().split('T').first,
-          duracionEstimada: int.tryParse(duracionCtrl.text) ?? 60,
+          fechaVencimiento: fechaVencimiento!.toIso8601String(),
           tipo: tipo,
           prioridad: prioridad,
           dificultad: dificultad,
-          estado: 'pendiente',
+          estado: estado,
           materiaId: materiaId,
         );
       }
@@ -187,7 +155,7 @@ class _CreateTareaDialogState extends State<CreateTareaDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Error:\n$e',
+            'Error al guardar la tarea\n$e',
           ),
         ),
       );
@@ -200,12 +168,31 @@ class _CreateTareaDialogState extends State<CreateTareaDialog> {
     }
   }
 
-  InputDecoration decoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
       ),
+      items: items
+          .map(
+            (item) => DropdownMenuItem(
+              value: item,
+              child: Text(
+                item[0].toUpperCase() + item.substring(1),
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
     );
   }
 
@@ -223,174 +210,188 @@ class _CreateTareaDialogState extends State<CreateTareaDialog> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      isEdit ? 'Editar tarea' : 'Nueva tarea',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        editing ? 'Editar tarea' : 'Nueva tarea',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: tituloCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Título',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
-                  IconButton(
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Ingrese un título';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: descripcionCtrl,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Descripción',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: materiaId,
+                  decoration: InputDecoration(
+                    labelText: 'Materia',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Seleccione una materia';
+                    }
+                    return null;
+                  },
+                  items: materias.map((m) {
+                    return DropdownMenuItem<String>(
+                      value: m['id'] as String,
+                      child: Text(
+                        m['nombre'] as String,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      materiaId = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDropdown(
+                  label: 'Tipo',
+                  value: tipo,
+                  items: const [
+                    'tarea',
+                    'examen',
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      tipo = value!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDropdown(
+                  label: 'Prioridad',
+                  value: prioridad,
+                  items: const [
+                    'baja',
+                    'media',
+                    'alta',
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      prioridad = value!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildDropdown(
+                  label: 'Dificultad',
+                  value: dificultad,
+                  items: const [
+                    'baja',
+                    'media',
+                    'alta',
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      dificultad = value!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _pickFecha,
+                    icon: const Icon(
+                      Icons.calendar_month,
+                    ),
+                    label: Text(
+                      fechaVencimiento == null
+                          ? 'Seleccionar fecha de vencimiento'
+                          : '${fechaVencimiento!.day.toString().padLeft(2, '0')}/${fechaVencimiento!.month.toString().padLeft(2, '0')}/${fechaVencimiento!.year}',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF5B4CF0),
+                    ),
+                    onPressed: loading ? null : _save,
+                    child: loading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            editing ? 'Guardar cambios' : 'Guardar tarea',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton(
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: tituloCtrl,
-                decoration: decoration('Título *'),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descripcionCtrl,
-                maxLines: 3,
-                decoration: decoration('Descripción'),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: materiaId,
-                decoration: decoration('Materia *'),
-                items: materias.map((m) {
-                  return DropdownMenuItem(
-                    value: m["id"] as String,
-                    child: Text(m["nombre"]),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    materiaId = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: duracionCtrl,
-                keyboardType: TextInputType.number,
-                decoration: decoration(
-                  'Duración estimada (minutos)',
-                ),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: tipo,
-                decoration: decoration('Tipo'),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'tarea',
-                    child: Text('Tarea'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'examen',
-                    child: Text('Examen'),
-                  ),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    tipo = value!;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: prioridad,
-                decoration: decoration('Prioridad'),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'baja',
-                    child: Text('Baja'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'media',
-                    child: Text('Media'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'alta',
-                    child: Text('Alta'),
-                  ),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    prioridad = value!;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: dificultad,
-                decoration: decoration('Dificultad'),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'baja',
-                    child: Text('Baja'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'media',
-                    child: Text('Media'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'alta',
-                    child: Text('Alta'),
-                  ),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    dificultad = value!;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _pickFecha,
-                  icon: const Icon(
-                    Icons.calendar_month,
-                  ),
-                  label: Text(
-                    fechaVencimiento == null
-                        ? 'Seleccionar fecha de vencimiento'
-                        : '${fechaVencimiento!.day.toString().padLeft(2, '0')}/${fechaVencimiento!.month.toString().padLeft(2, '0')}/${fechaVencimiento!.year}',
+                    child: const Text(
+                      'Cancelar',
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 26),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  onPressed: loading ? null : save,
-                  child: loading
-                      ? const CircularProgressIndicator(
-                          color: Colors.white,
-                        )
-                      : Text(
-                          isEdit ? 'Guardar cambios' : 'Crear tarea',
-                        ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancelar'),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

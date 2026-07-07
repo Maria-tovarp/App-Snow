@@ -8,8 +8,7 @@ class CreateTarea {
   Future<void> call({
     required String titulo,
     String? descripcion,
-    String? fechaVencimiento,
-    required int duracionEstimada,
+    required String fechaVencimiento,
     required String tipo,
     required String prioridad,
     required String dificultad,
@@ -20,7 +19,6 @@ class CreateTarea {
       titulo: titulo,
       descripcion: descripcion,
       fechaVencimiento: fechaVencimiento,
-      duracionEstimada: duracionEstimada,
       tipo: tipo,
       prioridad: prioridad,
       dificultad: dificultad,

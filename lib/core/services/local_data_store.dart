@@ -104,8 +104,7 @@ class LocalDataStore {
     final userId = _userId;
     if (userId == null) return [];
     final response = await _client.from('tareas').select('''
-      id, titulo, descripcion, fecha_vencimiento,
-      duracion_estimada, tipo, prioridad, dificultad, estado,
+      id, titulo, descripcion, fecha_vencimiento, tipo, prioridad, dificultad, estado,
       materia_id, user_id, materias(nombre)
     ''').eq('user_id', userId).order('created_at', ascending: false);
     return _rows(response).map((row) {
@@ -125,7 +124,6 @@ class LocalDataStore {
       'titulo': tarea['titulo'],
       'descripcion': tarea['descripcion'],
       'fecha_vencimiento': tarea['fecha_vencimiento'],
-      'duracion_estimada': tarea['duracion_estimada'] ?? 60,
       'tipo': tarea['tipo'] ?? 'tarea',
       'prioridad': tarea['prioridad'] ?? 'media',
       'dificultad': tarea['dificultad'] ?? 'media',
@@ -222,7 +220,6 @@ class LocalDataStore {
 
   Future<void> savePomodoroSession(
       {required String tipo,
-      required int duracionMinutos,
       String? materiaId}) async {
     final userId = _userId;
     if (userId == null) throw Exception('No hay usuario autenticado');
@@ -230,7 +227,6 @@ class LocalDataStore {
       'user_id': userId,
       'materia_id': materiaId,
       'tipo': tipo,
-      'duracion_minutos': duracionMinutos,
       'completada': true
     });
   }
@@ -244,7 +240,7 @@ class LocalDataStore {
         DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
     final response = await _client
         .from('pomodoro_sessions')
-        .select('tipo, duracion_minutos')
+        .select('tipo ')
         .eq('user_id', userId)
         .gte('created_at', start)
         .lte('created_at', end);
