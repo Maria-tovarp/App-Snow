@@ -662,7 +662,6 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
           titulo: tituloCtrl.text.trim(),
           descripcion:
               descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-          fechaAsignacion: DateTime.now().toIso8601String().split('T').first,
           fechaVencimiento: fechaEntrega?.toIso8601String().split('T').first,
           duracionEstimada: 0,
           tipo: tipo,

@@ -5,7 +5,6 @@ abstract class TareaRepositoryPort {
   Future<void> createTarea({
     required String titulo,
     String? descripcion,
-    required String fechaAsignacion,
     String? fechaVencimiento,
     required int duracionEstimada,
     required String tipo,

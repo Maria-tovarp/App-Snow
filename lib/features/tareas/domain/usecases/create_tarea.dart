@@ -8,7 +8,6 @@ class CreateTarea {
   Future<void> call({
     required String titulo,
     String? descripcion,
-    required String fechaAsignacion,
     String? fechaVencimiento,
     required int duracionEstimada,
     required String tipo,
@@ -20,7 +19,6 @@ class CreateTarea {
     return repository.createTarea(
       titulo: titulo,
       descripcion: descripcion,
-      fechaAsignacion: fechaAsignacion,
       fechaVencimiento: fechaVencimiento,
       duracionEstimada: duracionEstimada,
       tipo: tipo,

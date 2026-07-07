@@ -2,7 +2,6 @@ class Tarea {
   final String id;
   final String titulo;
   final String? descripcion;
-  final String? fechaAsignacion;
   final String? fechaVencimiento;
   final int duracionEstimada;
   final String tipo;
@@ -17,7 +16,6 @@ class Tarea {
     required this.id,
     required this.titulo,
     this.descripcion,
-    this.fechaAsignacion,
     this.fechaVencimiento,
     required this.duracionEstimada,
     required this.tipo,
@@ -69,7 +67,6 @@ class Tarea {
     String? id,
     String? titulo,
     String? descripcion,
-    String? fechaAsignacion,
     String? fechaVencimiento,
     int? duracionEstimada,
     String? tipo,
@@ -84,7 +81,6 @@ class Tarea {
       id: id ?? this.id,
       titulo: titulo ?? this.titulo,
       descripcion: descripcion ?? this.descripcion,
-      fechaAsignacion: fechaAsignacion ?? this.fechaAsignacion,
       fechaVencimiento: fechaVencimiento ?? this.fechaVencimiento,
       duracionEstimada: duracionEstimada ?? this.duracionEstimada,
       tipo: tipo ?? this.tipo,

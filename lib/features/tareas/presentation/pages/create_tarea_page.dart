@@ -58,7 +58,6 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
         descripcion: _descripcionCtrl.text.trim().isEmpty
             ? null
             : _descripcionCtrl.text.trim(),
-        fechaAsignacion: DateTime.now().toIso8601String().split('T').first,
         fechaVencimiento: fechaVencimiento?.toIso8601String().split('T').first,
         duracionEstimada: int.tryParse(_duracionCtrl.text.trim()) ?? 0,
         tipo: tipo,
