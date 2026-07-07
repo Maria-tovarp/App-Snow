@@ -76,7 +76,7 @@ class LocalDataStore {
     final userId = _userId;
     if (userId == null) return [];
     final response = await _client.from('tareas').select('''
-      id, titulo, descripcion, fecha_asignacion, fecha_vencimiento,
+      id, titulo, descripcion, fecha_vencimiento,
       duracion_estimada, tipo, prioridad, dificultad, estado,
       materia_id, user_id, materias(nombre)
     ''').eq('user_id', userId).order('created_at', ascending: false);
