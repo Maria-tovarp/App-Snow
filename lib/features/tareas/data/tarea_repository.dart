@@ -19,7 +19,7 @@ class TareaRepository implements TareaRepositoryPort {
         .from('materias')
         .select('id,nombre')
         .eq('user_id', user.id)
-        .order('nombre');
+        .order('nombre', ascending: true);
 
     return List<Map<String, dynamic>>.from(response);
   }
@@ -62,7 +62,7 @@ class TareaRepository implements TareaRepositoryPort {
   Future<void> createTarea({
     required String titulo,
     String? descripcion,
-    String? fechaVencimiento,
+    required String fechaVencimiento,
     required int duracionEstimada,
     required String tipo,
     required String prioridad,
@@ -95,7 +95,8 @@ class TareaRepository implements TareaRepositoryPort {
     required String id,
     required String titulo,
     String? descripcion,
-    String? fechaVencimiento,
+    required String fechaVencimiento,
+    required int duracionEstimada,
     required String tipo,
     required String prioridad,
     required String dificultad,
@@ -105,6 +106,7 @@ class TareaRepository implements TareaRepositoryPort {
       'titulo': titulo,
       'descripcion': descripcion,
       'fecha_vencimiento': fechaVencimiento,
+      'duracion_estimada': duracionEstimada,
       'tipo': tipo,
       'prioridad': prioridad,
       'dificultad': dificultad,
@@ -114,7 +116,10 @@ class TareaRepository implements TareaRepositoryPort {
 
   @override
   Future<void> deleteTarea(String id) async {
-    await _client.from('tareas').delete().eq('id', id);
+    await _client
+        .from('tareas')
+        .delete()
+        .eq('id', id);
   }
 
   @override
@@ -122,8 +127,11 @@ class TareaRepository implements TareaRepositoryPort {
     required String id,
     required String estado,
   }) async {
-    await _client.from('tareas').update({
-      'estado': estado,
-    }).eq('id', id);
+    await _client
+        .from('tareas')
+        .update({
+          'estado': estado,
+        })
+        .eq('id', id);
   }
 }

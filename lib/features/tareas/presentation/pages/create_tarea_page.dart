@@ -79,7 +79,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Seleccione la fecha de vencimiento',
+            'Debes seleccionar una fecha de vencimiento',
           ),
         ),
       );
@@ -96,7 +96,10 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
         descripcion: _descripcionCtrl.text.trim().isEmpty
             ? null
             : _descripcionCtrl.text.trim(),
-        fechaVencimiento: fechaVencimiento!.toIso8601String(),
+        fechaVencimiento: fechaVencimiento!
+            .toIso8601String()
+            .split('T')
+            .first,
         duracionEstimada:
             int.tryParse(_duracionCtrl.text.trim()) ?? 60,
         tipo: tipo,
@@ -155,8 +158,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
       onChanged: onChanged,
     );
   }
-
-  @override
+    @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
@@ -220,6 +222,12 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
+                  validator: (value) {
+                    if (value == null) {
+                      return "Seleccione una materia";
+                    }
+                    return null;
+                  },
                   items: materias.map((materia) {
                     return DropdownMenuItem<String>(
                       value: materia["id"] as String,
@@ -246,6 +254,19 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Ingrese la duración";
+                    }
+
+                    final minutos = int.tryParse(value);
+
+                    if (minutos == null || minutos <= 0) {
+                      return "La duración debe ser mayor que 0";
+                    }
+
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 16),
@@ -301,18 +322,25 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                 const SizedBox(height: 16),
 
                 OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                   icon: const Icon(Icons.calendar_month),
                   label: Text(
                     fechaVencimiento == null
                         ? "Seleccionar fecha de vencimiento"
-                        : "${fechaVencimiento!.day}/${fechaVencimiento!.month}/${fechaVencimiento!.year}",
+                        : "${fechaVencimiento!.day.toString().padLeft(2, '0')}/"
+                          "${fechaVencimiento!.month.toString().padLeft(2, '0')}/"
+                          "${fechaVencimiento!.year}",
                   ),
                   onPressed: _pickFecha,
                 ),
 
                 const SizedBox(height: 30),
-
-                SizedBox(
+                                SizedBox(
                   width: double.infinity,
                   height: 52,
                   child: FilledButton(
@@ -321,10 +349,21 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     ),
                     onPressed: isLoading ? null : _save,
                     child: isLoading
-                        ? const CircularProgressIndicator(
-                            color: Colors.white,
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
                           )
-                        : const Text("Guardar tarea"),
+                        : const Text(
+                            "Guardar tarea",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
               ],
