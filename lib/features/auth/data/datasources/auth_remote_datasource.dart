@@ -13,27 +13,49 @@ class AuthRemoteDataSource {
     required String carrera,
     required String semestre,
     required String universidad,
-  }) {
-    return client.auth.signUp(
+  }) async {
+    // Crear usuario en Supabase Auth
+    final response = await client.auth.signUp(
       email: email,
       password: password,
       data: {
         'nombre': nombre,
-        'identificacion': identificacion,
-        'carrera': carrera,
-        'semestre': semestre,
-        'universidad': universidad,
       },
+    );
+
+    final user = response.user;
+
+    // Si el usuario fue creado, guardar su perfil
+    if (user != null) {
+      await client.from('profiles').insert({
+        'id': user.id,
+        'nombre': nombre,
+        'identificacion': int.parse(identificacion),
+        'correo_electronico': email,
+        'carrera': carrera,
+        'semestre': int.parse(semestre),
+        'universidad': universidad,
+      });
+    }
+
+    return response;
+  }
+
+  Future<AuthResponse> signIn({
+    required String email,
+    required String password,
+  }) async {
+    return await client.auth.signInWithPassword(
+      email: email,
+      password: password,
     );
   }
 
-  Future<AuthResponse> signIn({required String email, required String password}) {
-    return client.auth.signInWithPassword(email: email, password: password);
+  Future<void> resetPassword(String email) async {
+    await client.auth.resetPasswordForEmail(email);
   }
 
-  Future<void> resetPassword(String email) {
-    return client.auth.resetPasswordForEmail(email);
+  Future<void> signOut() async {
+    await client.auth.signOut();
   }
-
-  Future<void> signOut() => client.auth.signOut();
 }
