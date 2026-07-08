@@ -561,6 +561,8 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
 
   String? materiaId;
 
+  String? errorMessage;
+
   DateTime? fechaVencimiento;
 
   String tipo = 'tarea';
@@ -645,14 +647,15 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
 
   Future<void> save() async {
     if (tituloCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingresa el título de la tarea'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      setState(() {
+        errorMessage = 'Ingresa el título de la tarea';
+      });
       return;
     }
+
+    setState(() {
+      errorMessage = null;
+    });
 
     setState(() => loading = true);
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../data/tarea_repository.dart';
+import 'package:helloworld/features/materias/data/materia_model.dart';
 import 'package:helloworld/features/materias/data/materia_repository.dart';
+
+import '../../data/tarea_repository.dart';
 
 class CreateTareaPage extends StatefulWidget {
   const CreateTareaPage({super.key});
@@ -27,7 +29,8 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
   String prioridad = 'Media';
   String dificultad = 'Media';
 
-  List<Map<String, dynamic>> materias = [];
+  List<MateriaModel> materias = [];
+
   String? materiaId;
 
   @override
@@ -37,13 +40,15 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
   }
 
   Future<void> _loadMaterias() async {
-    final data = await _materiaRepository.getMaterias();
+    try {
+      final data = await _materiaRepository.getMaterias();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      materias = data;
-    });
+      setState(() {
+        materias = data;
+      });
+    } catch (_) {}
   }
 
   @override
@@ -54,7 +59,11 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
   }
 
   Future<void> _guardar() async {
-    if (!_formKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
+
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     setState(() {
       isLoading = true;
@@ -63,8 +72,10 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
     try {
       await _repository.createTarea(
         titulo: _tituloCtrl.text.trim(),
-        descripcion: _descripcionCtrl.text.trim(),
-        fechaVencimiento: fecha.toIso8601String(),
+        descripcion: _descripcionCtrl.text.trim().isEmpty
+            ? null
+            : _descripcionCtrl.text.trim(),
+        fechaVencimiento: fecha.toIso8601String().split('T').first,
         tipo: tipo,
         prioridad: prioridad,
         dificultad: dificultad,
@@ -85,12 +96,12 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
           ),
         ),
       );
-    }
-
-    if (mounted) {
-      setState(() {
-        isLoading = false;
-      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -98,7 +109,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
     final result = await showDatePicker(
       context: context,
       initialDate: fecha,
-      firstDate: DateTime(2020),
+      firstDate: DateTime(2024),
       lastDate: DateTime(2100),
     );
 
@@ -188,8 +199,9 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Ingrese el título';
+                          return 'Ingresa el título de la tarea';
                         }
+
                         return null;
                       },
                     ),
@@ -197,20 +209,22 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                     TextFormField(
                       controller: _descripcionCtrl,
                       maxLines: 3,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       decoration: _inputDecoration(
                         'Descripción',
                       ),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: materiaId,
+                      initialValue: materiaId,
                       decoration: _inputDecoration(
                         'Materia',
                       ),
                       items: materias.map((m) {
-                        return DropdownMenuItem(
+                        return DropdownMenuItem<String>(
                           value: m.id,
-child: Text(m.nombre),
+                          child: Text(
+                            m.nombre,
                           ),
                         );
                       }).toList(),
@@ -222,7 +236,7 @@ child: Text(m.nombre),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: tipo,
+                      initialValue: tipo,
                       decoration: _inputDecoration(
                         'Tipo',
                       ),
@@ -254,7 +268,7 @@ child: Text(m.nombre),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: prioridad,
+                      initialValue: prioridad,
                       decoration: _inputDecoration(
                         'Prioridad',
                       ),
@@ -282,7 +296,7 @@ child: Text(m.nombre),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: dificultad,
+                      initialValue: dificultad,
                       decoration: _inputDecoration(
                         'Dificultad',
                       ),
@@ -308,11 +322,10 @@ child: Text(m.nombre),
                         });
                       },
                     ),
-                    const SizedBox(height: 16),
-                    Text(
+                    const SizedBox(height: 18),
+                    const Text(
                       'Fecha de vencimiento',
                       style: TextStyle(
-                        color: Colors.grey.shade700,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -321,7 +334,7 @@ child: Text(m.nombre),
                       onTap: _pickDate,
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        height: 54,
+                        height: 52,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                         ),
@@ -339,10 +352,6 @@ child: Text(m.nombre),
                             Expanded(
                               child: Text(
                                 _fechaTexto(),
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                ),
                               ),
                             ),
                             const Icon(
@@ -365,7 +374,7 @@ child: Text(m.nombre),
                                 width: 22,
                                 height: 22,
                                 child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
+                                  strokeWidth: 2,
                                   color: Colors.white,
                                 ),
                               )
