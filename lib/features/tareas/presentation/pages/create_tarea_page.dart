@@ -159,6 +159,25 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
           color: Color(0xFF5B4CF0),
         ),
       ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(
+          color: Colors.red,
+          width: 1.5,
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(
+          color: Colors.red,
+          width: 2,
+        ),
+      ),
+      errorStyle: const TextStyle(
+        color: Colors.red,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 
