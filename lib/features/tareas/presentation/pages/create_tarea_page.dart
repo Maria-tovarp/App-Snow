@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/tarea_repository.dart';
+import 'package:helloworld/features/materias/data/materia_repository.dart';
 
 class CreateTareaPage extends StatefulWidget {
   const CreateTareaPage({super.key});
@@ -10,30 +11,39 @@ class CreateTareaPage extends StatefulWidget {
 }
 
 class _CreateTareaPageState extends State<CreateTareaPage> {
+  final _repository = TareaRepository();
+  final _materiaRepository = MateriaRepository();
+
   final _formKey = GlobalKey<FormState>();
 
   final _tituloCtrl = TextEditingController();
   final _descripcionCtrl = TextEditingController();
 
-  final TareaRepository _repository = TareaRepository();
-
-  List<Map<String, dynamic>> materias = [];
-
-  String? materiaId;
-
-  String tipo = 'tarea';
-  String prioridad = 'media';
-  String dificultad = 'media';
-  String estado = 'pendiente';
-
   bool isLoading = false;
 
-  DateTime? fechaVencimiento;
+  DateTime fecha = DateTime.now();
+
+  String tipo = 'Tarea';
+  String prioridad = 'Media';
+  String dificultad = 'Media';
+
+  List<Map<String, dynamic>> materias = [];
+  String? materiaId;
 
   @override
   void initState() {
     super.initState();
     _loadMaterias();
+  }
+
+  Future<void> _loadMaterias() async {
+    final data = await _materiaRepository.getMaterias();
+
+    if (!mounted) return;
+
+    setState(() {
+      materias = data;
+    });
   }
 
   @override
@@ -43,46 +53,8 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
     super.dispose();
   }
 
-  Future<void> _loadMaterias() async {
-    try {
-      final data = await _repository.getMaterias();
-
-      if (!mounted) return;
-
-      setState(() {
-        materias = data;
-      });
-    } catch (_) {}
-  }
-
-  Future<void> _pickFecha() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-    );
-
-    if (picked != null) {
-      setState(() {
-        fechaVencimiento = picked;
-      });
-    }
-  }
-
-  Future<void> _save() async {
+  Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
-
-    if (fechaVencimiento == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Debes seleccionar una fecha de vencimiento',
-          ),
-        ),
-      );
-      return;
-    }
 
     setState(() {
       isLoading = true;
@@ -91,14 +63,12 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
     try {
       await _repository.createTarea(
         titulo: _tituloCtrl.text.trim(),
-        descripcion: _descripcionCtrl.text.trim().isEmpty
-            ? null
-            : _descripcionCtrl.text.trim(),
-        fechaVencimiento: fechaVencimiento!.toIso8601String().split('T').first,
+        descripcion: _descripcionCtrl.text.trim(),
+        fechaVencimiento: fecha.toIso8601String(),
         tipo: tipo,
         prioridad: prioridad,
         dificultad: dificultad,
-        estado: estado,
+        estado: 'pendiente',
         materiaId: materiaId,
       );
 
@@ -111,222 +81,314 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Error al guardar la tarea\n$e',
+            'Error: $e',
           ),
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+    }
+
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
-  Widget _buildDropdown({
-    required String label,
-    required String value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+  Future<void> _pickDate() async {
+    final result = await showDatePicker(
+      context: context,
+      initialDate: fecha,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (result != null) {
+      setState(() {
+        fecha = result;
+      });
+    }
+  }
+
+  String _fechaTexto() {
+    const meses = [
+      '',
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
+    ];
+
+    return '${fecha.day} ${meses[fecha.month]} ${fecha.year}';
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: const Color(0xFFF2F2F7),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(
+          color: Color(0xFF5B4CF0),
         ),
       ),
-      items: items
-          .map(
-            (item) => DropdownMenuItem(
-              value: item,
-              child: Text(
-                item[0].toUpperCase() + item.substring(1),
-              ),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
+      backgroundColor: const Color(0xFFF7F5FF),
       appBar: AppBar(
         title: const Text('Nueva tarea'),
+        backgroundColor: const Color(0xFFF7F5FF),
         elevation: 0,
-        backgroundColor: const Color(0xFFF7F7FB),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: const Color(0xFFE4E4EC),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 550,
             ),
-          ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _tituloCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Título',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingrese un título';
-                    }
-                    return null;
-                  },
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: const Color(0xFFE5E2F0),
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _descripcionCtrl,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Descripción',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: materiaId,
-                  decoration: InputDecoration(
-                    labelText: 'Materia',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Seleccione una materia';
-                    }
-                    return null;
-                  },
-                  items: materias.map((materia) {
-                    return DropdownMenuItem<String>(
-                      value: materia['id'] as String,
-                      child: Text(
-                        materia['nombre'] as String,
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextFormField(
+                      controller: _tituloCtrl,
+                      decoration: _inputDecoration(
+                        'Título',
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      materiaId = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildDropdown(
-                  label: 'Tipo',
-                  value: tipo,
-                  items: const [
-                    'tarea',
-                    'examen',
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      tipo = value!;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildDropdown(
-                  label: 'Prioridad',
-                  value: prioridad,
-                  items: const [
-                    'baja',
-                    'media',
-                    'alta',
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      prioridad = value!;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildDropdown(
-                  label: 'Dificultad',
-                  value: dificultad,
-                  items: const [
-                    'baja',
-                    'media',
-                    'alta',
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      dificultad = value!;
-                    });
-                  },
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(
-                        double.infinity,
-                        52,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Ingrese el título';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _descripcionCtrl,
+                      maxLines: 3,
+                      decoration: _inputDecoration(
+                        'Descripción',
                       ),
                     ),
-                    onPressed: _pickFecha,
-                    icon: const Icon(
-                      Icons.calendar_month,
-                    ),
-                    label: Text(
-                      fechaVencimiento == null
-                          ? 'Seleccionar fecha de vencimiento'
-                          : '${fechaVencimiento!.day.toString().padLeft(2, '0')}/${fechaVencimiento!.month.toString().padLeft(2, '0')}/${fechaVencimiento!.year}',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF5B4CF0),
-                    ),
-                    onPressed: isLoading ? null : _save,
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Guardar tarea',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: materiaId,
+                      decoration: _inputDecoration(
+                        'Materia',
+                      ),
+                      items: materias.map((m) {
+                        return DropdownMenuItem(
+                          value: m.id,
+child: Text(m.nombre),
                           ),
-                  ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          materiaId = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: tipo,
+                      decoration: _inputDecoration(
+                        'Tipo',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Tarea',
+                          child: Text('Tarea'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Proyecto',
+                          child: Text('Proyecto'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Examen',
+                          child: Text('Examen'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Quiz',
+                          child: Text('Quiz'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+
+                        setState(() {
+                          tipo = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: prioridad,
+                      decoration: _inputDecoration(
+                        'Prioridad',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Alta',
+                          child: Text('Alta'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Media',
+                          child: Text('Media'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Baja',
+                          child: Text('Baja'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+
+                        setState(() {
+                          prioridad = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: dificultad,
+                      decoration: _inputDecoration(
+                        'Dificultad',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Alta',
+                          child: Text('Alta'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Media',
+                          child: Text('Media'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Baja',
+                          child: Text('Baja'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+
+                        setState(() {
+                          dificultad = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Fecha de vencimiento',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: _pickDate,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        height: 54,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF2F2F7),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              color: Color(0xFF5B4CF0),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                _fechaTexto(),
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.expand_more,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    SizedBox(
+                      height: 52,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF5B4CF0),
+                        ),
+                        onPressed: isLoading ? null : _guardar,
+                        child: isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Guardar tarea',
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 48,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          'Cancelar',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

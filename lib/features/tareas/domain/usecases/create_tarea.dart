@@ -3,12 +3,12 @@ import '../repositories/tarea_repository_port.dart';
 class CreateTarea {
   final TareaRepositoryPort repository;
 
-  const CreateTarea(this.repository);
+  CreateTarea(this.repository);
 
   Future<void> call({
     required String titulo,
     String? descripcion,
-    required String fechaVencimiento,
+    String? fechaVencimiento,
     required String tipo,
     required String prioridad,
     required String dificultad,

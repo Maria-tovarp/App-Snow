@@ -219,8 +219,7 @@ class LocalDataStore {
   }
 
   Future<void> savePomodoroSession(
-      {required String tipo,
-      String? materiaId}) async {
+      {required String tipo, String? materiaId}) async {
     final userId = _userId;
     if (userId == null) throw Exception('No hay usuario autenticado');
     await _client.from('pomodoro_sessions').insert({

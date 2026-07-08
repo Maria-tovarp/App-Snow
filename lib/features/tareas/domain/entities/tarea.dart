@@ -2,6 +2,7 @@ class Tarea {
   final String id;
   final String titulo;
   final String? descripcion;
+  final String? fechaAsignacion;
   final String? fechaVencimiento;
   final String tipo;
   final String prioridad;
@@ -15,6 +16,7 @@ class Tarea {
     required this.id,
     required this.titulo,
     this.descripcion,
+    this.fechaAsignacion,
     this.fechaVencimiento,
     required this.tipo,
     required this.prioridad,
@@ -32,6 +34,7 @@ class Tarea {
       id: json['id'] as String,
       titulo: json['titulo'] as String,
       descripcion: json['descripcion'] as String?,
+      fechaAsignacion: json['fecha_asignacion']?.toString(),
       fechaVencimiento: json['fecha_vencimiento']?.toString(),
       tipo: (json['tipo'] ?? 'tarea') as String,
       prioridad: (json['prioridad'] ?? 'media') as String,
@@ -49,6 +52,7 @@ class Tarea {
       'id': id,
       'titulo': titulo,
       'descripcion': descripcion,
+      'fecha_asignacion': fechaAsignacion,
       'fecha_vencimiento': fechaVencimiento,
       'tipo': tipo,
       'prioridad': prioridad,
@@ -63,6 +67,7 @@ class Tarea {
     String? id,
     String? titulo,
     String? descripcion,
+    String? fechaAsignacion,
     String? fechaVencimiento,
     String? tipo,
     String? prioridad,
@@ -76,6 +81,7 @@ class Tarea {
       id: id ?? this.id,
       titulo: titulo ?? this.titulo,
       descripcion: descripcion ?? this.descripcion,
+      fechaAsignacion: fechaAsignacion ?? this.fechaAsignacion,
       fechaVencimiento: fechaVencimiento ?? this.fechaVencimiento,
       tipo: tipo ?? this.tipo,
       prioridad: prioridad ?? this.prioridad,

@@ -6,28 +6,6 @@ import 'package:helloworld/features/tareas/domain/repositories/tarea_repository_
 class TareaRepository implements TareaRepositoryPort {
   final SupabaseClient _client = Supabase.instance.client;
 
-  /// ==========================================
-  /// MATERIAS
-  /// ==========================================
-
-  Future<List<Map<String, dynamic>>> getMaterias() async {
-    final user = _client.auth.currentUser;
-
-    if (user == null) return [];
-
-    final response = await _client
-        .from('materias')
-        .select('id,nombre')
-        .eq('user_id', user.id)
-        .order('nombre', ascending: true);
-
-    return List<Map<String, dynamic>>.from(response);
-  }
-
-  /// ==========================================
-  /// TAREAS
-  /// ==========================================
-
   @override
   Future<List<TareaModel>> getTareas() async {
     final user = _client.auth.currentUser;
@@ -48,14 +26,14 @@ class TareaRepository implements TareaRepositoryPort {
           materias!tareas_materia_id_fkey(nombre)
         ''').eq('user_id', user.id).order('created_at', ascending: false);
 
-    return (response as List).map((e) => TareaModel.fromJson(e)).toList();
+    return (response as List).map((json) => TareaModel.fromJson(json)).toList();
   }
 
   @override
   Future<void> createTarea({
     required String titulo,
     String? descripcion,
-    required String fechaVencimiento,
+    String? fechaVencimiento,
     required String tipo,
     required String prioridad,
     required String dificultad,
@@ -86,7 +64,7 @@ class TareaRepository implements TareaRepositoryPort {
     required String id,
     required String titulo,
     String? descripcion,
-    required String fechaVencimiento,
+    String? fechaVencimiento,
     required String tipo,
     required String prioridad,
     required String dificultad,
