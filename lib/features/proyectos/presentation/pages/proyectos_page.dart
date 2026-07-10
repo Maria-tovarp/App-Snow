@@ -124,6 +124,143 @@ class _ProyectosPageState extends State<ProyectosPage> {
     return '$dias días';
   }
 
+  Future<void> _showUpdateProgressDialog(ProyectoModel proyecto) async {
+    double avance = proyecto.avancePorcentual.toDouble();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+              backgroundColor: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.18),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(child: SizedBox()),
+                        const Text(
+                          'Actualizar avance',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      proyecto.titulo,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF8A8A9B),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      '${avance.round()}%',
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: primary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Slider(
+                      value: avance,
+                      min: 0,
+                      max: 100,
+                      divisions: 20,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          avance = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await repo.updateAvance(
+                            id: proyecto.id,
+                            avancePorcentual: avance.round(),
+                          );
+
+                          if (!mounted) return;
+
+                          Navigator.pop(context);
+                          load();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'Guardar',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(
+                            color: Color(0xFFD9D9E3),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text('Cancelar'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -359,23 +496,23 @@ class _ProyectosPageState extends State<ProyectosPage> {
                       ),
                     ),
                   ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Expanded(
-                      child: Text(
-                        'Avance',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Color(0xFF6E6E80),
-                        ),
+                    const Text(
+                      'Avance',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF4B5563),
                       ),
                     ),
+                    const Spacer(),
                     Text(
                       '${p.avancePorcentual}%',
                       style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
@@ -390,53 +527,91 @@ class _ProyectosPageState extends State<ProyectosPage> {
                     valueColor: const AlwaysStoppedAnimation(primary),
                   ),
                 ),
-                const SizedBox(height: 14),
-                const Text(
-                  'Actualizar avance',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF6E6E80),
-                  ),
-                ),
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 8,
-                    activeTrackColor: primary,
-                    inactiveTrackColor: const Color(0xFFE8E8F0),
-                    thumbColor: Colors.white,
-                    overlayColor: Colors.transparent,
-                    thumbShape:
-                        const RoundSliderThumbShape(enabledThumbRadius: 10),
-                  ),
-                  child: Slider(
-                    value: p.avancePorcentual.toDouble(),
-                    min: 0,
-                    max: 100,
-                    divisions: 10,
-                    onChanged: (value) async {
-                      await repo.updateAvance(
-                        id: p.id,
-                        avancePorcentual: value.round(),
-                      );
-                      await load();
+                const SizedBox(height: 18),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      _showUpdateProgressDialog(p);
                     },
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      '${_formatFecha(p.fechaInicio)} - ${_formatFecha(p.fechaFin)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF7B7B8B),
+                    icon: const Icon(
+                      Icons.trending_up_rounded,
+                      color: primary,
+                      size: 20,
+                    ),
+                    label: const Text(
+                      'Actualizar avance',
+                      style: TextStyle(
+                        color: primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
                       ),
                     ),
-                    const Spacer(),
-                    Text(
-                      _duracionLabel(p.fechaInicio, p.fechaFin),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF7B7B8B),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Inicio',
+                            style: TextStyle(
+                              color: Color(0xFF8A8A9B),
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _formatFecha(p.fechaInicio),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Entrega',
+                            style: TextStyle(
+                              color: Color(0xFF8A8A9B),
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _formatFecha(p.fechaFin),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text(
+                            'Duración',
+                            style: TextStyle(
+                              color: Color(0xFF8A8A9B),
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _duracionLabel(p.fechaInicio, p.fechaFin),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -662,7 +837,7 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
           materiaId: materiaId,
           fechaInicio: fechaInicio?.toIso8601String().split('T').first,
           fechaFin: fechaFin?.toIso8601String().split('T').first,
-          avancePorcentual: avance.round(),
+          avancePorcentual: widget.proyecto!.avancePorcentual,
         );
       } else {
         await repo.createProyecto(
@@ -673,7 +848,7 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
           materiaId: materiaId,
           fechaInicio: fechaInicio?.toIso8601String().split('T').first,
           fechaFin: fechaFin?.toIso8601String().split('T').first,
-          avancePorcentual: avance.round(),
+          avancePorcentual: 0,
         );
       }
 
@@ -811,35 +986,6 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Avance inicial: ${avance.round()}%',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 8,
-                    activeTrackColor: primary,
-                    inactiveTrackColor: const Color(0xFFE6E6EF),
-                    thumbColor: Colors.white,
-                    overlayColor: Colors.transparent,
-                  ),
-                  child: Slider(
-                    value: avance,
-                    min: 0,
-                    max: 100,
-                    divisions: 10,
-                    onChanged: (value) {
-                      setState(() => avance = value);
-                    },
-                  ),
                 ),
                 const SizedBox(height: 10),
                 SizedBox(

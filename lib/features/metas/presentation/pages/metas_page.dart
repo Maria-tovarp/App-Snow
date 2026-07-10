@@ -47,10 +47,20 @@ class _MetasPageState extends State<MetasPage> {
   List<MetaModel> get completadas =>
       metas.where((m) => m.estado == 'completada').toList();
 
-  void _showCreateModal() {
-    final tituloCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
-    final periodoCtrl = TextEditingController();
+  void _showMetaModal({MetaModel? meta}) {
+    final tituloCtrl = TextEditingController(
+      text: meta?.titulo ?? '',
+    );
+
+    final descCtrl = TextEditingController(
+      text: meta?.descripcion ?? '',
+    );
+
+    final periodoCtrl = TextEditingController(
+      text: meta?.periodo ?? '',
+    );
+
+    bool tituloError = false;
 
     showDialog(
       context: context,
@@ -81,9 +91,9 @@ class _MetasPageState extends State<MetasPage> {
                       Row(
                         children: [
                           const Expanded(child: SizedBox()),
-                          const Text(
-                            'Nueva Meta',
-                            style: TextStyle(
+                          Text(
+                            meta == null ? 'Nueva Meta' : 'Editar Meta',
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
@@ -109,9 +119,25 @@ class _MetasPageState extends State<MetasPage> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      TextField(
-                        controller: tituloCtrl,
-                        decoration: _inputDecoration('Título *'),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            controller: tituloCtrl,
+                            decoration: _inputDecoration('Título *').copyWith(
+                              errorText: tituloError
+                                  ? 'Ingresa el título de la meta'
+                                  : null,
+                            ),
+                            onChanged: (_) {
+                              if (tituloError) {
+                                setModalState(() {
+                                  tituloError = false;
+                                });
+                              }
+                            },
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -130,17 +156,38 @@ class _MetasPageState extends State<MetasPage> {
                         height: 50,
                         child: ElevatedButton(
                           onPressed: () async {
-                            if (tituloCtrl.text.trim().isEmpty) return;
+                            if (tituloCtrl.text.trim().isEmpty) {
+                              setModalState(() {
+                                tituloError = true;
+                              });
+                              return;
+                            }
 
-                            await repo.createMeta(
-                              titulo: tituloCtrl.text.trim(),
-                              descripcion: descCtrl.text.trim().isEmpty
-                                  ? null
-                                  : descCtrl.text.trim(),
-                              periodo: periodoCtrl.text.trim().isEmpty
-                                  ? null
-                                  : periodoCtrl.text.trim(),
-                            );
+                            setModalState(() {
+                              tituloError = false;
+                            });
+                            if (meta == null) {
+                              await repo.createMeta(
+                                titulo: tituloCtrl.text.trim(),
+                                descripcion: descCtrl.text.trim().isEmpty
+                                    ? null
+                                    : descCtrl.text.trim(),
+                                periodo: periodoCtrl.text.trim().isEmpty
+                                    ? null
+                                    : periodoCtrl.text.trim(),
+                              );
+                            } else {
+                              await repo.updateMeta(
+                                id: meta.id,
+                                titulo: tituloCtrl.text.trim(),
+                                descripcion: descCtrl.text.trim().isEmpty
+                                    ? null
+                                    : descCtrl.text.trim(),
+                                periodo: periodoCtrl.text.trim().isEmpty
+                                    ? null
+                                    : periodoCtrl.text.trim(),
+                              );
+                            }
 
                             if (!mounted) return;
                             Navigator.pop(context);
@@ -154,9 +201,9 @@ class _MetasPageState extends State<MetasPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text(
-                            'Crear',
-                            style: TextStyle(
+                          child: Text(
+                            meta == null ? 'Crear' : 'Guardar cambios',
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -416,6 +463,16 @@ class _MetasPageState extends State<MetasPage> {
           ),
           Column(
             children: [
+              if (m.estado != 'completada')
+                IconButton(
+                  onPressed: () {
+                    _showMetaModal(meta: m);
+                  },
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    color: Colors.black87,
+                  ),
+                ),
               if (!isCompleted)
                 IconButton(
                   onPressed: () async {
@@ -426,6 +483,103 @@ class _MetasPageState extends State<MetasPage> {
                 ),
               IconButton(
                 onPressed: () async {
+                  final confirmar = await showDialog<bool>(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        titlePadding: const EdgeInsets.only(top: 26),
+                        title: Column(
+                          children: const [
+                            CircleAvatar(
+                              radius: 30,
+                              backgroundColor: Color(0xFFFFEBEE),
+                              child: Icon(
+                                Icons.delete_outline_rounded,
+                                color: Colors.red,
+                                size: 34,
+                              ),
+                            ),
+                            SizedBox(height: 18),
+                            Text(
+                              'Eliminar Meta',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        content: const Text(
+                          '¿Estás seguro de que deseas eliminar esta meta?\n\n'
+                          'Esta acción no se puede deshacer.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Color(0xFF6B7280),
+                            height: 1.5,
+                          ),
+                        ),
+                        actionsPadding:
+                            const EdgeInsets.fromLTRB(20, 0, 20, 22),
+                        actions: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(48),
+                                    side: const BorderSide(
+                                        color: Color(0xFFD9D9E3)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Cancelar',
+                                    style: TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    foregroundColor: Colors.white,
+                                    minimumSize: const Size.fromHeight(48),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Eliminar',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (confirmar != true) return;
+
                   await repo.deleteMeta(m.id);
                   _load();
                 },
@@ -542,7 +696,7 @@ class _MetasPageState extends State<MetasPage> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton.icon(
-                      onPressed: _showCreateModal,
+                      onPressed: () => _showMetaModal(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF5B4CF0),
                         foregroundColor: Colors.white,

@@ -61,7 +61,11 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
   Future<void> _guardar() async {
     FocusScope.of(context).unfocus();
 
-    if (!_formKey.currentState!.validate()) {
+    final valido = _formKey.currentState!.validate();
+
+    print('ENTRÓ A GUARDAR');
+
+    if (!valido) {
       return;
     }
 
@@ -213,6 +217,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
                   children: [
                     TextFormField(
                       controller: _tituloCtrl,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       decoration: _inputDecoration(
                         'Título',
                       ),

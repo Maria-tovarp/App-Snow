@@ -20,6 +20,8 @@ class _TareasPageState extends State<TareasPage> {
   bool loading = true;
   int tabIndex = 0;
 
+  String filtroPrioridad = 'Todas';
+
   static const Color primary = Color(0xFF5B4CF0);
 
   @override
@@ -53,7 +55,13 @@ class _TareasPageState extends State<TareasPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentList = tabIndex == 0 ? pendientes : completadas;
+    List<TareaModel> currentList = tabIndex == 0 ? pendientes : completadas;
+
+    if (filtroPrioridad != 'Todas') {
+      currentList = currentList.where((t) {
+        return t.prioridad.toLowerCase() == filtroPrioridad.toLowerCase();
+      }).toList();
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
@@ -150,21 +158,65 @@ class _TareasPageState extends State<TareasPage> {
           ),
         ),
         const SizedBox(width: 12),
-        Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE4E4EC)),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.filter_list, size: 18),
-              SizedBox(width: 6),
-              Text('Todas'),
-              Icon(Icons.keyboard_arrow_down),
-            ],
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            setState(() {
+              filtroPrioridad = value;
+            });
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem(
+              value: 'Prioridad',
+              child: Text('Todas'),
+            ),
+            PopupMenuItem(
+              value: 'Alta',
+              child: Text('Alta'),
+            ),
+            PopupMenuItem(
+              value: 'Media',
+              child: Text('Media'),
+            ),
+            PopupMenuItem(
+              value: 'Baja',
+              child: Text('Baja'),
+            ),
+          ],
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFFE4E4EC),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.filter_list_rounded,
+                  size: 21,
+                  color: Color(0xFF2D2D2D),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  filtroPrioridad,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2D2D2D),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 22,
+                  color: Color(0xFF2D2D2D),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -233,6 +285,32 @@ class _TareasPageState extends State<TareasPage> {
   }
 
   Widget _card(TareaModel t) {
+    DateTime? fecha;
+
+    if (t.fechaVencimiento != null) {
+      fecha = DateTime.tryParse(t.fechaVencimiento!);
+    }
+
+    int diasRestantes = 0;
+
+    if (fecha != null) {
+      final hoy = DateTime.now();
+
+      final fechaActual = DateTime(
+        hoy.year,
+        hoy.month,
+        hoy.day,
+      );
+
+      final fechaEntrega = DateTime(
+        fecha.year,
+        fecha.month,
+        fecha.day,
+      );
+
+      diasRestantes = fechaEntrega.difference(fechaActual).inDays;
+    }
+
     final isDone = t.estado.toLowerCase() == 'completada';
 
     return Container(
@@ -243,172 +321,230 @@ class _TareasPageState extends State<TareasPage> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE6E6EF)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 6,
-            height: 132,
-            decoration: BoxDecoration(
-              color: isDone ? Colors.green : const Color(0xFFF59E0B),
-              borderRadius: BorderRadius.circular(10),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 6,
+              decoration: BoxDecoration(
+                color: isDone ? Colors.green : _colorSemaforo(diasRestantes),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: isDone
-                          ? null
-                          : () async {
-                              await repo.updateEstado(
-                                id: t.id,
-                                estado: 'completada',
-                              );
-                              await load();
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GestureDetector(
+                        onTap: isDone
+                            ? null
+                            : () async {
+                                await repo.updateEstado(
+                                  id: t.id,
+                                  estado: 'completada',
+                                );
+                                await load();
 
-                              if (!mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                    'Tarea marcada como completada',
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                      'Tarea marcada como completada',
+                                    ),
+                                    backgroundColor: primary,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    margin: const EdgeInsets.all(16),
                                   ),
-                                  backgroundColor: primary,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  margin: const EdgeInsets.all(16),
+                                );
+                              },
+                        child: Container(
+                          width: 22,
+                          height: 22,
+                          margin: const EdgeInsets.only(top: 2),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDone
+                                  ? Colors.green
+                                  : const Color(0xFF7A7A8C),
+                              width: 2,
+                            ),
+                            color: isDone ? Colors.green : Colors.transparent,
+                          ),
+                          child: isDone
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 14,
+                                  color: Colors.white,
+                                )
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              t.titulo,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            if ((t.descripcion ?? '').trim().isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                t.descripcion!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  height: 1.4,
+                                  color: Color(0xFF7A7A8C),
                                 ),
-                              );
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: Icon(
+                              Icons.edit_outlined,
+                              size: 22,
+                              color: isDone
+                                  ? Colors.grey.shade300
+                                  : Colors.black87,
+                            ),
+                            onPressed: isDone ? null : () => _openEditModal(t),
+                          ),
+                          const SizedBox(height: 14),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              size: 22,
+                              color: Colors.red,
+                            ),
+                            onPressed: () async {
+                              final confirmar = await _confirmDeleteDialog();
+                              if (confirmar == true) {
+                                await repo.deleteTarea(t.id);
+                                await load();
+
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text('Tarea eliminada'),
+                                    backgroundColor: primary,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    margin: const EdgeInsets.all(16),
+                                  ),
+                                );
+                              }
                             },
-                      child: Container(
-                        width: 22,
-                        height: 22,
-                        margin: const EdgeInsets.only(top: 2),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color:
-                                isDone ? Colors.green : const Color(0xFF7A7A8C),
-                            width: 2,
                           ),
-                          color: isDone ? Colors.green : Colors.transparent,
-                        ),
-                        child: isDone
-                            ? const Icon(
-                                Icons.check,
-                                size: 14,
-                                color: Colors.white,
-                              )
-                            : null,
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        t.titulo,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _taskChip(_materiaLabel(t), outlined: true),
+                      _taskChip(
+                        t.prioridad,
+                        background: _prioridadColor(t.prioridad),
+                        textColor: Colors.white,
                       ),
+                      _taskChip(
+                        t.tipo,
+                        background: const Color(0xFFE9E9F2),
+                      ),
+                      _taskChip(
+                        t.dificultad,
+                        background: const Color(0xFFE9E9F2),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 18,
                     ),
-                    Column(
+                    decoration: BoxDecoration(
+                      color: _fondoSemaforo(diasRestantes),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
                       children: [
-                        IconButton(
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: Icon(
-                            Icons.edit_outlined,
-                            size: 22,
-                            color:
-                                isDone ? Colors.grey.shade300 : Colors.black87,
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.65),
+                            shape: BoxShape.circle,
                           ),
-                          onPressed: isDone ? null : () => _openEditModal(t),
+                          child: Icon(
+                            Icons.schedule,
+                            color: _colorSemaforo(diasRestantes),
+                            size: 22,
+                          ),
                         ),
-                        const SizedBox(height: 14),
-                        IconButton(
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            size: 22,
-                            color: Colors.red,
-                          ),
-                          onPressed: () async {
-                            final confirmar = await _confirmDeleteDialog();
-                            if (confirmar == true) {
-                              await repo.deleteTarea(t.id);
-                              await load();
-
-                              if (!mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('Tarea eliminada'),
-                                  backgroundColor: primary,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  margin: const EdgeInsets.all(16),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _formatFechaBonita(t.fechaVencimiento),
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                              );
-                            }
-                          },
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _mensajeDias(diasRestantes),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: _colorSemaforo(diasRestantes),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                if ((t.descripcion ?? '').isNotEmpty)
-                  Text(
-                    t.descripcion!,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      height: 1.45,
-                      color: Color(0xFF7A7A8C),
-                    ),
                   ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _taskChip(_materiaLabel(t), outlined: true),
-                    _taskChip(
-                      t.prioridad,
-                      background: _prioridadColor(t.prioridad),
-                      textColor: Colors.white,
-                    ),
-                    _taskChip(t.tipo, background: const Color(0xFFE9E9F2)),
-                    _taskChip(
-                      t.dificultad,
-                      background: const Color(0xFFE9E9F2),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  _formatFechaBonita(t.fechaVencimiento),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF7A7A8C),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -449,6 +585,25 @@ class _TareasPageState extends State<TareasPage> {
       default:
         return const Color(0xFF9CA3AF);
     }
+  }
+
+  Color _colorSemaforo(int dias) {
+    if (dias < 0) return const Color(0xFFE53935);
+    if (dias <= 2) return const Color(0xFFF59E0B);
+    return const Color(0xFF22C55E);
+  }
+
+  Color _fondoSemaforo(int dias) {
+    if (dias < 0) return const Color(0xFFFFEBEE);
+    if (dias <= 2) return const Color(0xFFFFF8E1);
+    return const Color(0xFFE8F5E9);
+  }
+
+  String _mensajeDias(int dias) {
+    if (dias < 0) return 'Tarea vencida';
+    if (dias == 0) return 'Se entrega hoy';
+    if (dias == 1) return 'Se entrega mañana';
+    return 'Faltan $dias días';
   }
 
   String _materiaLabel(TareaModel t) {
@@ -497,20 +652,87 @@ class _TareasPageState extends State<TareasPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Eliminar tarea'),
-          content: const Text('¿Estás segura de eliminar esta tarea?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFE11445),
-                foregroundColor: Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 300),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          titlePadding: const EdgeInsets.only(top: 26),
+          title: Column(children: const [
+            CircleAvatar(
+              radius: 26,
+              backgroundColor: Color(0xFFFFEBEE),
+              child: Icon(
+                Icons.delete_outline_rounded,
+                color: Colors.red,
+                size: 30,
               ),
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Eliminar'),
+            ),
+            SizedBox(height: 18),
+            Text(
+              'Eliminar Tarea',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ]),
+          content: const Text(
+            '¿Estás seguro de que deseas eliminar esta tarea?\n\n'
+            'Esta acción no se puede deshacer.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF6B7280),
+              height: 1.5,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 22),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      side: const BorderSide(color: Color(0xFFD9D9E3)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancelar',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Eliminar',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -557,6 +779,10 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
 
   bool loading = false;
 
+  String? tituloError;
+  String? materiaError;
+  String? fechaError;
+
   List<MateriaModel> materias = [];
 
   String? materiaId;
@@ -586,7 +812,7 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
     descCtrl.text = t.descripcion ?? '';
     materiaId = t.materiaId;
 
-    final tiposValidos = ['tarea', 'examen', 'proyecto'];
+    final tiposValidos = ['tarea', 'examen'];
     final prioridadesValidas = ['baja', 'media', 'alta'];
     final dificultadesValidas = ['baja', 'media', 'alta'];
 
@@ -641,21 +867,41 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
     );
 
     if (picked != null) {
-      setState(() => fechaVencimiento = picked);
+      setState(() {
+        fechaVencimiento = picked;
+        fechaError = null;
+      });
     }
   }
 
   Future<void> save() async {
+    setState(() {
+      tituloError = null;
+      materiaError = null;
+      fechaError = null;
+    });
+
+    bool valido = true;
+
     if (tituloCtrl.text.trim().isEmpty) {
-      setState(() {
-        errorMessage = 'Ingresa el título de la tarea';
-      });
-      return;
+      tituloError = 'Ingresa el título de la tarea';
+      valido = false;
     }
 
-    setState(() {
-      errorMessage = null;
-    });
+    if (materiaId == null) {
+      materiaError = 'Selecciona una materia';
+      valido = false;
+    }
+
+    if (fechaVencimiento == null) {
+      fechaError = 'Selecciona una fecha';
+      valido = false;
+    }
+
+    if (!valido) {
+      setState(() {});
+      return;
+    }
 
     setState(() => loading = true);
 
@@ -701,10 +947,6 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
           ),
           backgroundColor: const Color(0xFF5B4CF0),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
         ),
       );
     } catch (e) {
@@ -722,20 +964,45 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
     }
   }
 
-  InputDecoration _decoration(String label) {
+  InputDecoration _decoration(
+    String label, {
+    String? errorText,
+  }) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Color(0xFF7A7A8C)),
+      errorText: errorText,
+      labelStyle: const TextStyle(
+        color: Color(0xFF7A7A8C),
+      ),
       filled: true,
       fillColor: const Color(0xFFF3F3F7),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 16,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF5B4CF0), width: 1.4),
+        borderSide: const BorderSide(
+          color: Color(0xFF5B4CF0),
+          width: 1.4,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(
+          color: Colors.red,
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(
+          color: Colors.red,
+          width: 1.5,
+        ),
       ),
     );
   }
@@ -835,7 +1102,15 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
                 const SizedBox(height: 22),
                 TextField(
                   controller: tituloCtrl,
-                  decoration: _decoration('Título *'),
+                  onChanged: (_) {
+                    if (tituloError != null) {
+                      setState(() => tituloError = null);
+                    }
+                  },
+                  decoration: _decoration(
+                    'Título *',
+                    errorText: tituloError,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 TextField(
@@ -846,7 +1121,10 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String?>(
                   value: safeMateriaId,
-                  decoration: _decoration('Materia *'),
+                  decoration: _decoration(
+                    'Materia *',
+                    errorText: materiaError,
+                  ),
                   isExpanded: true,
                   items: [
                     const DropdownMenuItem<String?>(
@@ -863,14 +1141,22 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
                       ),
                     ),
                   ],
-                  onChanged: (value) => setState(() => materiaId = value),
+                  onChanged: (value) {
+                    setState(() {
+                      materiaId = value;
+                      materiaError = null;
+                    });
+                  },
                 ),
                 const SizedBox(height: 14),
                 InkWell(
                   onTap: _pickFecha,
                   borderRadius: BorderRadius.circular(12),
                   child: InputDecorator(
-                    decoration: _decoration('Fecha de entrega *'),
+                    decoration: _decoration(
+                      'Fecha de entrega *',
+                      errorText: fechaError,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -890,7 +1176,7 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
                       child: _dropdownField(
                         label: 'Tipo',
                         value: tipo,
-                        values: const ['tarea', 'examen', 'proyecto'],
+                        values: const ['tarea', 'examen'],
                         onChanged: (value) {
                           if (value == null) return;
                           setState(() => tipo = value);

@@ -29,18 +29,38 @@ class MetaRepository implements MetaRepositoryPort {
       throw Exception('No hay usuario autenticado');
     }
 
-    await _client.from('metas').insert({
-      'titulo': titulo,
-      'descripcion': descripcion,
-      'periodo': periodo,
-      'estado': 'pendiente',
-      'user_id': user.id,
-    });
+    try {
+      await _client.from('metas').insert({
+        'titulo': titulo,
+        'descripcion': descripcion,
+        'periodo': periodo,
+        'estado': 'pendiente',
+        'user_id': user.id,
+      });
+
+      print('META GUARDADA');
+    } catch (e) {
+      print('ERROR META: $e');
+      rethrow;
+    }
   }
 
   Future<void> completarMeta(String id) async {
     await _client.from('metas').update({
       'estado': 'completada',
+    }).eq('id', id);
+  }
+
+  Future<void> updateMeta({
+    required String id,
+    required String titulo,
+    String? descripcion,
+    String? periodo,
+  }) async {
+    await _client.from('metas').update({
+      'titulo': titulo,
+      'descripcion': descripcion,
+      'periodo': periodo,
     }).eq('id', id);
   }
 

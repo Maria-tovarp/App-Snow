@@ -115,7 +115,7 @@ class _MateriasPageState extends State<MateriasPage> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Eliminar materia'),
+        title: const Text('Eliminar Materia'),
         content: const Text('¿Seguro que deseas eliminar esta materia?'),
         actions: [
           TextButton(
@@ -430,6 +430,9 @@ class _MateriaModalState extends State<_MateriaModal> {
   final profesorCtrl = TextEditingController();
   final creditosCtrl = TextEditingController(text: '3');
 
+  bool nombreError = false;
+  bool creditosError = false;
+
   static const Color primary = Color(0xFF5B4CF0);
 
   Color selectedColor = const Color(0xFFFF403B);
@@ -480,14 +483,12 @@ class _MateriaModalState extends State<_MateriaModal> {
   }
 
   void _submit() {
-    if (nombreCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingresa el nombre de la materia'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    setState(() {
+      nombreError = nombreCtrl.text.trim().isEmpty;
+      creditosError = creditosCtrl.text.trim().isEmpty;
+    });
+
+    if (nombreError || creditosError) {
       return;
     }
 
@@ -503,13 +504,30 @@ class _MateriaModalState extends State<_MateriaModal> {
   }
 
   InputDecoration _decoration() {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(9),
+      borderSide: BorderSide.none,
+    );
+
     return InputDecoration(
       filled: true,
       fillColor: const Color(0xFFF0F0F3),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      border: OutlineInputBorder(
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border,
+      errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(
+          color: Colors.red,
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(9),
+        borderSide: const BorderSide(
+          color: Colors.red,
+          width: 1.5,
+        ),
       ),
     );
   }
@@ -534,7 +552,22 @@ class _MateriaModalState extends State<_MateriaModal> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          decoration: _decoration(),
+          decoration: _decoration().copyWith(
+            errorText: label == 'Nombre de la materia' && nombreError
+                ? 'Ingresa el nombre de la materia'
+                : label == 'Créditos' && creditosError
+                    ? 'Ingresa los créditos'
+                    : null,
+          ),
+          onChanged: (_) {
+            if (label == 'Nombre de la materia' && nombreError) {
+              setState(() => nombreError = false);
+            }
+
+            if (label == 'Créditos' && creditosError) {
+              setState(() => creditosError = false);
+            }
+          },
         ),
         const SizedBox(height: 12),
       ],
