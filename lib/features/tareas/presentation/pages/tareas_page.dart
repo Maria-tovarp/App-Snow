@@ -658,14 +658,18 @@ class _TareasPageState extends State<TareasPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Colors.red,
-                  size: 52,
+                const CircleAvatar(
+                  radius: 26,
+                  backgroundColor: Color(0xFFFFEBEE),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.red,
+                    size: 30,
+                  ),
                 ),
                 const SizedBox(height: 22),
                 const Text(
-                  'Eliminar tarea',
+                  'Eliminar Tarea',
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w700,
@@ -673,7 +677,7 @@ class _TareasPageState extends State<TareasPage> {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  '¿Deseas eliminar esta tarea?',
+                  '¿Estás seguro de que deseas eliminar esta tarea?',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
@@ -682,7 +686,7 @@ class _TareasPageState extends State<TareasPage> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Esta acción eliminará permanentemente la tarea y no se podrá recuperar.',
+                  'Esta acción no se puede deshacer.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
@@ -691,46 +695,49 @@ class _TareasPageState extends State<TareasPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                SizedBox(
-                  width: double.infinity,
-                  height: 58,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          side: const BorderSide(color: Color(0xFFD9D9E3)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancelar',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text(
-                      'Eliminar tarea',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(48),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Eliminar',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  height: 58,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                    ),
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text(
-                      'Cancelar',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
               ],
             ),
