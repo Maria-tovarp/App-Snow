@@ -48,20 +48,89 @@ class _ProyectosPageState extends State<ProyectosPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Eliminar proyecto'),
-          content: const Text('¿Estás segura de eliminar este proyecto?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 300),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          titlePadding: const EdgeInsets.only(top: 26),
+          title: Column(
+            children: const [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: Color(0xFFFFEBEE),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.red,
+                  size: 30,
+                ),
               ),
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Eliminar'),
+              SizedBox(height: 18),
+              Text(
+                'Eliminar Proyecto',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            '¿Estás seguro de que deseas eliminar este proyecto?\n\n'
+            'Esta acción no se puede deshacer.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF6B7280),
+              height: 1.5,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 22),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      side: const BorderSide(color: Color(0xFFD9D9E3)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancelar',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Eliminar',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -122,6 +191,51 @@ class _ProyectosPageState extends State<ProyectosPage> {
 
     final dias = ff.difference(fi).inDays;
     return '$dias días';
+  }
+
+  String _estadoProyecto(ProyectoModel p) {
+    final hoy = DateTime.now();
+
+    if (p.fechaFin == null) {
+      return 'En progreso';
+    }
+
+    final fechaFin = DateTime.parse(p.fechaFin!);
+
+    // Proyecto terminado
+    if (p.avancePorcentual >= 100) {
+      return 'Finalizado';
+    }
+
+    // Proyecto vencido
+    if (fechaFin.isBefore(DateTime(hoy.year, hoy.month, hoy.day))) {
+      return 'Vencido';
+    }
+
+    // Días restantes
+    final diasRestantes = fechaFin.difference(hoy).inDays;
+
+    if (diasRestantes <= 3) {
+      return 'Próximo a vencer';
+    }
+
+    return 'En progreso';
+  }
+
+  Color _colorEstadoProyecto(ProyectoModel p) {
+    switch (_estadoProyecto(p)) {
+      case 'Finalizado':
+        return const Color(0xFF22C55E); // Verde
+
+      case 'Vencido':
+        return const Color(0xFFEF4444); // Rojo
+
+      case 'Próximo a vencer':
+        return const Color(0xFFF59E0B); // Amarillo
+
+      default:
+        return primary; // Morado de la app
+    }
   }
 
   Future<void> _showUpdateProgressDialog(ProyectoModel proyecto) async {
@@ -263,6 +377,12 @@ class _ProyectosPageState extends State<ProyectosPage> {
 
   @override
   Widget build(BuildContext context) {
+    final proyectosEnProgreso =
+        proyectos.where((p) => p.avancePorcentual < 100).toList();
+
+    final proyectosFinalizados =
+        proyectos.where((p) => p.avancePorcentual >= 100).toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
       body: RefreshIndicator(
@@ -284,15 +404,29 @@ class _ProyectosPageState extends State<ProyectosPage> {
                   else if (proyectos.isEmpty)
                     _emptyState()
                   else ...[
-                    Text(
-                      'En Progreso',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 14),
-                    ...proyectos.map(_projectCard),
+                    if (proyectosEnProgreso.isNotEmpty) ...[
+                      Text(
+                        'En Progreso',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 14),
+                      ...proyectosEnProgreso.map(_projectCard),
+                    ],
+                    if (proyectosFinalizados.isNotEmpty) ...[
+                      const SizedBox(height: 28),
+                      Text(
+                        'Finalizados',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 14),
+                      ...proyectosFinalizados.map(_projectCard),
+                    ],
                   ],
                 ],
               ),
@@ -445,11 +579,12 @@ class _ProyectosPageState extends State<ProyectosPage> {
                         ),
                       ),
                     ),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => _openEditModal(p),
-                      icon: const Icon(Icons.edit_outlined),
-                    ),
+                    if (p.avancePorcentual < 100)
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => _openEditModal(p),
+                        icon: const Icon(Icons.edit_outlined),
+                      ),
                     IconButton(
                       visualDensity: VisualDensity.compact,
                       onPressed: () async {
@@ -476,27 +611,64 @@ class _ProyectosPageState extends State<ProyectosPage> {
                       color: Color(0xFF6E6E80),
                     ),
                   ),
-                const SizedBox(height: 12),
                 if (p.materiaNombre != null && p.materiaNombre!.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFD7D7E1)),
-                    ),
-                    child: Text(
-                      p.materiaNombre!,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _colorEstadoProyecto(p).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          _estadoProyecto(p),
+                          style: TextStyle(
+                            color: _colorEstadoProyecto(p),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      if (p.materiaNombre != null &&
+                          p.materiaNombre!.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFD7D7E1),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.menu_book_rounded,
+                                size: 16,
+                                color: primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                p.materiaNombre!,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 18),
                 Row(
                   children: [
                     const Text(
@@ -528,26 +700,48 @@ class _ProyectosPageState extends State<ProyectosPage> {
                   ),
                 ),
                 const SizedBox(height: 18),
-                Center(
-                  child: TextButton.icon(
-                    onPressed: () {
-                      _showUpdateProgressDialog(p);
-                    },
-                    icon: const Icon(
-                      Icons.trending_up_rounded,
-                      color: primary,
-                      size: 20,
-                    ),
-                    label: const Text(
-                      'Actualizar avance',
-                      style: TextStyle(
+                if (p.avancePorcentual < 100)
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        _showUpdateProgressDialog(p);
+                      },
+                      icon: const Icon(
+                        Icons.trending_up_rounded,
                         color: primary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
+                        size: 20,
+                      ),
+                      label: const Text(
+                        'Actualizar avance',
+                        style: TextStyle(
+                          color: primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
+                  )
+                else
+                  const Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Proyecto completado',
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
                 const SizedBox(height: 18),
                 Row(
                   children: [

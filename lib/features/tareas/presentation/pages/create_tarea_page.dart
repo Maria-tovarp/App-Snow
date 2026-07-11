@@ -61,11 +61,7 @@ class _CreateTareaPageState extends State<CreateTareaPage> {
   Future<void> _guardar() async {
     FocusScope.of(context).unfocus();
 
-    final valido = _formKey.currentState!.validate();
-
-    print('ENTRÓ A GUARDAR');
-
-    if (!valido) {
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
