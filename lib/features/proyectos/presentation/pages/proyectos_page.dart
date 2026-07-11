@@ -48,7 +48,7 @@ class _ProyectosPageState extends State<ProyectosPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 300),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 32),
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(22),
@@ -95,7 +95,9 @@ class _ProyectosPageState extends State<ProyectosPage> {
                     onPressed: () => Navigator.pop(context, false),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
-                      side: const BorderSide(color: Color(0xFFD9D9E3)),
+                      side: const BorderSide(
+                        color: Color(0xFFD9D9E3),
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
