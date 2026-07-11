@@ -646,82 +646,87 @@ class _TareasPageState extends State<TareasPage> {
     return showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 300),
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-          ),
-          titlePadding: const EdgeInsets.only(top: 26),
-          title: Column(children: const [
-            CircleAvatar(
-              radius: 26,
-              backgroundColor: Color(0xFFFFEBEE),
-              child: Icon(
-                Icons.delete_outline_rounded,
-                color: Colors.red,
-                size: 30,
-              ),
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
             ),
-            SizedBox(height: 18),
-            Text(
-              'Eliminar Tarea',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ]),
-          content: const Text(
-            '¿Estás seguro de que deseas eliminar esta tarea?\n\n'
-            'Esta acción no se puede deshacer.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              color: Color(0xFF6B7280),
-              height: 1.5,
-            ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 22),
-          actions: [
-            Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                      side: const BorderSide(color: Color(0xFFD9D9E3)),
+                const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.red,
+                  size: 52,
+                ),
+                const SizedBox(height: 22),
+                const Text(
+                  'Eliminar tarea',
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  '¿Deseas eliminar esta tarea?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Esta acción eliminará permanentemente la tarea y no se podrá recuperar.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF7A7A8A),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: double.infinity,
+                  height: 58,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                     ),
+                    onPressed: () => Navigator.pop(context, true),
                     child: const Text(
-                      'Cancelar',
+                      'Eliminar tarea',
                       style: TextStyle(
-                        color: Colors.black87,
+                        fontSize: 17,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(48),
-                      elevation: 0,
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 58,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                     ),
+                    onPressed: () => Navigator.pop(context, false),
                     child: const Text(
-                      'Eliminar',
+                      'Cancelar',
                       style: TextStyle(
+                        fontSize: 17,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -729,7 +734,7 @@ class _TareasPageState extends State<TareasPage> {
                 ),
               ],
             ),
-          ],
+          ),
         );
       },
     );
