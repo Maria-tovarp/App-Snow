@@ -416,61 +416,59 @@ class _TareasPageState extends State<TareasPage> {
                           ],
                         ),
                       ),
-                      Column(
-                        children: [
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            icon: Icon(
-                              Icons.edit_outlined,
-                              size: 22,
-                              color: isDone
-                                  ? Colors.grey.shade300
-                                  : Colors.black87,
-                            ),
-                            onPressed: isDone ? null : () => _openEditModal(t),
-                          ),
-                          const SizedBox(height: 14),
-                          SizedBox(
-                            width: 36,
-                            height: 36,
-                            child: ExcludeSemantics(
-                              child: IconButton(
-                                tooltip: '',
-                                padding: EdgeInsets.zero,
-                                splashRadius: 18,
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.red,
-                                  size: 22,
-                                ),
-                                onPressed: () async {
-                                  final confirmar =
-                                      await _confirmDeleteDialog();
-                                  if (confirmar == true) {
-                                    await repo.deleteTarea(t.id);
-                                    await load();
-
-                                    if (!mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text('Tarea eliminada'),
-                                        backgroundColor: primary,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        margin: const EdgeInsets.all(16),
-                                      ),
-                                    );
-                                  }
-                                },
+                      SizedBox(
+                        width: 40,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                size: 22,
+                                color: isDone
+                                    ? Colors.grey.shade300
+                                    : Colors.black87,
                               ),
+                              onPressed:
+                                  isDone ? null : () => _openEditModal(t),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 14),
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                                size: 22,
+                              ),
+                              onPressed: () async {
+                                final confirmar = await _confirmDeleteDialog();
+                                if (confirmar == true) {
+                                  await repo.deleteTarea(t.id);
+                                  await load();
+
+                                  if (!mounted) return;
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text('Tarea eliminada'),
+                                      backgroundColor: primary,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      margin: const EdgeInsets.all(16),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
