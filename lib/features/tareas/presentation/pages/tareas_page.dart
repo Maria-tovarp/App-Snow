@@ -650,7 +650,7 @@ class _TareasPageState extends State<TareasPage> {
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.symmetric(horizontal: 32),
           child: Container(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(28),
@@ -667,15 +667,15 @@ class _TareasPageState extends State<TareasPage> {
                     size: 30,
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 16),
                 const Text(
                   'PRUEBA 123',
                   style: TextStyle(
-                    fontSize: 30,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 const Text(
                   '¿Estás seguro de que deseas eliminar esta tarea?',
                   textAlign: TextAlign.center,
@@ -694,7 +694,7 @@ class _TareasPageState extends State<TareasPage> {
                     height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 24),
                 Row(
                   children: [
                     Expanded(
