@@ -435,34 +435,39 @@ class _TareasPageState extends State<TareasPage> {
                           SizedBox(
                             width: 36,
                             height: 36,
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              splashRadius: 18,
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.red,
-                                size: 22,
-                              ),
-                              onPressed: () async {
-                                final confirmar = await _confirmDeleteDialog();
-                                if (confirmar == true) {
-                                  await repo.deleteTarea(t.id);
-                                  await load();
+                            child: ExcludeSemantics(
+                              child: IconButton(
+                                tooltip: '',
+                                padding: EdgeInsets.zero,
+                                splashRadius: 18,
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red,
+                                  size: 22,
+                                ),
+                                onPressed: () async {
+                                  final confirmar =
+                                      await _confirmDeleteDialog();
+                                  if (confirmar == true) {
+                                    await repo.deleteTarea(t.id);
+                                    await load();
 
-                                  if (!mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: const Text('Tarea eliminada'),
-                                      backgroundColor: primary,
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text('Tarea eliminada'),
+                                        backgroundColor: primary,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        margin: const EdgeInsets.all(16),
                                       ),
-                                      margin: const EdgeInsets.all(16),
-                                    ),
-                                  );
-                                }
-                              },
+                                    );
+                                  }
+                                },
+                              ),
                             ),
                           ),
                         ],
