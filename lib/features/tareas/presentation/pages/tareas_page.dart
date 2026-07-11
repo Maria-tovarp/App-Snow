@@ -669,7 +669,7 @@ class _TareasPageState extends State<TareasPage> {
                 ),
                 const SizedBox(height: 22),
                 const Text(
-                  'Eliminar Tarea',
+                  'PRUEBA 123',
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w700,
