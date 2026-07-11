@@ -438,6 +438,17 @@ class _ProyectosPageState extends State<ProyectosPage> {
   }
 
   Widget _header() {
+    final proyectosEnProgreso =
+        proyectos.where((p) => p.avancePorcentual < 100).length;
+
+    final proyectosFinalizados =
+        proyectos.where((p) => p.avancePorcentual >= 100).length;
+
+    final textoActivos =
+        '$proyectosEnProgreso ${proyectosEnProgreso == 1 ? "activo" : "activos"}';
+
+    final textoFinalizados =
+        '$proyectosFinalizados ${proyectosFinalizados == 1 ? "finalizado" : "finalizados"}';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
@@ -463,7 +474,7 @@ class _ProyectosPageState extends State<ProyectosPage> {
                   ),
                 ),
                 Text(
-                  '${proyectos.length} en progreso',
+                  '$textoActivos • $textoFinalizados',
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 15,
