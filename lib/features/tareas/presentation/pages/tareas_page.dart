@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:helloworld/features/materias/data/materia_repository.dart';
 import 'package:helloworld/features/materias/data/materia_model.dart';
 
+import 'package:helloworld/core/widgets/app_notification.dart';
 import '../../data/tarea_model.dart';
 import '../../data/tarea_repository.dart';
 
@@ -439,16 +440,9 @@ class _TareasPageState extends State<TareasPage> {
 
                                 if (!mounted) return;
 
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text('Tarea eliminada'),
-                                    backgroundColor: primary,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    margin: const EdgeInsets.all(16),
-                                  ),
+                                AppNotification.success(
+                                  context,
+                                  message: 'Tarea eliminada correctamente',
                                 );
                               }
                             },
@@ -646,125 +640,135 @@ class _TareasPageState extends State<TareasPage> {
     return showDialog<bool>(
       context: context,
       builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
+        return AlertDialog(
           insetPadding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          titlePadding: const EdgeInsets.only(top: 26),
+          title: Column(
+            children: const [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: Color(0xFFFFEBEE),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.red,
+                  size: 30,
+                ),
+              ),
+              SizedBox(height: 18),
+              Text(
+                'Eliminar Tarea',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            '¿Estás seguro de que deseas eliminar esta tarea?\n\n'
+            'Esta acción no se puede deshacer.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF6B7280),
+              height: 1.5,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 22),
+          actions: [
+            Row(
               children: [
-                const CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Color(0xFFFFEBEE),
-                  child: Icon(
-                    Icons.delete_outline_rounded,
-                    color: Colors.red,
-                    size: 30,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'PRUEBA 123',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  '¿Estás seguro de que deseas eliminar esta tarea?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Esta acción no se puede deshacer.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF7A7A8A),
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                          side: const BorderSide(color: Color(0xFFD9D9E3)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Cancelar',
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      side: const BorderSide(
+                        color: Color(0xFFD9D9E3),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(48),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Eliminar',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                    child: const Text(
+                      'Cancelar',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Eliminar',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
+          ],
         );
       },
     );
   }
 
-  void _openCreateModal() {
-    showDialog<bool>(
+  Future<void> _openCreateModal() async {
+    final creado = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black54,
       builder: (_) => const _CreateTareaModal(),
-    ).then((value) {
-      if (value == true) load();
-    });
+    );
+
+    if (creado == true) {
+      await load();
+
+      if (!mounted) return;
+
+      AppNotification.success(
+        context,
+        message: 'Tarea creada correctamente',
+      );
+    }
   }
 
-  void _openEditModal(TareaModel tarea) {
-    showDialog<bool>(
+  Future<void> _openEditModal(TareaModel tarea) async {
+    final actualizado = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black54,
       builder: (_) => _CreateTareaModal(tarea: tarea),
-    ).then((value) {
-      if (value == true) load();
-    });
+    );
+
+    if (actualizado == true) {
+      await load();
+
+      if (!mounted) return;
+
+      AppNotification.success(
+        context,
+        message: 'Tarea actualizada correctamente',
+      );
+    }
   }
 }
 
@@ -942,20 +946,9 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
       }
 
       if (!mounted) return;
-
       Navigator.pop(context, true);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isEdit
-                ? 'Tarea actualizada correctamente'
-                : 'Tarea creada correctamente',
-          ),
-          backgroundColor: const Color(0xFF5B4CF0),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (!mounted) return;
     } catch (e) {
       if (!mounted) return;
 

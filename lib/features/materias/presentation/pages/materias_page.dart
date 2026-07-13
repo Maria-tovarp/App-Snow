@@ -111,46 +111,100 @@ class _MateriasPageState extends State<MateriasPage> {
     );
   }
 
-  void _deleteMateria(int index) {
-    showDialog(
+  Future<bool?> _deleteMateria(int index) {
+    return showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Eliminar Materia'),
-        content: const Text('¿Seguro que deseas eliminar esta materia?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+      builder: (context) {
+        return AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              final id = materias[index]['id']?.toString();
-
-              if (id != null) {
-                await _store.deleteMateria(id);
-                await _loadMaterias();
-              }
-
-              if (!mounted) return;
-
-              Navigator.pop(context);
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Materia eliminada'),
-                  backgroundColor: primary,
-                  behavior: SnackBarBehavior.floating,
+          titlePadding: const EdgeInsets.only(top: 26),
+          title: Column(
+            children: const [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: Color(0xFFFFEBEE),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.red,
+                  size: 30,
                 ),
-              );
-            },
-            child: const Text('Eliminar'),
+              ),
+              SizedBox(height: 18),
+              Text(
+                'Eliminar Materia',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+          content: const Text(
+            '¿Estás seguro de que deseas eliminar esta Materia?\n\n'
+            'Esta acción no se puede deshacer.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF6B7280),
+              height: 1.5,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 22),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      side: const BorderSide(
+                        color: Color(0xFFD9D9E3),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancelar',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Eliminar',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 
