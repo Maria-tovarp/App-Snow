@@ -1,6 +1,6 @@
 name: helloworld
-description: A new Flutter project.
-publish_to: 'none'
+description: Aplicación de organización académica Snow.
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
   cupertino_icons: ^1.0.8
   supabase_flutter: ^2.5.6
   flutter_riverpod: ^2.5.1
@@ -24,7 +25,9 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -32,3 +35,12 @@ flutter:
   assets:
     - .env
     - assets/sounds/ding.mp3
+    - assets/icon/snow_icon.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/snow_icon.png"
+  remove_alpha_ios: true
+  background_color_ios: "#5A46F5"
+  min_sdk_android: 21
