@@ -39,15 +39,15 @@ workflows:
 
       - name: Instalar CocoaPods
         script: |
-          cd "$CM_BUILD_DIR"
-          find ios -name "Podfile" -execdir pod install \;
+          cd "$CM_BUILD_DIR/ios"
+          pod install
 
-      - name: Compilar iOS sin firma
+      - name: Compilar iOS sin firma en Release
         script: |
           cd "$CM_BUILD_DIR"
-          flutter build ios --debug --no-codesign
+          flutter build ios --release --no-codesign
 
-      - name: Empaquetar aplicación como IPA sin firma
+      - name: Crear IPA sin firma
         script: |
           cd "$CM_BUILD_DIR/build/ios/iphoneos"
 
