@@ -32,15 +32,23 @@ workflows:
 
           echo "Archivo .env creado correctamente"
 
-      - name: Obtener dependencias Flutter
-        script: |
-          cd "$CM_BUILD_DIR"
-          flutter pub get
+      - name: Preparar Flutter para macOS
+  script: |
+    cd "$CM_BUILD_DIR"
 
-      - name: Instalar CocoaPods
-        script: |
-          cd "$CM_BUILD_DIR/ios"
-          pod install
+    rm -f ios/Flutter/Generated.xcconfig
+    rm -f ios/Flutter/flutter_export_environment.sh
+    rm -rf ios/Flutter/ephemeral
+
+    flutter clean
+    flutter pub get
+
+    echo "Configuración de Flutter regenerada para macOS"
+
+    - name: Instalar CocoaPods
+  script: |
+    cd "$CM_BUILD_DIR/ios"
+    pod install
 
       - name: Compilar iOS sin firma en Release
         script: |
