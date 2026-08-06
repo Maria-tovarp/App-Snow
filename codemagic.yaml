@@ -14,17 +14,11 @@ workflows:
     scripts:
       - name: Crear archivo .env
         script: |
+          set -e
           cd "$CM_BUILD_DIR"
 
-          if [ -z "$SUPABASE_URL" ]; then
-            echo "ERROR: falta SUPABASE_URL"
-            exit 1
-          fi
-
-          if [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "ERROR: falta SUPABASE_ANON_KEY"
-            exit 1
-          fi
+          : "${SUPABASE_URL:?ERROR: falta SUPABASE_URL}"
+          : "${SUPABASE_ANON_KEY:?ERROR: falta SUPABASE_ANON_KEY}"
 
           printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' \
             "$SUPABASE_URL" \
@@ -32,31 +26,31 @@ workflows:
 
           echo "Archivo .env creado correctamente"
 
-      - name: Preparar Flutter para macOS
-  script: |
-    cd "$CM_BUILD_DIR"
+      - name: Preparar proyecto Flutter
+        script: |
+          set -e
+          cd "$CM_BUILD_DIR"
 
-    rm -f ios/Flutter/Generated.xcconfig
-    rm -f ios/Flutter/flutter_export_environment.sh
-    rm -rf ios/Flutter/ephemeral
+          rm -f ios/Flutter/Generated.xcconfig
+          rm -f ios/Flutter/flutter_export_environment.sh
+          rm -rf ios/Flutter/ephemeral
 
-    flutter clean
-    flutter pub get
+          flutter clean
+          flutter pub get
+          flutter precache --ios
 
-    echo "Configuración de Flutter regenerada para macOS"
-
-    - name: Instalar CocoaPods
-  script: |
-    cd "$CM_BUILD_DIR/ios"
-    pod install
+          echo "Proyecto preparado para macOS"
 
       - name: Compilar iOS sin firma en Release
         script: |
+          set -e
           cd "$CM_BUILD_DIR"
+
           flutter build ios --release --no-codesign
 
       - name: Crear IPA sin firma
         script: |
+          set -e
           cd "$CM_BUILD_DIR/build/ios/iphoneos"
 
           rm -rf Payload
@@ -71,6 +65,7 @@ workflows:
             Payload \
             Snow-unsigned.ipa
 
+          test -f Snow-unsigned.ipa
           echo "IPA sin firma creado correctamente"
 
     artifacts:
