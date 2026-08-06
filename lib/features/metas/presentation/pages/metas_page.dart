@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:helloworld/core/services/local_data_store.dart';
 
 import '../../data/meta_model.dart';
 import '../../data/meta_repository.dart';
@@ -21,6 +22,14 @@ class _MetasPageState extends State<MetasPage> {
   @override
   void initState() {
     super.initState();
+    final store = LocalDataStore.instance;
+    if (store.hasCached('metas')) {
+      metas = store
+          .cached('metas')
+          .map((item) => MetaModel.fromJson(item))
+          .toList();
+      loading = false;
+    }
     _load();
   }
 
@@ -65,6 +74,7 @@ class _MetasPageState extends State<MetasPage> {
     showDialog(
       context: context,
       builder: (_) {
+        final colors = Theme.of(context).colorScheme;
         return Dialog(
           insetPadding: const EdgeInsets.symmetric(horizontal: 30),
           backgroundColor: Colors.transparent,
@@ -72,7 +82,7 @@ class _MetasPageState extends State<MetasPage> {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colors.surface,
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
@@ -222,10 +232,10 @@ class _MetasPageState extends State<MetasPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Cancelar',
                             style: TextStyle(
-                              color: Colors.black87,
+                              color: colors.onSurface,
                               fontSize: 15,
                             ),
                           ),
@@ -272,9 +282,13 @@ class _MetasPageState extends State<MetasPage> {
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE2E2EA)),
+          border: Border.all(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF393947)
+                : const Color(0xFFE2E2EA),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,21 +319,29 @@ class _MetasPageState extends State<MetasPage> {
     required bool active,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: active ? Colors.white : Colors.transparent,
+            color: active
+                ? (isDark
+                    ? const Color(0xFF15151D)
+                    : Theme.of(context).colorScheme.surface)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Center(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
-                fontWeight: FontWeight.w500,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                color: active
+                    ? Theme.of(context).colorScheme.onSurface
+                    : const Color(0xFF8A8A9B),
               ),
             ),
           ),
@@ -332,9 +354,13 @@ class _MetasPageState extends State<MetasPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E2EA)),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF393947)
+              : const Color(0xFFE2E2EA),
+        ),
       ),
       child: const Column(
         children: [
@@ -369,14 +395,20 @@ class _MetasPageState extends State<MetasPage> {
 
   Widget _metaCard(MetaModel m) {
     final isCompleted = m.estado == 'completada';
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E2EA)),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF393947)
+              : const Color(0xFFE2E2EA),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -426,12 +458,17 @@ class _MetasPageState extends State<MetasPage> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F3F7),
+                          color: isDark
+                              ? const Color(0xFF292934)
+                              : const Color(0xFFF3F3F7),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Text(
                           m.periodo!,
-                          style: const TextStyle(fontSize: 13),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colors.onSurface,
+                          ),
                         ),
                       ),
                     Container(
@@ -468,9 +505,9 @@ class _MetasPageState extends State<MetasPage> {
                   onPressed: () {
                     _showMetaModal(meta: m);
                   },
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.edit_outlined,
-                    color: Colors.black87,
+                    color: colors.onSurface,
                   ),
                 ),
               if (!isCompleted)
@@ -486,8 +523,9 @@ class _MetasPageState extends State<MetasPage> {
                   final confirmar = await showDialog<bool>(
                     context: context,
                     builder: (context) {
+                      final dialogColors = Theme.of(context).colorScheme;
                       return AlertDialog(
-                        backgroundColor: Colors.white,
+                        backgroundColor: dialogColors.surface,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(22),
                         ),
@@ -541,10 +579,10 @@ class _MetasPageState extends State<MetasPage> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'Cancelar',
                                     style: TextStyle(
-                                      color: Colors.black87,
+                                      color: dialogColors.onSurface,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -599,9 +637,13 @@ class _MetasPageState extends State<MetasPage> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E2EA)),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF393947)
+              : const Color(0xFFE2E2EA),
+        ),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -644,7 +686,7 @@ class _MetasPageState extends State<MetasPage> {
     final currentList = tab == 0 ? pendientes : completadas;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
@@ -727,7 +769,9 @@ class _MetasPageState extends State<MetasPage> {
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE9E9EF),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF292934)
+                          : const Color(0xFFE9E9EF),
                       borderRadius: BorderRadius.circular(22),
                     ),
                     child: Row(
@@ -794,6 +838,10 @@ class _MetasPageState extends State<MetasPage> {
         ],
         selectedItemColor: const Color(0xFF5B4CF0),
         unselectedItemColor: const Color(0xFF8B8B9B),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF20202B)
+            : Colors.white,
+        elevation: 0,
         type: BottomNavigationBarType.fixed,
       ),
     );

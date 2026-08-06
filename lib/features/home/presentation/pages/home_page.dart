@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:helloworld/core/services/auth_session_service.dart';
+import 'package:helloworld/core/services/app_prefs.dart';
 import 'package:helloworld/core/services/local_data_store.dart';
+import 'package:helloworld/features/auth/presentation/widgets/force_change_password_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,6 +19,8 @@ class _HomePageState extends State<HomePage> {
   final _store = LocalDataStore.instance;
   final _auth = AuthSessionService.instance;
 
+  bool _checkingPasswordStatus = false;
+  bool _passwordDialogVisible = false;
   bool isLoading = true;
   int materiasActivas = 0;
   int tareasPendientes = 0;
@@ -33,16 +38,169 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+
+    _restoreCachedData();
     _loadData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkMandatoryPasswordChange();
+    });
+  }
+
+  void _restoreCachedData() {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final cached = AppPrefs.homeSummary(userId);
+    if (cached == null) return;
+
+    materiasActivas = cached['materiasActivas'] as int? ?? 0;
+    tareasPendientes = cached['tareasPendientes'] as int? ?? 0;
+    tareasCompletadas = cached['tareasCompletadas'] as int? ?? 0;
+    proyectosActivos = cached['proyectosActivos'] as int? ?? 0;
+    metasCompletadas = cached['metasCompletadas'] as int? ?? 0;
+    metasTotales = cached['metasTotales'] as int? ?? 0;
+    tareasPorDia = List<int>.from(
+      cached['tareasPorDia'] as List? ?? List<int>.filled(7, 0),
+    );
+    proximasEntregas = (cached['proximasEntregas'] as List? ?? const [])
+        .map((item) {
+          final entrega = Map<String, dynamic>.from(item as Map);
+          entrega['fechaDate'] = DateTime.tryParse(
+            (entrega['fecha'] ?? '').toString(),
+          );
+          return entrega;
+        })
+        .toList();
+    isLoading = false;
+  }
+
+  bool _isTrue(dynamic value) {
+    return value == true || value?.toString().toLowerCase() == 'true';
+  }
+
+  Future<void> _checkMandatoryPasswordChange() async {
+    if (_checkingPasswordStatus || _passwordDialogVisible) {
+      return;
+    }
+
+    _checkingPasswordStatus = true;
+
+    try {
+      final client = Supabase.instance.client;
+      final session = client.auth.currentSession;
+
+      if (session == null) {
+        return;
+      }
+
+      // Refresca el usuario para obtener los metadatos más recientes.
+      try {
+        await client.auth.refreshSession();
+      } catch (_) {
+        // Continúa con la información disponible localmente.
+      }
+
+      final user = client.auth.currentUser;
+
+      if (user == null) {
+        return;
+      }
+
+      var mustChangePassword = _isTrue(
+        user.appMetadata['must_change_password'],
+      );
+
+      // profiles es la fuente vigente. app_metadata queda como respaldo si la
+      // fila no existe o RLS no permite consultarla.
+      try {
+        final profile = await client
+            .from('profiles')
+            .select('must_change_password')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (profile != null) {
+          mustChangePassword = _isTrue(
+            profile?['must_change_password'],
+          );
+        }
+      } catch (_) {
+        // Se utiliza app_metadata.
+      }
+
+      if (!mustChangePassword || !mounted) {
+        return;
+      }
+
+      _passwordDialogVisible = true;
+
+      final passwordNotice = ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tu contraseña es temporal. Debes cambiarla para continuar.',
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(days: 1),
+        ),
+      );
+
+      final changed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        useRootNavigator: true,
+        builder: (_) {
+          return const ForceChangePasswordDialog();
+        },
+      );
+
+      passwordNotice.close();
+
+      if (!mounted) return;
+
+      if (changed == true) {
+        // Conserva y vuelve a sincronizar el resumen sin reconstruir Home con
+        // valores vacíos después del cambio de credenciales.
+        try {
+          await _loadData();
+        } catch (error) {
+          debugPrint(
+            'Se conservan los datos locales tras cambiar la contraseña: $error',
+          );
+        }
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Contraseña actualizada correctamente.',
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Color(0xFF5546E8),
+          ),
+        );
+      }
+    } finally {
+      _checkingPasswordStatus = false;
+      _passwordDialogVisible = false;
+    }
   }
 
   Future<void> _loadData() async {
-    await _store.initialize();
+    // Estas consultas son independientes. Ejecutarlas en paralelo evita sumar
+    // la latencia de cada petición a Supabase.
+    final results = await Future.wait<Object?>([
+      _store.initialize(),
+      _store.getTareas(),
+      _store.getProyectos(),
+      _store.getMetas(),
+      _store.getMaterias(),
+    ]);
 
-    final tareas = await _store.getTareas();
-    final proyectos = await _store.getProyectos();
-    final metas = await _store.getMetas();
-    final materias = await _store.getMaterias();
+    final tareas = results[1] as List<Map<String, dynamic>>;
+    final proyectos = results[2] as List<Map<String, dynamic>>;
+    final metas = results[3] as List<Map<String, dynamic>>;
+    final materias = results[4] as List<Map<String, dynamic>>;
 
     final pendientes = tareas
         .where((t) => (t['estado'] ?? 'pendiente') != 'completada')
@@ -122,6 +280,26 @@ class _HomePageState extends State<HomePage> {
       tareasPorDia = weekCounts;
       isLoading = false;
     });
+
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId != null) {
+      await AppPrefs.saveHomeSummary(userId, {
+        'materiasActivas': materias.length,
+        'tareasPendientes': pendientes.length,
+        'tareasCompletadas': completadas,
+        'proyectosActivos': activos,
+        'metasCompletadas': metasDone,
+        'metasTotales': metas.length,
+        'proximasEntregas': entregas.take(5).map((entrega) {
+          return {
+            'tipo': entrega['tipo'],
+            'titulo': entrega['titulo'],
+            'fecha': entrega['fecha'],
+          };
+        }).toList(),
+        'tareasPorDia': weekCounts,
+      });
+    }
   }
 
   String _friendlyName(String rawName) {
@@ -143,7 +321,7 @@ class _HomePageState extends State<HomePage> {
     final progreso = totalTareas == 0 ? 0.0 : tareasCompletadas / totalTareas;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicator(
         color: _primary,
         onRefresh: _loadData,
@@ -160,27 +338,28 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 22),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  _StatsGrid(
-                    materiasActivas: materiasActivas,
-                    tareasPendientes: tareasPendientes,
-                    proyectosActivos: proyectosActivos,
-                    metasCompletadas: metasCompletadas,
-                    metasTotales: metasTotales,
-                  ),
-                  const SizedBox(height: 18),
-                  _ProgressCard(
-                    completadas: tareasCompletadas,
-                    total: totalTareas,
-                    progreso: progreso,
-                  ),
-                  const SizedBox(height: 18),
-                  _WeeklyLoadCard(values: tareasPorDia),
-                  const SizedBox(height: 18),
                   if (isLoading)
-                    const SizedBox(height: 0)
-                  else
+                    const _HomeLoadingSkeleton()
+                  else ...[
+                    _StatsGrid(
+                      materiasActivas: materiasActivas,
+                      tareasPendientes: tareasPendientes,
+                      proyectosActivos: proyectosActivos,
+                      metasCompletadas: metasCompletadas,
+                      metasTotales: metasTotales,
+                    ),
+                    const SizedBox(height: 18),
+                    _ProgressCard(
+                      completadas: tareasCompletadas,
+                      total: totalTareas,
+                      progreso: progreso,
+                    ),
+                    const SizedBox(height: 18),
+                    _WeeklyLoadCard(values: tareasPorDia),
+                    const SizedBox(height: 18),
                     _DeliveriesCard(entregas: proximasEntregas),
-                  const SizedBox(height: 18),
+                    const SizedBox(height: 18),
+                  ],
                   _ShortcutsGrid(
                     onTap: (route) => context.go(route),
                   ),
@@ -190,6 +369,124 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _HomeLoadingSkeleton extends StatelessWidget {
+  const _HomeLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    const placeholder = Color(0xFFE4E1F5);
+
+    Widget block(double height) {
+      return Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: placeholder,
+          borderRadius: BorderRadius.circular(20),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF2F0FF),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFDDD8FF)),
+          ),
+          child: const Row(
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: _HomePageState._primary,
+                  strokeWidth: 2.5,
+                ),
+              ),
+              SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cargando tus datos',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Estamos preparando el resumen de tu semestre.',
+                      style: TextStyle(
+                        color: _HomePageState._textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 0,
+          childAspectRatio: 1.5,
+          children: List.generate(
+            4,
+            (_) => Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: placeholder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 82,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: placeholder,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 32,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: placeholder,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        block(130),
+        const SizedBox(height: 18),
+        block(250),
+        const SizedBox(height: 18),
+        block(120),
+        const SizedBox(height: 18),
+      ],
     );
   }
 }
@@ -205,11 +502,13 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 38, 20, 24),
-      decoration: const BoxDecoration(
-        color: _HomePageState._primary,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF211B52) : _HomePageState._primary,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,13 +610,16 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 12, 10, 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: _HomePageState._border,
+          color: isDark ? const Color(0xFF343442) : _HomePageState._border,
           width: 1.4,
         ),
       ),
@@ -327,8 +629,8 @@ class _StatCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: _HomePageState._textMuted,
+            style: TextStyle(
+              color: colors.onSurfaceVariant,
               fontSize: 15,
               height: 1.12,
               fontWeight: FontWeight.w400,
@@ -337,8 +639,8 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.black,
+            style: TextStyle(
+              color: colors.onSurface,
               fontSize: 28,
               fontWeight: FontWeight.w500,
               height: 1,
@@ -382,7 +684,9 @@ class _ProgressCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progreso,
               minHeight: 12,
-              backgroundColor: const Color(0xFFE0DBFF),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF34304F)
+                  : const Color(0xFFE0DBFF),
               valueColor: const AlwaysStoppedAnimation<Color>(
                 _HomePageState._primary,
               ),
@@ -432,7 +736,10 @@ class _WeeklyLoadCard extends StatelessWidget {
           SizedBox(
             height: 170,
             child: CustomPaint(
-              painter: _WeeklyPainter(values),
+              painter: _WeeklyPainter(
+                values,
+                isDark: Theme.of(context).brightness == Brightness.dark,
+              ),
               child: const SizedBox.expand(),
             ),
           ),
@@ -443,15 +750,18 @@ class _WeeklyLoadCard extends StatelessWidget {
 }
 
 class _WeeklyPainter extends CustomPainter {
-  _WeeklyPainter(this.values);
+  _WeeklyPainter(this.values, {required this.isDark});
 
   final List<int> values;
+  final bool isDark;
   final labels = const ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
   @override
   void paint(Canvas canvas, Size size) {
     final gridPaint = Paint()
-      ..color = const Color(0xFFDCDCE2)
+      ..color = isDark
+          ? const Color(0xFF3B3B49)
+          : const Color(0xFFDCDCE2)
       ..strokeWidth = 1.2;
 
     final barPaint = Paint()
@@ -459,8 +769,8 @@ class _WeeklyPainter extends CustomPainter {
       ..strokeWidth = 16
       ..strokeCap = StrokeCap.round;
 
-    final axisText = const TextStyle(
-      color: Colors.grey,
+    final axisText = TextStyle(
+      color: isDark ? const Color(0xFFA9A9B8) : Colors.grey,
       fontSize: 14,
     );
 
@@ -557,7 +867,7 @@ class _WeeklyPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _WeeklyPainter oldDelegate) {
-    return oldDelegate.values != values;
+    return oldDelegate.values != values || oldDelegate.isDark != isDark;
   }
 }
 
@@ -657,6 +967,11 @@ class _ShortcutsGrid extends StatelessWidget {
         '/calendario',
       ),
       _ShortcutItem(
+        Icons.calendar_view_week_outlined,
+        'Horario',
+        '/horario',
+      ),
+      _ShortcutItem(
         Icons.adjust,
         'Metas',
         '/metas',
@@ -705,8 +1020,11 @@ class _ShortcutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Material(
-      color: Colors.white,
+      color: colors.surface,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -715,7 +1033,9 @@ class _ShortcutCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: _HomePageState._border,
+              color: isDark
+                  ? const Color(0xFF343442)
+                  : _HomePageState._border,
               width: 1.4,
             ),
           ),
@@ -746,14 +1066,17 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: _HomePageState._border,
+          color: isDark ? const Color(0xFF343442) : _HomePageState._border,
           width: 1.4,
         ),
       ),

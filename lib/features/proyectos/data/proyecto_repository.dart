@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:helloworld/core/services/local_data_store.dart';
 
 import 'proyecto_model.dart';
 
@@ -23,7 +24,9 @@ class ProyectoRepository implements ProyectoRepositoryPort {
           materias(nombre)
         ''').eq('user_id', user.id).order('created_at', ascending: false);
 
-    return (response as List).map((e) => ProyectoModel.fromJson(e)).toList();
+    final rows = List<Map<String, dynamic>>.from(response as List);
+    LocalDataStore.instance.cacheRows('proyectos', rows);
+    return rows.map((e) => ProyectoModel.fromJson(e)).toList();
   }
 
   Future<void> createProyecto({

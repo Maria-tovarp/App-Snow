@@ -21,7 +21,11 @@ class _CalendarioPageState extends State<CalendarioPage> {
     DateTime.now().month,
     1,
   );
-
+  DateTime selectedDay = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
   static const Color primary = Color(0xFF5B4CF0);
   static const Color textDark = Color(0xFF20202A);
   static const Color textMuted = Color(0xFF7C7C90);
@@ -30,15 +34,35 @@ class _CalendarioPageState extends State<CalendarioPage> {
   @override
   void initState() {
     super.initState();
+    if (_store.hasCached('tareas') || _store.hasCached('proyectos')) {
+      eventos = _buildEvents(
+        _store.cached('tareas'),
+        _store.cached('proyectos'),
+      );
+      loading = false;
+    }
     _load();
   }
 
   Future<void> _load() async {
-    await _store.initialize();
+    final results = await Future.wait([
+      _store.getTareas(),
+      _store.getProyectos(),
+    ]);
+    final data = _buildEvents(results[0], results[1]);
 
-    final tareas = await _store.getTareas();
-    final proyectos = await _store.getProyectos();
+    if (!mounted) return;
 
+    setState(() {
+      eventos = data;
+      loading = false;
+    });
+  }
+
+  List<Map<String, dynamic>> _buildEvents(
+    List<Map<String, dynamic>> tareas,
+    List<Map<String, dynamic>> proyectos,
+  ) {
     final data = <Map<String, dynamic>>[];
 
     for (final t in tareas) {
@@ -73,12 +97,7 @@ class _CalendarioPageState extends State<CalendarioPage> {
           .compareTo((b['fecha'] ?? '').toString()),
     );
 
-    if (!mounted) return;
-
-    setState(() {
-      eventos = data;
-      loading = false;
-    });
+    return data;
   }
 
   List<Map<String, dynamic>> get _eventos30Dias {
@@ -93,6 +112,55 @@ class _CalendarioPageState extends State<CalendarioPage> {
 
       return !fecha.isBefore(hoySolo) && !fecha.isAfter(limite);
     }).toList();
+  }
+
+  List<Map<String, dynamic>> get _eventosDelDia {
+    return eventos.where((e) {
+      final fecha = DateTime.tryParse(
+        (e['fecha'] ?? '').toString(),
+      );
+
+      if (fecha == null) return false;
+
+      return fecha.year == selectedDay!.year &&
+          fecha.month == selectedDay!.month &&
+          fecha.day == selectedDay!.day;
+    }).toList();
+  }
+
+  String get _tituloEventos {
+    if (selectedDay == null) {
+      return 'Próximos eventos';
+    }
+
+    const dias = [
+      'lunes',
+      'martes',
+      'miércoles',
+      'jueves',
+      'viernes',
+      'sábado',
+      'domingo',
+    ];
+
+    const meses = [
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
+    ];
+
+    final fecha = selectedDay!;
+
+    return 'Eventos del ${dias[fecha.weekday - 1]} ${fecha.day} de ${meses[fecha.month - 1]}';
   }
 
   String _formatFechaCorta(String? fecha) {
@@ -127,6 +195,22 @@ class _CalendarioPageState extends State<CalendarioPage> {
         visibleMonth.month - 1,
         1,
       );
+
+      final hoy = DateTime.now();
+
+      if (visibleMonth.year == hoy.year && visibleMonth.month == hoy.month) {
+        selectedDay = DateTime(
+          hoy.year,
+          hoy.month,
+          hoy.day,
+        );
+      } else {
+        selectedDay = DateTime(
+          visibleMonth.year,
+          visibleMonth.month,
+          1,
+        );
+      }
     });
   }
 
@@ -135,15 +219,30 @@ class _CalendarioPageState extends State<CalendarioPage> {
       visibleMonth = DateTime(
         visibleMonth.year,
         visibleMonth.month + 1,
-        1,
       );
+
+      final hoy = DateTime.now();
+
+      if (visibleMonth.year == hoy.year && visibleMonth.month == hoy.month) {
+        selectedDay = DateTime(
+          hoy.year,
+          hoy.month,
+          hoy.day,
+        );
+      } else {
+        selectedDay = DateTime(
+          visibleMonth.year,
+          visibleMonth.month,
+          1,
+        );
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
@@ -154,22 +253,56 @@ class _CalendarioPageState extends State<CalendarioPage> {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               child: Column(
                 children: [
+                  const _LegendCard(),
+                  const SizedBox(height: 14),
                   _CalendarMonth(
                     month: visibleMonth,
                     eventos: eventos,
+                    selectedDay: selectedDay,
                     onPrevious: _prevMonth,
                     onNext: _nextMonth,
+                    onDaySelected: (day) {
+                      setState(() {
+                        final hoy = DateTime.now();
+
+                        final mismaFecha = selectedDay.year == day.year &&
+                            selectedDay.month == day.month &&
+                            selectedDay.day == day.day;
+
+                        if (mismaFecha) {
+                          if (visibleMonth.year == hoy.year &&
+                              visibleMonth.month == hoy.month) {
+                            selectedDay = DateTime(
+                              hoy.year,
+                              hoy.month,
+                              hoy.day,
+                            );
+                          } else {
+                            selectedDay = DateTime(
+                              visibleMonth.year,
+                              visibleMonth.month,
+                              1,
+                            );
+                          }
+                        } else {
+                          selectedDay = day;
+                        }
+                      });
+                    },
                   ),
                   const SizedBox(height: 18),
                   if (loading)
                     const SizedBox(height: 120)
                   else
                     _UpcomingEventsCard(
-                      eventos: _eventos30Dias,
+                      titulo: _tituloEventos,
+                      mensajeVacio: 'No hay eventos para este día.',
+                      eventos: _eventosDelDia,
                       formatFecha: _formatFechaCorta,
+                      animationKey: ValueKey(
+                        '${selectedDay.year}-${selectedDay.month}-${selectedDay.day}',
+                      ),
                     ),
-                  const SizedBox(height: 18),
-                  const _LegendCard(),
                 ],
               ),
             ),
@@ -243,16 +376,22 @@ class _CalendarMonth extends StatelessWidget {
   final List<Map<String, dynamic>> eventos;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
+  final ValueChanged<DateTime> onDaySelected;
+  final DateTime? selectedDay;
 
   const _CalendarMonth({
     required this.month,
     required this.eventos,
     required this.onPrevious,
     required this.onNext,
+    required this.onDaySelected,
+    required this.selectedDay,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final firstDay = DateTime(month.year, month.month, 1);
     final lastDay = DateTime(month.year, month.month + 1, 0);
     final previousMonthLastDay = DateTime(month.year, month.month, 0);
@@ -278,9 +417,18 @@ class _CalendarMonth extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _CalendarioPageState.border),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? const Color(0xFF393947) : _CalendarioPageState.border,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -288,26 +436,34 @@ class _CalendarMonth extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: onPrevious,
-                icon: const Icon(Icons.chevron_left, size: 28),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFF3F0FF),
+                  foregroundColor: _CalendarioPageState.primary,
+                ),
+                icon: const Icon(Icons.chevron_left, size: 24),
               ),
               Expanded(
                 child: Text(
-                  '${_monthName(month.month)} De ${month.year}',
+                  '${_monthName(month.month)} de ${month.year}',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: _CalendarioPageState.textDark,
-                    fontSize: 18,
+                  style: TextStyle(
+                    color: colors.onSurface,
+                    fontSize: 17,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
               IconButton(
                 onPressed: onNext,
-                icon: const Icon(Icons.chevron_right, size: 28),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFF3F0FF),
+                  foregroundColor: _CalendarioPageState.primary,
+                ),
+                icon: const Icon(Icons.chevron_right, size: 24),
               ),
             ],
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 18),
           Row(
             children: weekdays
                 .map(
@@ -360,45 +516,65 @@ class _CalendarMonth extends StatelessWidget {
 
               final hasEvent = isCurrentMonth && eventDays.contains(day);
 
-              return Container(
-                decoration: BoxDecoration(
-                  color: isToday ? _CalendarioPageState.primary : Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: hasEvent || isToday
-                        ? const Color(0xFFA699FF)
-                        : const Color(0xFFE4E4EC),
-                    width: hasEvent || isToday ? 1.3 : 1,
-                  ),
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Text(
-                      '$day',
-                      style: TextStyle(
-                        color: !isCurrentMonth
-                            ? const Color(0xFFB9B9C3)
-                            : isToday
-                                ? Colors.white
-                                : Colors.black,
-                        fontSize: 13,
-                        fontWeight: isToday ? FontWeight.w800 : FontWeight.w500,
-                      ),
+              final isSelected = selectedDay != null &&
+                  isCurrentMonth &&
+                  selectedDay!.year == month.year &&
+                  selectedDay!.month == month.month &&
+                  selectedDay!.day == day;
+
+              return InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: isCurrentMonth
+                    ? () => onDaySelected(
+                          DateTime(month.year, month.month, day),
+                        )
+                    : null,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? _CalendarioPageState.primary
+                        : isToday
+                            ? const Color(0xFFF3F0FF)
+                            : Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected
+                          ? _CalendarioPageState.primary
+                          : isToday
+                              ? _CalendarioPageState.primary
+                              : hasEvent
+                                  ? const Color(0xFFA699FF)
+                                  : const Color(0xFFE4E4EC),
+                      width: isToday || isSelected || hasEvent ? 1.5 : 1,
                     ),
-                    if (hasEvent && !isToday)
-                      const Positioned(
-                        bottom: 2,
-                        child: Text(
-                          '•',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
-                            height: 1,
-                          ),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Text(
+                        '$day',
+                        style: TextStyle(
+                          color: !isCurrentMonth
+                              ? const Color(0xFFB9B9C3)
+                              : isSelected
+                                  ? Colors.white
+                                  : Colors.black,
+                          fontSize: 13,
+                          fontWeight:
+                              isToday ? FontWeight.w800 : FontWeight.w500,
                         ),
                       ),
-                  ],
+                      if (hasEvent && !isToday)
+                        const Positioned(
+                          bottom: 2,
+                          child: Icon(
+                            Icons.circle,
+                            size: 6,
+                            color: _CalendarioPageState.primary,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -431,34 +607,45 @@ class _CalendarMonth extends StatelessWidget {
 class _UpcomingEventsCard extends StatelessWidget {
   final List<Map<String, dynamic>> eventos;
   final String Function(String?) formatFecha;
+  final String titulo;
+  final String mensajeVacio;
+  final Key animationKey;
 
   const _UpcomingEventsCard({
     required this.eventos,
     required this.formatFecha,
+    required this.titulo,
+    required this.mensajeVacio,
+    required this.animationKey,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _CalendarioPageState.border),
+        border: Border.all(
+          color: isDark ? const Color(0xFF393947) : _CalendarioPageState.border,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.calendar_month_outlined, size: 23),
-              SizedBox(width: 10),
+              const Icon(Icons.calendar_month_outlined, size: 23),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Próximos eventos',
+                  titulo,
                   style: TextStyle(
-                    color: _CalendarioPageState.textDark,
+                    color: colors.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
@@ -467,26 +654,71 @@ class _UpcomingEventsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          if (eventos.isEmpty)
-            const Text(
-              'No hay eventos próximos',
-              style: TextStyle(
-                color: _CalendarioPageState.textMuted,
-                fontSize: 14,
-              ),
-            )
-          else
-            ...eventos.map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _EventCard(
-                  titulo: (e['titulo'] ?? '').toString(),
-                  materia: (e['materia'] ?? 'Sin materia').toString(),
-                  tipo: (e['tipo'] ?? '').toString(),
-                  fecha: formatFecha((e['fecha'] ?? '').toString()),
-                ),
-              ),
-            ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            child: eventos.isEmpty
+                ? Container(
+                    key: const ValueKey('sin_eventos'),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF292934)
+                          : const Color(0xFFF7F6FF),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEAE7FF),
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                          child: const Icon(
+                            Icons.event_available_outlined,
+                            color: _CalendarioPageState.primary,
+                            size: 21,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            mensajeVacio,
+                            style: const TextStyle(
+                              color: _CalendarioPageState.textMuted,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
+                    key: animationKey,
+                    children: eventos
+                        .map(
+                          (e) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _EventCard(
+                              titulo: (e['titulo'] ?? '').toString(),
+                              materia:
+                                  (e['materia'] ?? 'Sin materia').toString(),
+                              tipo: (e['tipo'] ?? '').toString(),
+                              fecha: formatFecha((e['fecha'] ?? '').toString()),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+          ),
         ],
       ),
     );
@@ -508,21 +740,26 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _CalendarioPageState.border),
+        border: Border.all(
+          color: isDark ? const Color(0xFF393947) : _CalendarioPageState.border,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             titulo,
-            style: const TextStyle(
-              color: _CalendarioPageState.textDark,
+            style: TextStyle(
+              color: colors.onSurface,
               fontSize: 15,
               fontWeight: FontWeight.w800,
             ),
@@ -580,27 +817,37 @@ class _LegendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _CalendarioPageState.border),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF393947)
+              : _CalendarioPageState.border,
+        ),
       ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: const Row(
         children: [
-          _LegendItem(
-            color: _CalendarioPageState.primary,
-            text: 'Día actual',
-            filled: true,
+          Expanded(
+            child: _LegendItem(
+              color: _CalendarioPageState.primary,
+              text: 'Día actual',
+              filled: true,
+            ),
           ),
-          SizedBox(height: 14),
-          _LegendItem(
-            color: _CalendarioPageState.primary,
-            text: 'Días con eventos',
-            filled: false,
+          SizedBox(width: 10),
+          Expanded(
+            child: _LegendItem(
+              color: _CalendarioPageState.primary,
+              text: 'Días con eventos',
+              filled: false,
+            ),
           ),
         ],
       ),
@@ -621,39 +868,52 @@ class _LegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 31,
-          height: 31,
-          decoration: BoxDecoration(
-            color: filled ? color : Colors.white,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: color, width: 1.4),
-          ),
-          child: filled
-              ? null
-              : const Center(
-                  child: Text(
-                    '•',
-                    style: TextStyle(
-                      fontSize: 24,
-                      height: 1,
-                      color: Colors.black,
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              color: filled
+                  ? color
+                  : (isDark ? const Color(0xFF292934) : Colors.white),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: color, width: 1.4),
+            ),
+            child: filled
+                ? null
+                : const Center(
+                    child: Icon(
+                      Icons.circle,
+                      size: 5,
+                      color: _CalendarioPageState.primary,
                     ),
                   ),
-                ),
-        ),
-        const SizedBox(width: 14),
-        Text(
-          text,
-          style: const TextStyle(
-            color: _CalendarioPageState.textMuted,
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
           ),
-        ),
-      ],
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: colors.onSurface,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -61,6 +61,11 @@ class _PomodoroPageState extends State<PomodoroPage> {
   void initState() {
     super.initState();
 
+    final store = LocalDataStore.instance;
+    if (store.hasCached('materias')) {
+      materias = store.cached('materias');
+      loadingMaterias = false;
+    }
     _loadStats();
     _loadWeekStats();
     _loadMaterias();
@@ -285,7 +290,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
   Widget build(BuildContext context) {
     final min = (remainingSeconds ~/ 60).toString().padLeft(2, '0');
     final sec = (remainingSeconds % 60).toString().padLeft(2, '0');
-    final progress = (1 - (remainingSeconds / totalSeconds)).clamp(0.0, 1.0);
+    final progress = (remainingSeconds / totalSeconds).clamp(0.0, 1.0);
 
     return PopScope(
       canPop: !isRunning,
@@ -295,7 +300,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,12 +313,12 @@ class _PomodoroPageState extends State<PomodoroPage> {
                   children: [
                     _infoCard(),
                     const SizedBox(height: 22),
-                    const Text(
+                    Text(
                       'Materia (opcional)',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -388,21 +393,25 @@ class _PomodoroPageState extends State<PomodoroPage> {
   }
 
   Widget _infoCard() {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: cardBorder),
+        border: Border.all(
+          color: isDark ? const Color(0xFF393947) : cardBorder,
+        ),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Método Pomodoro',
             style: TextStyle(
-              color: textDark,
+              color: colors.onSurface,
               fontSize: 20,
               fontWeight: FontWeight.w800,
             ),
@@ -423,12 +432,14 @@ class _PomodoroPageState extends State<PomodoroPage> {
   }
 
   Widget _materiaSelector() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
     if (loadingMaterias) {
       return Container(
         height: 52,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F0F3),
+          color: isDark ? const Color(0xFF292934) : const Color(0xFFF0F0F3),
           borderRadius: BorderRadius.circular(10),
         ),
         child: const SizedBox(
@@ -443,7 +454,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
       value: materiaSeleccionadaId,
       decoration: InputDecoration(
         filled: true,
-        fillColor: const Color(0xFFF0F0F3),
+        fillColor: isDark ? const Color(0xFF292934) : const Color(0xFFF0F0F3),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 18,
           vertical: 14,
@@ -464,10 +475,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
           ),
         ),
       ),
-      hint: const Text(
+      hint: Text(
         'Sin materia específica',
         style: TextStyle(
-          color: textDark,
+          color: colors.onSurface,
           fontSize: 15,
           fontWeight: FontWeight.w700,
         ),
@@ -496,11 +507,14 @@ class _PomodoroPageState extends State<PomodoroPage> {
   }
 
   Widget _modeSelector() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 50,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: cardBorder),
+        border: Border.all(
+          color: isDark ? const Color(0xFF393947) : cardBorder,
+        ),
       ),
       child: Row(
         children: [
@@ -534,12 +548,13 @@ class _PomodoroPageState extends State<PomodoroPage> {
     required bool left,
     required VoidCallback onTap,
   }) {
+    final colors = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       child: Container(
         height: 50,
         decoration: BoxDecoration(
-          color: active ? primary : Colors.white,
+          color: active ? primary : colors.surface,
           borderRadius: BorderRadius.horizontal(
             left: left ? const Radius.circular(10) : Radius.zero,
             right: !left ? const Radius.circular(10) : Radius.zero,
@@ -550,14 +565,14 @@ class _PomodoroPageState extends State<PomodoroPage> {
           children: [
             Icon(
               icon,
-              color: active ? Colors.white : Colors.black,
+              color: active ? Colors.white : colors.onSurface,
               size: 22,
             ),
             const SizedBox(width: 12),
             Text(
               text,
               style: TextStyle(
-                color: active ? Colors.white : Colors.black,
+                color: active ? Colors.white : colors.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -569,6 +584,8 @@ class _PomodoroPageState extends State<PomodoroPage> {
   }
 
   Widget _timerCard(String min, String sec, double progress) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = isBreakMode
         ? const Color(0xFFA78BFA)
         : isRunning
@@ -584,8 +601,11 @@ class _PomodoroPageState extends State<PomodoroPage> {
         24,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: isDark ? const Color(0xFF393947) : Colors.transparent,
+        ),
         boxShadow: [
           BoxShadow(
             color: color.withOpacity(0.08),
@@ -812,6 +832,8 @@ class _PomodoroPageState extends State<PomodoroPage> {
   }
 
   Widget _sessionsCard() {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final sessionsCompleted = completedSessionsToday.clamp(0, 4);
     final value = sessionsCompleted / 4;
     final currentSession = (sessionsCompleted + 1).clamp(1, 4);
@@ -821,9 +843,11 @@ class _PomodoroPageState extends State<PomodoroPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: cardBorder),
+        border: Border.all(
+          color: isDark ? const Color(0xFF393947) : cardBorder,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -836,11 +860,11 @@ class _PomodoroPageState extends State<PomodoroPage> {
                 size: 24,
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Progreso de hoy',
                   style: TextStyle(
-                    color: textDark,
+                    color: colors.onSurface,
                     fontSize: 19,
                     fontWeight: FontWeight.w800,
                   ),
@@ -926,16 +950,18 @@ class _PomodoroPageState extends State<PomodoroPage> {
     required String title,
     required String value,
   }) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(
         vertical: 14,
         horizontal: 12,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F8FC),
+        color: isDark ? const Color(0xFF292934) : const Color(0xFFF8F8FC),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: cardBorder,
+          color: isDark ? const Color(0xFF393947) : cardBorder,
         ),
       ),
       child: Column(
@@ -957,8 +983,8 @@ class _PomodoroPageState extends State<PomodoroPage> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              color: textDark,
+            style: TextStyle(
+              color: colors.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
@@ -972,6 +998,8 @@ class _PomodoroPageState extends State<PomodoroPage> {
     required String day,
     required int minutes,
   }) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     Color levelColor;
 
     if (minutes == 0) {
@@ -991,16 +1019,16 @@ class _PomodoroPageState extends State<PomodoroPage> {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8F8FC),
+          color: isDark ? const Color(0xFF292934) : const Color(0xFFF8F8FC),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           children: [
             Text(
               day,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w700,
-                color: textDark,
+                color: colors.onSurface,
               ),
             ),
             const SizedBox(height: 14),
@@ -1033,18 +1061,22 @@ class _PomodoroPageState extends State<PomodoroPage> {
   }
 
   Widget _weeklyHistoryCard() {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: cardBorder),
+        border: Border.all(
+          color: isDark ? const Color(0xFF393947) : cardBorder,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(
                 Icons.bar_chart_rounded,
@@ -1055,7 +1087,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
               Text(
                 'Historial Semanal',
                 style: TextStyle(
-                  color: textDark,
+                  color: colors.onSurface,
                   fontSize: 19,
                   fontWeight: FontWeight.w800,
                 ),
@@ -1154,7 +1186,7 @@ class _PomodoroPainter extends CustomPainter {
         radius: radius,
       ),
       -pi / 2,
-      2 * pi * progress,
+      -2 * pi * progress,
       false,
       foreground,
     );

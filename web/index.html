@@ -31,6 +31,20 @@
 
   <title>hello_world</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Flutter ya proporciona su propio botón para mostrar la contraseña. */
+    input::-ms-reveal,
+    input::-ms-clear {
+      display: none;
+    }
+
+    input::-webkit-credentials-auto-fill-button {
+      visibility: hidden;
+      display: none !important;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

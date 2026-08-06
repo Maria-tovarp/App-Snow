@@ -29,6 +29,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _login() async {
+    FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
     ref.read(authLoadingProvider.notifier).state = true;
@@ -40,6 +41,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           );
 
       if (!mounted) return;
+      _formKey.currentState?.reset();
+      _emailCtrl.clear();
+      _passwordCtrl.clear();
+      _obscurePassword = true;
+
       context.go('/home');
     } catch (e) {
       if (!mounted) return;

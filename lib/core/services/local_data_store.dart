@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LocalDataStore {
@@ -5,6 +9,44 @@ class LocalDataStore {
   static final LocalDataStore instance = LocalDataStore._();
 
   final SupabaseClient _client = Supabase.instance.client;
+  final Map<String, List<Map<String, dynamic>>> _cache = {};
+
+  bool hasCached(String collection) => _cache.containsKey(collection);
+
+  List<Map<String, dynamic>> cached(String collection) =>
+      List<Map<String, dynamic>>.from(_cache[collection] ?? const []);
+
+  void cacheRows(String collection, List<Map<String, dynamic>> rows) {
+    unawaited(_saveCache(collection, rows));
+  }
+
+  Future<void> loadCache() async {
+    final userId = _userId;
+    if (userId == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    for (final collection in ['materias', 'tareas', 'metas', 'proyectos']) {
+      final raw = prefs.getString('data_${userId}_$collection');
+      if (raw == null) continue;
+      try {
+        _cache[collection] = List<Map<String, dynamic>>.from(
+          (jsonDecode(raw) as List).map((item) => Map<String, dynamic>.from(item)),
+        );
+      } catch (_) {
+        await prefs.remove('data_${userId}_$collection');
+      }
+    }
+  }
+
+  Future<void> _saveCache(
+    String collection,
+    List<Map<String, dynamic>> rows,
+  ) async {
+    final userId = _userId;
+    if (userId == null) return;
+    _cache[collection] = List<Map<String, dynamic>>.from(rows);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('data_${userId}_$collection', jsonEncode(rows));
+  }
 
   final Map<String, dynamic> profile = {
     'nombre': 'Usuario',
@@ -61,13 +103,15 @@ class LocalDataStore {
 
   Future<List<Map<String, dynamic>>> getMaterias() async {
     final userId = _userId;
-    if (userId == null) return [];
+    if (userId == null) return cached('materias');
     final response = await _client
         .from('materias')
         .select()
         .eq('user_id', userId)
         .order('created_at', ascending: false);
-    return _rows(response);
+    final rows = _rows(response);
+    unawaited(_saveCache('materias', rows));
+    return rows;
   }
 
   Future<void> createMateria(
@@ -102,12 +146,12 @@ class LocalDataStore {
 
   Future<List<Map<String, dynamic>>> getTareas() async {
     final userId = _userId;
-    if (userId == null) return [];
+    if (userId == null) return cached('tareas');
     final response = await _client.from('tareas').select('''
       id, titulo, descripcion, fecha_vencimiento, tipo, prioridad, dificultad, estado,
       materia_id, user_id, materias(nombre)
     ''').eq('user_id', userId).order('created_at', ascending: false);
-    return _rows(response).map((row) {
+    final rows = _rows(response).map((row) {
       final materia = row['materias'];
       return {
         ...row,
@@ -115,6 +159,8 @@ class LocalDataStore {
             materia is Map<String, dynamic> ? materia['nombre'] : null
       };
     }).toList();
+    unawaited(_saveCache('tareas', rows));
+    return rows;
   }
 
   Future<void> createTarea(Map<String, dynamic> tarea) async {
@@ -146,13 +192,15 @@ class LocalDataStore {
 
   Future<List<Map<String, dynamic>>> getMetas() async {
     final userId = _userId;
-    if (userId == null) return [];
+    if (userId == null) return cached('metas');
     final response = await _client
         .from('metas')
         .select()
         .eq('user_id', userId)
         .order('created_at', ascending: false);
-    return _rows(response);
+    final rows = _rows(response);
+    unawaited(_saveCache('metas', rows));
+    return rows;
   }
 
   Future<void> createMeta(
@@ -178,12 +226,12 @@ class LocalDataStore {
 
   Future<List<Map<String, dynamic>>> getProyectos() async {
     final userId = _userId;
-    if (userId == null) return [];
+    if (userId == null) return cached('proyectos');
     final response = await _client.from('proyectos').select('''
       id, titulo, descripcion, materia_id, fecha_inicio, fecha_fin,
       avance_porcentual, user_id, materias(nombre)
     ''').eq('user_id', userId).order('created_at', ascending: false);
-    return _rows(response).map((row) {
+    final rows = _rows(response).map((row) {
       final materia = row['materias'];
       return {
         ...row,
@@ -191,6 +239,8 @@ class LocalDataStore {
             materia is Map<String, dynamic> ? materia['nombre'] : null
       };
     }).toList();
+    unawaited(_saveCache('proyectos', rows));
+    return rows;
   }
 
   Future<void> createProyecto(Map<String, dynamic> proyecto) async {

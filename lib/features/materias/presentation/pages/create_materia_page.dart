@@ -16,16 +16,35 @@ class _CreateMateriaPageState extends State<CreateMateriaPage> {
   final _creditosCtrl = TextEditingController();
   final MateriaRepository _repository = MateriaRepository();
 
-  String selectedColor = '#5B4CF0';
+  String selectedColor = '#ABDEE6';
   bool isLoading = false;
 
   final List<String> colors = [
-    '#5B4CF0',
-    '#FF6B6B',
-    '#4ECDC4',
-    '#FFD166',
-    '#1A73E8',
-    '#2ECC71',
+    '#ABDEE6',
+    '#CBAACB',
+    '#FFFFB5',
+    '#FFCCB6',
+    '#F3B0C3',
+    '#C6DBDA',
+    '#FEE1E8',
+    '#FED7C3',
+    '#F6EAC2',
+    '#ECD5E3',
+    '#FF968A',
+    '#FFAEA5',
+    '#FFC5BF',
+    '#FFD8BE',
+    '#FFC8A2',
+    '#D4F0F0',
+    '#8FCACA',
+    '#CCE2CB',
+    '#B6CFB6',
+    '#97C1A9',
+    '#FCB9AA',
+    '#FFDBCC',
+    '#ECEAE4',
+    '#A2E1DB',
+    '#55CBCD',
   ];
 
   @override
@@ -145,6 +164,7 @@ class _CreateMateriaPageState extends State<CreateMateriaPage> {
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 10,
+                  runSpacing: 10,
                   children: colors.map((color) {
                     final isSelected = color == selectedColor;
                     return GestureDetector(
@@ -159,9 +179,12 @@ class _CreateMateriaPageState extends State<CreateMateriaPage> {
                         decoration: BoxDecoration(
                           color: _parseColor(color),
                           shape: BoxShape.circle,
-                          border: isSelected
-                              ? Border.all(color: Colors.black, width: 2)
-                              : null,
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFF302875)
+                                : const Color(0xFFE4E4EC),
+                            width: isSelected ? 3 : 1,
+                          ),
                         ),
                       ),
                     );

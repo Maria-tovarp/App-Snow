@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:helloworld/core/services/local_data_store.dart';
 
 import 'package:helloworld/features/materias/data/materia_model.dart';
 
@@ -17,7 +18,9 @@ class MateriaRepository implements MateriaRepositoryPort {
         .eq('user_id', user.id)
         .order('created_at', ascending: false);
 
-    return (response as List).map((e) => MateriaModel.fromJson(e)).toList();
+    final rows = List<Map<String, dynamic>>.from(response as List);
+    LocalDataStore.instance.cacheRows('materias', rows);
+    return rows.map((e) => MateriaModel.fromJson(e)).toList();
   }
 
   Future<void> createMateria({

@@ -20,6 +20,10 @@ class _MateriasPageState extends State<MateriasPage> {
   @override
   void initState() {
     super.initState();
+    if (_store.hasCached('materias')) {
+      materias = _store.cached('materias');
+      loading = false;
+    }
     _loadMaterias();
   }
 
@@ -111,13 +115,14 @@ class _MateriasPageState extends State<MateriasPage> {
     );
   }
 
-  Future<bool?> _deleteMateria(int index) {
-    return showDialog<bool>(
+  Future<void> _deleteMateria(int index) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
+        final colors = Theme.of(context).colorScheme;
         return AlertDialog(
           insetPadding: const EdgeInsets.symmetric(horizontal: 32),
-          backgroundColor: Colors.white,
+          backgroundColor: colors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(22),
           ),
@@ -170,10 +175,10 @@ class _MateriasPageState extends State<MateriasPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Cancelar',
                       style: TextStyle(
-                        color: Colors.black87,
+                        color: colors.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -206,12 +211,54 @@ class _MateriasPageState extends State<MateriasPage> {
         );
       },
     );
+
+    if (confirmed != true || !mounted) return;
+
+    final materia = Map<String, dynamic>.from(materias[index]);
+    final id = materia['id']?.toString();
+    if (id == null || id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se encontró el ID de la materia.')),
+      );
+      return;
+    }
+
+    setState(() => materias.removeAt(index));
+    _store.cacheRows('materias', materias);
+
+    try {
+      await _store.deleteMateria(id);
+      await _loadMaterias();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Materia eliminada correctamente'),
+          backgroundColor: primary,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        final restoreIndex = index.clamp(0, materias.length).toInt();
+        materias.insert(restoreIndex, materia);
+      });
+      _store.cacheRows('materias', materias);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo eliminar la materia: $error'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           Expanded(
@@ -372,12 +419,17 @@ class _MateriaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: 132,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE4E4EC)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF393947) : const Color(0xFFE4E4EC),
+        ),
       ),
       child: Row(
         children: [
@@ -404,8 +456,8 @@ class _MateriaCard extends StatelessWidget {
                           nombre.isEmpty ? 'Materia sin nombre' : nombre,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF20202A),
+                          style: TextStyle(
+                            color: colors.onSurface,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
@@ -438,9 +490,9 @@ class _MateriaCard extends StatelessWidget {
                     children: [
                       IconButton(
                         onPressed: onEdit,
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.edit_outlined,
-                          color: Colors.black,
+                          color: colors.onSurface,
                           size: 21,
                         ),
                       ),
@@ -485,23 +537,39 @@ class _MateriaModalState extends State<_MateriaModal> {
   final creditosCtrl = TextEditingController(text: '3');
 
   bool nombreError = false;
+  bool profesorError = false;
   bool creditosError = false;
 
   static const Color primary = Color(0xFF5B4CF0);
 
-  Color selectedColor = const Color(0xFFFF403B);
+  Color selectedColor = const Color(0xFFABDEE6);
 
   final List<Color> colors = const [
-    Color(0xFFFF403B),
-    Color(0xFFFF9800),
-    Color(0xFF12B981),
-    Color(0xFF2F80ED),
-    Color(0xFF7C4DFF),
-    Color(0xFFE91E63),
-    Color(0xFF00A99D),
-    Color(0xFFFF5722),
-    Color(0xFF5D6EF3),
-    Color(0xFF9B4DF0),
+    Color(0xFFABDEE6),
+    Color(0xFFCBAACB),
+    Color(0xFFFFFFB5),
+    Color(0xFFFFCCB6),
+    Color(0xFFF3B0C3),
+    Color(0xFFC6DBDA),
+    Color(0xFFFEE1E8),
+    Color(0xFFFED7C3),
+    Color(0xFFF6EAC2),
+    Color(0xFFECD5E3),
+    Color(0xFFFF968A),
+    Color(0xFFFFAEA5),
+    Color(0xFFFFC5BF),
+    Color(0xFFFFD8BE),
+    Color(0xFFFFC8A2),
+    Color(0xFFD4F0F0),
+    Color(0xFF8FCACA),
+    Color(0xFFCCE2CB),
+    Color(0xFFB6CFB6),
+    Color(0xFF97C1A9),
+    Color(0xFFFCB9AA),
+    Color(0xFFFFDBCC),
+    Color(0xFFECEAE4),
+    Color(0xFFA2E1DB),
+    Color(0xFF55CBCD),
   ];
 
   @override
@@ -525,7 +593,7 @@ class _MateriaModalState extends State<_MateriaModal> {
 
     if (intValue != null) return Color(intValue);
 
-    return const Color(0xFFFF403B);
+    return const Color(0xFFABDEE6);
   }
 
   @override
@@ -539,10 +607,11 @@ class _MateriaModalState extends State<_MateriaModal> {
   void _submit() {
     setState(() {
       nombreError = nombreCtrl.text.trim().isEmpty;
+      profesorError = profesorCtrl.text.trim().isEmpty;
       creditosError = creditosCtrl.text.trim().isEmpty;
     });
 
-    if (nombreError || creditosError) {
+    if (nombreError || profesorError || creditosError) {
       return;
     }
 
@@ -609,6 +678,8 @@ class _MateriaModalState extends State<_MateriaModal> {
           decoration: _decoration().copyWith(
             errorText: label == 'Nombre de la materia' && nombreError
                 ? 'Ingresa el nombre de la materia'
+                : label == 'Profesor' && profesorError
+                    ? 'Ingresa el nombre del profesor'
                 : label == 'Créditos' && creditosError
                     ? 'Ingresa los créditos'
                     : null,
@@ -621,6 +692,10 @@ class _MateriaModalState extends State<_MateriaModal> {
             if (label == 'Créditos' && creditosError) {
               setState(() => creditosError = false);
             }
+
+            if (label == 'Profesor' && profesorError) {
+              setState(() => profesorError = false);
+            }
           },
         ),
         const SizedBox(height: 12),
@@ -630,6 +705,8 @@ class _MateriaModalState extends State<_MateriaModal> {
 
   @override
   Widget build(BuildContext context) {
+    final colorsTheme = Theme.of(context).colorScheme;
+
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16),
       backgroundColor: Colors.transparent,
@@ -637,7 +714,7 @@ class _MateriaModalState extends State<_MateriaModal> {
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(24, 18, 24, 26),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorsTheme.surface,
           borderRadius: BorderRadius.circular(6),
           boxShadow: [
             BoxShadow(
@@ -658,8 +735,8 @@ class _MateriaModalState extends State<_MateriaModal> {
                   Text(
                     widget.isEdit ? 'Editar Materia' : 'Nueva Materia',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFF20202A),
+                    style: TextStyle(
+                      color: colorsTheme.onSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                     ),
@@ -670,11 +747,11 @@ class _MateriaModalState extends State<_MateriaModal> {
                       child: InkWell(
                         onTap: () => Navigator.pop(context),
                         borderRadius: BorderRadius.circular(20),
-                        child: const Padding(
+                        child: Padding(
                           padding: EdgeInsets.all(5),
                           child: Icon(
                             Icons.close,
-                            color: Color(0xFF4B4B55),
+                            color: colorsTheme.onSurface,
                             size: 22,
                           ),
                         ),
@@ -699,7 +776,7 @@ class _MateriaModalState extends State<_MateriaModal> {
                 controller: nombreCtrl,
               ),
               _input(
-                label: 'Profesor (opcional)',
+                label: 'Profesor',
                 controller: profesorCtrl,
               ),
               _input(
@@ -707,10 +784,10 @@ class _MateriaModalState extends State<_MateriaModal> {
                 controller: creditosCtrl,
                 keyboardType: TextInputType.number,
               ),
-              const Text(
+              Text(
                 'Color',
                 style: TextStyle(
-                  color: Color(0xFF20202A),
+                  color: colorsTheme.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -734,9 +811,12 @@ class _MateriaModalState extends State<_MateriaModal> {
                       decoration: BoxDecoration(
                         color: c,
                         shape: BoxShape.circle,
-                        border: selected
-                            ? Border.all(color: Colors.black, width: 3)
-                            : null,
+                        border: Border.all(
+                          color: selected
+                              ? const Color(0xFF302875)
+                              : const Color(0xFFE4E4EC),
+                          width: selected ? 3 : 1,
+                        ),
                       ),
                     ),
                   );
@@ -773,7 +853,7 @@ class _MateriaModalState extends State<_MateriaModal> {
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.black87,
+                    foregroundColor: colorsTheme.onSurface,
                     side: const BorderSide(
                       color: Color(0xFFD6D6DE),
                       width: 1,
@@ -782,10 +862,10 @@ class _MateriaModalState extends State<_MateriaModal> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Cancelar',
                     style: TextStyle(
-                      color: Colors.black87,
+                      color: colorsTheme.onSurface,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -828,11 +908,18 @@ class _BottomNavMaterias extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: colors.surface,
         border: Border(
-          top: BorderSide(color: Color(0xFFE7E7EF)),
+          top: BorderSide(
+            color: isDark
+                ? const Color(0xFF393947)
+                : const Color(0xFFE7E7EF),
+          ),
         ),
       ),
       child: SafeArea(

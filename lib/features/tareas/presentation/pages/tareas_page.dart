@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:helloworld/features/materias/data/materia_repository.dart';
 import 'package:helloworld/features/materias/data/materia_model.dart';
+import 'package:helloworld/core/services/local_data_store.dart';
 
 import 'package:helloworld/core/widgets/app_notification.dart';
 import '../../data/tarea_model.dart';
@@ -28,6 +29,14 @@ class _TareasPageState extends State<TareasPage> {
   @override
   void initState() {
     super.initState();
+    final store = LocalDataStore.instance;
+    if (store.hasCached('tareas')) {
+      tareas = store
+          .cached('tareas')
+          .map((item) => TareaModel.fromJson(item))
+          .toList();
+      loading = false;
+    }
     load();
   }
 
@@ -65,7 +74,7 @@ class _TareasPageState extends State<TareasPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
       body: RefreshIndicator(
         onRefresh: load,
@@ -96,7 +105,7 @@ class _TareasPageState extends State<TareasPage> {
         ),
       ),
       bottomNavigationBar: Container(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         child: const _BottomNav(currentIndex: 2),
       ),
     );
@@ -187,34 +196,36 @@ class _TareasPageState extends State<TareasPage> {
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFFE4E4EC),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF393947)
+                    : const Color(0xFFE4E4EC),
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.filter_list_rounded,
                   size: 21,
-                  color: Color(0xFF2D2D2D),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   filtroPrioridad,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF2D2D2D),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(
+                Icon(
                   Icons.keyboard_arrow_down_rounded,
                   size: 22,
-                  color: Color(0xFF2D2D2D),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ],
             ),
@@ -228,7 +239,9 @@ class _TareasPageState extends State<TareasPage> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDEDF5),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF292934)
+            : const Color(0xFFEDEDF5),
         borderRadius: BorderRadius.circular(30),
       ),
       child: Row(
@@ -249,7 +262,9 @@ class _TareasPageState extends State<TareasPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: active ? Colors.white : Colors.transparent,
+            color: active
+                ? Theme.of(context).colorScheme.surface
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(30),
           ),
           child: Center(
@@ -257,7 +272,9 @@ class _TareasPageState extends State<TareasPage> {
               text,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: active ? Colors.black : Colors.grey,
+                color: active
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Colors.grey,
               ),
             ),
           ),
@@ -270,9 +287,13 @@ class _TareasPageState extends State<TareasPage> {
     return Container(
       padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE4E4EC)),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF393947)
+              : const Color(0xFFE4E4EC),
+        ),
       ),
       child: Center(
         child: Text(
@@ -318,9 +339,13 @@ class _TareasPageState extends State<TareasPage> {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6E6EF)),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF393947)
+              : const Color(0xFFE6E6EF),
+        ),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -397,10 +422,10 @@ class _TareasPageState extends State<TareasPage> {
                           children: [
                             Text(
                               t.titulo,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             if ((t.descripcion ?? '').trim().isNotEmpty) ...[
@@ -426,8 +451,11 @@ class _TareasPageState extends State<TareasPage> {
                             icon: Icon(
                               Icons.edit_outlined,
                               color: isDone
-                                  ? Colors.grey.shade300
-                                  : Colors.black87,
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.28)
+                                  : Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           IconButton(
@@ -466,14 +494,8 @@ class _TareasPageState extends State<TareasPage> {
                         background: _prioridadColor(t.prioridad),
                         textColor: Colors.white,
                       ),
-                      _taskChip(
-                        t.tipo,
-                        background: const Color(0xFFE9E9F2),
-                      ),
-                      _taskChip(
-                        t.dificultad,
-                        background: const Color(0xFFE9E9F2),
-                      ),
+                      _taskChip(t.tipo),
+                      _taskChip(t.dificultad),
                     ],
                   ),
                   const SizedBox(height: 22),
@@ -484,7 +506,12 @@ class _TareasPageState extends State<TareasPage> {
                       vertical: 18,
                     ),
                     decoration: BoxDecoration(
-                      color: _fondoSemaforo(diasRestantes),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Color.alphaBlend(
+                              _colorSemaforo(diasRestantes).withOpacity(0.14),
+                              const Color(0xFF20202B),
+                            )
+                          : _fondoSemaforo(diasRestantes),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -493,7 +520,9 @@ class _TareasPageState extends State<TareasPage> {
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.65),
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white.withOpacity(0.08)
+                                : Colors.white.withOpacity(0.65),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -541,23 +570,34 @@ class _TareasPageState extends State<TareasPage> {
   Widget _taskChip(
     String text, {
     Color? background,
-    Color textColor = Colors.black87,
+    Color? textColor,
     bool outlined = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
+    final chipBackground = isDark ? const Color(0xFF292934) : null;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color:
-            outlined ? Colors.white : (background ?? const Color(0xFFF1F1F6)),
+        color: outlined
+            ? (chipBackground ?? Colors.white)
+            : (background ?? chipBackground ?? const Color(0xFFF1F1F6)),
         borderRadius: BorderRadius.circular(16),
-        border: outlined ? Border.all(color: const Color(0xFFD9D9E3)) : null,
+        border: outlined
+            ? Border.all(
+                color: isDark
+                    ? const Color(0xFF565665)
+                    : const Color(0xFFD9D9E3),
+              )
+            : null,
       ),
       child: Text(
         text,
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
-          color: textColor,
+          color: textColor ?? colors.onSurface,
         ),
       ),
     );
@@ -640,9 +680,10 @@ class _TareasPageState extends State<TareasPage> {
     return showDialog<bool>(
       context: context,
       builder: (context) {
+        final colors = Theme.of(context).colorScheme;
         return AlertDialog(
           insetPadding: const EdgeInsets.symmetric(horizontal: 32),
-          backgroundColor: Colors.white,
+          backgroundColor: colors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(22),
           ),
@@ -695,10 +736,10 @@ class _TareasPageState extends State<TareasPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Cancelar',
                       style: TextStyle(
-                        color: Colors.black87,
+                        color: colors.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1043,6 +1084,7 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final safeMateriaId =
         materias.any((m) => m.id == materiaId) ? materiaId : null;
 
@@ -1059,7 +1101,7 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
@@ -1267,6 +1309,8 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: (i) {
@@ -1291,7 +1335,8 @@ class _BottomNav extends StatelessWidget {
       selectedItemColor: const Color(0xFF5B4CF0),
       unselectedItemColor: const Color(0xFF8A8A9B),
       type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
+      backgroundColor:
+          isDark ? const Color(0xFF20202B) : Colors.white,
       elevation: 0,
       items: const [
         BottomNavigationBarItem(

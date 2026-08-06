@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:helloworld/core/services/app_prefs.dart';
+import 'package:helloworld/core/services/local_data_store.dart';
 import 'package:helloworld/core/storage/shared_preferences_session_storage.dart';
 
 class SplashPage extends StatefulWidget {
@@ -29,6 +31,15 @@ class _SplashPageState extends State<SplashPage> {
     if (!seenOnboarding) {
       context.go('/onboarding');
       return;
+    }
+
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (hasSession && userId != null) {
+      await Future.wait([
+        AppPrefs.loadHomeSummary(userId),
+        LocalDataStore.instance.loadCache(),
+      ]);
+      if (!mounted) return;
     }
 
     context.go(hasSession ? '/home' : '/login');

@@ -57,12 +57,13 @@ class OnboardingPage extends StatelessWidget {
                     child:
                         _BubbleIcon(icon: Icons.cruelty_free_sharp, size: 28),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 26),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(height: 34),
+                  Align(
+                    alignment: Alignment.center,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 26),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                         Stack(
                           clipBehavior: Clip.none,
                           alignment: Alignment.center,
@@ -218,7 +219,8 @@ class OnboardingPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 24),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],

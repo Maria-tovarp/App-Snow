@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:helloworld/core/services/local_data_store.dart';
 
 import 'tarea_model.dart';
 import 'package:helloworld/features/tareas/domain/repositories/tarea_repository_port.dart';
@@ -26,7 +27,9 @@ class TareaRepository implements TareaRepositoryPort {
           materias!tareas_materia_id_fkey(nombre)
         ''').eq('user_id', user.id).order('created_at', ascending: false);
 
-    return (response as List).map((json) => TareaModel.fromJson(json)).toList();
+    final rows = List<Map<String, dynamic>>.from(response as List);
+    LocalDataStore.instance.cacheRows('tareas', rows);
+    return rows.map((json) => TareaModel.fromJson(json)).toList();
   }
 
   @override

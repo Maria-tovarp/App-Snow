@@ -29,3 +29,38 @@ final appTheme = ThemeData(
     ),
   ),
 );
+
+final appDarkTheme = ThemeData(
+  useMaterial3: true,
+  brightness: Brightness.dark,
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: const Color(0xFF6C63FF),
+    brightness: Brightness.dark,
+  ),
+  scaffoldBackgroundColor: const Color(0xFF15151D),
+  cardColor: const Color(0xFF20202B),
+  fontFamily: 'Roboto',
+  textTheme: const TextTheme(
+    titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+    titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+    bodyLarge: TextStyle(fontSize: 15),
+    bodyMedium: TextStyle(fontSize: 13),
+    labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+  ),
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: const Color(0xFF292934),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Color(0xFF8C82FF), width: 1.2),
+    ),
+  ),
+);

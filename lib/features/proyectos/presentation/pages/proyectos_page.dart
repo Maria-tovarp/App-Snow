@@ -23,6 +23,14 @@ class _ProyectosPageState extends State<ProyectosPage> {
   @override
   void initState() {
     super.initState();
+    final store = LocalDataStore.instance;
+    if (store.hasCached('proyectos')) {
+      proyectos = store
+          .cached('proyectos')
+          .map((item) => ProyectoModel.fromJson(item))
+          .toList();
+      loading = false;
+    }
     load();
   }
 
@@ -47,9 +55,10 @@ class _ProyectosPageState extends State<ProyectosPage> {
     return showDialog<bool>(
       context: context,
       builder: (context) {
+        final colors = Theme.of(context).colorScheme;
         return AlertDialog(
           insetPadding: const EdgeInsets.symmetric(horizontal: 32),
-          backgroundColor: Colors.white,
+          backgroundColor: colors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(22),
           ),
@@ -102,10 +111,10 @@ class _ProyectosPageState extends State<ProyectosPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Cancelar',
                       style: TextStyle(
-                        color: Colors.black87,
+                        color: colors.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -386,7 +395,7 @@ class _ProyectosPageState extends State<ProyectosPage> {
         proyectos.where((p) => p.avancePorcentual >= 100).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: load,
         child: ListView(
@@ -521,9 +530,13 @@ class _ProyectosPageState extends State<ProyectosPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 42),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E2EA)),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF393947)
+              : const Color(0xFFE2E2EA),
+        ),
       ),
       child: const Column(
         children: [
@@ -561,9 +574,13 @@ class _ProyectosPageState extends State<ProyectosPage> {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E2EA)),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF393947)
+              : const Color(0xFFE2E2EA),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -654,10 +671,14 @@ class _ProyectosPageState extends State<ProyectosPage> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF292934)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: const Color(0xFFD7D7E1),
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF454553)
+                                  : const Color(0xFFD7D7E1),
                             ),
                           ),
                           child: Row(
@@ -1076,6 +1097,7 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final safeMateriaId =
         materias.any((m) => m['id'] == materiaId) ? materiaId : null;
 
@@ -1095,7 +1117,7 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
           ),
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
@@ -1236,16 +1258,16 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black87,
+                      foregroundColor: colors.onSurface,
                       side: const BorderSide(color: Color(0xFFD9D9E3)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Cancelar',
                       style: TextStyle(
-                        color: Colors.black87,
+                        color: colors.onSurface,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),

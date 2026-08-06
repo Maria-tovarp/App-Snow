@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:helloworld/core/services/local_data_store.dart';
 import 'meta_model.dart';
 
 import 'package:helloworld/features/metas/domain/repositories/meta_repository_port.dart';
@@ -16,7 +17,9 @@ class MetaRepository implements MetaRepositoryPort {
         .eq('user_id', user.id)
         .order('created_at', ascending: false);
 
-    return (response as List).map((e) => MetaModel.fromJson(e)).toList();
+    final rows = List<Map<String, dynamic>>.from(response as List);
+    LocalDataStore.instance.cacheRows('metas', rows);
+    return rows.map((e) => MetaModel.fromJson(e)).toList();
   }
 
   Future<void> createMeta({

@@ -6,6 +6,7 @@ import '../features/auth/presentation/pages/register_page.dart';
 import '../features/auth/presentation/pages/splash_page.dart';
 import '../features/calendario/presentation/pages/calendario_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
+import '../features/horario/presentation/pages/horario_page.dart';
 import '../features/materias/presentation/pages/materias_page.dart';
 import '../features/metas/presentation/pages/metas_page.dart';
 import '../features/onboarding/presentation/pages/onboarding_page.dart';
@@ -17,7 +18,7 @@ import '../features/tareas/presentation/pages/tareas_page.dart';
 final appRouter = GoRouter(
   // Para la sustentación/video, la app inicia directamente en el onboarding.
   // Cuando ya no quieras forzarlo, vuelve a cambiarlo por: initialLocation: '/'
-  initialLocation: '/onboarding',
+  initialLocation: '/',
   routes: [
     GoRoute(path: '/', builder: (context, state) => const SplashPage()),
     GoRoute(
@@ -29,18 +30,68 @@ final appRouter = GoRouter(
     GoRoute(
         path: '/forgot-password',
         builder: (context, state) => const ForgotPasswordPage()),
-    GoRoute(path: '/home', builder: (context, state) => const HomePage()),
     GoRoute(
-        path: '/materias', builder: (context, state) => const MateriasPage()),
-    GoRoute(path: '/tareas', builder: (context, state) => const TareasPage()),
-    GoRoute(path: '/metas', builder: (context, state) => const MetasPage()),
-    GoRoute(path: '/perfil', builder: (context, state) => const ProfilePage()),
+      path: '/home',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: const HomePage(),
+      ),
+    ),
     GoRoute(
-        path: '/proyectos', builder: (context, state) => const ProyectosPage()),
+      path: '/materias',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: const MateriasPage(),
+      ),
+    ),
     GoRoute(
-        path: '/pomodoro', builder: (context, state) => const PomodoroPage()),
+      path: '/tareas',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: const TareasPage(),
+      ),
+    ),
     GoRoute(
-        path: '/calendario',
-        builder: (context, state) => const CalendarioPage()),
+      path: '/metas',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: const MetasPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/perfil',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: const ProfilePage(),
+      ),
+    ),
+    GoRoute(
+      path: '/proyectos',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: const ProyectosPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/pomodoro',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: const PomodoroPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/calendario',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: const CalendarioPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/horario',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: const HorarioPage(),
+      ),
+    ),
   ],
 );

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:helloworld/core/services/auth_session_service.dart';
 import 'package:helloworld/core/services/local_data_store.dart';
+import 'package:helloworld/core/services/theme_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -37,17 +38,47 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+    _restoreCachedData();
     _load();
   }
 
-  Future<void> _load() async {
-    await _store.initialize();
+  void _restoreCachedData() {
+    if (!_store.hasCached('materias') &&
+        !_store.hasCached('tareas') &&
+        !_store.hasCached('proyectos') &&
+        !_store.hasCached('metas')) {
+      return;
+    }
 
-    final materiasData = await _store.getMaterias();
-    final tareasData = await _store.getTareas();
-    final proyectosData = await _store.getProyectos();
-    final metasData = await _store.getMetas();
-    final pomodoro = await _store.getTodayPomodoroStats();
+    final materiasData = _store.cached('materias');
+    final tareasData = _store.cached('tareas');
+    final proyectosData = _store.cached('proyectos');
+    final metasData = _store.cached('metas');
+    profile = Map<String, dynamic>.from(_store.profile);
+    materias = materiasData.length;
+    tareasCompletadas =
+        tareasData.where((t) => t['estado'] == 'completada').length;
+    tareasPendientes =
+        tareasData.where((t) => t['estado'] != 'completada').length;
+    proyectos = proyectosData.length;
+    metas = metasData.length;
+    loading = false;
+  }
+
+  Future<void> _load() async {
+    final results = await Future.wait<Object?>([
+      _store.initialize(),
+      _store.getMaterias(),
+      _store.getTareas(),
+      _store.getProyectos(),
+      _store.getMetas(),
+      _store.getTodayPomodoroStats(),
+    ]);
+    final materiasData = results[1] as List<Map<String, dynamic>>;
+    final tareasData = results[2] as List<Map<String, dynamic>>;
+    final proyectosData = results[3] as List<Map<String, dynamic>>;
+    final metasData = results[4] as List<Map<String, dynamic>>;
+    final pomodoro = results[5] as Map<String, int>;
 
     if (!mounted) return;
 
@@ -164,7 +195,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           Expanded(
@@ -269,6 +300,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           university: _university,
                         ),
                         const SizedBox(height: 18),
+                        const _ThemeSettingsCard(),
+                        const SizedBox(height: 18),
                         SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -310,6 +343,85 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
+class _ThemeSettingsCard extends StatelessWidget {
+  const _ThemeSettingsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: ThemeService.instance,
+      builder: (context, _) {
+        final isDark = ThemeService.instance.isDark;
+        final colors = Theme.of(context).colorScheme;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark
+                  ? const Color(0xFF363642)
+                  : const Color(0xFFE7E7EF),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF343044)
+                      : const Color(0xFFEDEAFF),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  isDark
+                      ? Icons.dark_mode_outlined
+                      : Icons.light_mode_outlined,
+                  color: isDark
+                      ? const Color(0xFFC5BEFF)
+                      : _ProfilePageState.primary,
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Apariencia',
+                      style: TextStyle(
+                        color: colors.onSurface,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      isDark ? 'Tema oscuro activado' : 'Tema claro activado',
+                      style: TextStyle(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: isDark,
+                activeColor: _ProfilePageState.primary,
+                onChanged: ThemeService.instance.setDarkMode,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _Header extends StatelessWidget {
   final VoidCallback onEdit;
 
@@ -319,6 +431,9 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
@@ -404,11 +519,14 @@ class _ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 22),
       decoration: BoxDecoration(
-        color: _ProfilePageState.softBg,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -426,9 +544,13 @@ class _ProfileCard extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFEDEBFF),
+              color: isDark
+                  ? const Color(0xFF302B55)
+                  : const Color(0xFFEDEBFF),
               border: Border.all(
-                color: const Color(0xFFD5D0FF),
+                color: isDark
+                    ? const Color(0xFF5F55A5)
+                    : const Color(0xFFD5D0FF),
                 width: 4,
               ),
             ),
@@ -445,8 +567,8 @@ class _ProfileCard extends StatelessWidget {
           Text(
             name,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: _ProfilePageState.textDark,
+            style: TextStyle(
+              color: colors.onSurface,
               fontSize: 23,
               fontWeight: FontWeight.w800,
             ),
@@ -455,8 +577,8 @@ class _ProfileCard extends StatelessWidget {
           Text(
             career,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: _ProfilePageState.textMuted,
+            style: TextStyle(
+              color: colors.onSurfaceVariant,
               fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
@@ -468,16 +590,18 @@ class _ProfileCard extends StatelessWidget {
               vertical: 7,
             ),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0F0F4),
+              color: isDark
+                  ? const Color(0xFF292934)
+                  : const Color(0xFFF0F0F4),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.menu_book_outlined,
                   size: 16,
-                  color: _ProfilePageState.textDark,
+                  color: colors.onSurface,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -547,9 +671,12 @@ class _EditProfileCardState extends State<_EditProfileCard> {
   }
 
   InputDecoration _decoration({bool readOnly = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecoration(
       filled: true,
-      fillColor: readOnly ? const Color(0xFFE6E6EB) : const Color(0xFFF2F2F5),
+      fillColor: isDark
+          ? (readOnly ? const Color(0xFF24242D) : const Color(0xFF2B2B36))
+          : (readOnly ? const Color(0xFFE6E6EB) : const Color(0xFFF2F2F5)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
@@ -569,10 +696,10 @@ class _EditProfileCardState extends State<_EditProfileCard> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: _ProfilePageState.textDark,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 4),
@@ -600,22 +727,27 @@ class _EditProfileCardState extends State<_EditProfileCard> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFDCD6FF)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF3B3B49) : const Color(0xFFDCD6FF),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Editar Información',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: _ProfilePageState.textDark,
+              color: colors.onSurface,
             ),
           ),
           const SizedBox(height: 6),
@@ -704,13 +836,16 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFE2DFFF),
+          color: isDark ? const Color(0xFF393947) : const Color(0xFFE2DFFF),
           width: 1.2,
         ),
       ),
@@ -720,7 +855,7 @@ class _StatCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: iconBg,
+              color: isDark ? iconColor.withOpacity(0.16) : iconBg,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: iconColor, size: 20),
@@ -733,10 +868,10 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: Colors.black,
+                    color: colors.onSurface,
                   ),
                 ),
                 Text(
@@ -772,32 +907,36 @@ class _PerformanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hours = minutes ~/ 60;
     final mins = minutes % 60;
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7E7EF)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF393947) : const Color(0xFFE7E7EF),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.trending_up,
                 color: _ProfilePageState.primary,
                 size: 24,
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Text(
                 'Rendimiento',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: _ProfilePageState.textDark,
+                  color: colors.onSurface,
                 ),
               ),
             ],
@@ -844,10 +983,12 @@ class _MetricRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F8),
+        color: isDark ? const Color(0xFF292934) : const Color(0xFFF5F5F8),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -857,10 +998,10 @@ class _MetricRow extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: _ProfilePageState.textDark,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -889,23 +1030,28 @@ class _AccountInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7E7EF)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF393947) : const Color(0xFFE7E7EF),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Información de la cuenta',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: Colors.black,
+              color: colors.onSurface,
             ),
           ),
           const SizedBox(height: 20),
@@ -939,10 +1085,13 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F8),
+        color: isDark ? const Color(0xFF292934) : const Color(0xFFF5F5F8),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -955,7 +1104,7 @@ class _InfoRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: _ProfilePageState.textMuted,
                     fontSize: 13,
                   ),
@@ -964,10 +1113,10 @@ class _InfoRow extends StatelessWidget {
                 Text(
                   value,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: _ProfilePageState.textDark,
+                    color: colors.onSurface,
                   ),
                 ),
               ],
@@ -1005,13 +1154,18 @@ class _ProfileBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const active = _ProfilePageState.primary;
-    const inactive = _ProfilePageState.textMuted;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inactive = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
-          top: BorderSide(color: Color(0xFFE7E7EF)),
+          top: BorderSide(
+            color: isDark
+                ? const Color(0xFF393947)
+                : const Color(0xFFE7E7EF),
+          ),
         ),
       ),
       child: SafeArea(
