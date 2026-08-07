@@ -140,7 +140,6 @@ class _PomodoroPageState extends State<PomodoroPage> {
   Future<void> _tryLeavePomodoro() async {
     if (isRunning) {
       await _showExitBlockedMessage();
-      return;
     }
 
     if (!mounted) return;
@@ -292,61 +291,55 @@ class _PomodoroPageState extends State<PomodoroPage> {
     final sec = (remainingSeconds % 60).toString().padLeft(2, '0');
     final progress = (remainingSeconds / totalSeconds).clamp(0.0, 1.0);
 
-    return PopScope(
-      canPop: !isRunning,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && isRunning) {
-          _showExitBlockedMessage();
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _header(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 22, 18, 28),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _infoCard(),
-                    const SizedBox(height: 22),
-                    Text(
-                      'Materia (opcional)',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _header(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 22, 18, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _infoCard(),
+                  const SizedBox(height: 22),
+                  Text(
+                    'Materia (opcional)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
-                    const SizedBox(height: 12),
-                    _materiaSelector(),
-                    const SizedBox(height: 22),
-                    _modeSelector(),
-                    const SizedBox(height: 22),
-                    _timerCard(min, sec, progress),
-                    const SizedBox(height: 22),
-                    _sessionsCard(),
-                    const SizedBox(height: 22),
-                    _weeklyHistoryCard(),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 12),
+                  _materiaSelector(),
+                  const SizedBox(height: 22),
+                  _modeSelector(),
+                  const SizedBox(height: 22),
+                  _timerCard(min, sec, progress),
+                  const SizedBox(height: 22),
+                  _sessionsCard(),
+                  const SizedBox(height: 22),
+                  _weeklyHistoryCard(),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _header() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
-      decoration: const BoxDecoration(
-        color: primary,
+      padding: const EdgeInsets.fromLTRB(24, 38, 20, 24),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF211B52) : primary,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

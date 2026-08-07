@@ -499,65 +499,67 @@ class _TareasPageState extends State<TareasPage> {
                     ],
                   ),
                   const SizedBox(height: 22),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 18,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Color.alphaBlend(
-                              _colorSemaforo(diasRestantes).withOpacity(0.14),
-                              const Color(0xFF20202B),
-                            )
-                          : _fondoSemaforo(diasRestantes),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white.withOpacity(0.08)
-                                : Colors.white.withOpacity(0.65),
-                            shape: BoxShape.circle,
+                  if (!isDone)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 18,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Color.alphaBlend(
+                                _colorSemaforo(diasRestantes).withOpacity(0.14),
+                                const Color(0xFF20202B),
+                              )
+                            : _fondoSemaforo(diasRestantes),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white.withOpacity(0.08)
+                                  : Colors.white.withOpacity(0.65),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.schedule,
+                              color: _colorSemaforo(diasRestantes),
+                              size: 22,
+                            ),
                           ),
-                          child: Icon(
-                            Icons.schedule,
-                            color: _colorSemaforo(diasRestantes),
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _formatFechaBonita(t.fechaVencimiento),
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _formatFechaBonita(t.fechaVencimiento),
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _mensajeDias(diasRestantes),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: _colorSemaforo(diasRestantes),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _mensajeDias(diasRestantes),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: _colorSemaforo(diasRestantes),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -586,9 +588,8 @@ class _TareasPageState extends State<TareasPage> {
         borderRadius: BorderRadius.circular(16),
         border: outlined
             ? Border.all(
-                color: isDark
-                    ? const Color(0xFF565665)
-                    : const Color(0xFFD9D9E3),
+                color:
+                    isDark ? const Color(0xFF565665) : const Color(0xFFD9D9E3),
               )
             : null,
       ),
@@ -1089,7 +1090,7 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
         materias.any((m) => m.id == materiaId) ? materiaId : null;
 
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 30),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16),
       backgroundColor: Colors.transparent,
       child: AnimatedPadding(
         duration: const Duration(milliseconds: 150),
@@ -1099,10 +1100,10 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
         ),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+          padding: const EdgeInsets.fromLTRB(24, 18, 24, 26),
           decoration: BoxDecoration(
             color: colors.surface,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(6),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.18),
@@ -1114,32 +1115,48 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   children: [
                     const Expanded(child: SizedBox()),
                     Text(
                       isEdit ? 'Editar Tarea' : 'Nueva Tarea',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.onSurface,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     Expanded(
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close),
+                        child: InkWell(
+                          onTap: () => Navigator.pop(context),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.all(5),
+                            child: Icon(
+                              Icons.close,
+                              color: colors.onSurface,
+                              size: 22,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                const Text(
+                const SizedBox(height: 10),
+                Text(
                   'Completa la información de la tarea',
-                  style: TextStyle(color: Color(0xFF8A8A9B), fontSize: 14),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: colors.onSurfaceVariant,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
                 const SizedBox(height: 22),
                 TextField(
@@ -1335,8 +1352,7 @@ class _BottomNav extends StatelessWidget {
       selectedItemColor: const Color(0xFF5B4CF0),
       unselectedItemColor: const Color(0xFF8A8A9B),
       type: BottomNavigationBarType.fixed,
-      backgroundColor:
-          isDark ? const Color(0xFF20202B) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF20202B) : Colors.white,
       elevation: 0,
       items: const [
         BottomNavigationBarItem(

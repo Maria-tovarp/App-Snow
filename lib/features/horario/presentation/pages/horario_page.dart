@@ -266,8 +266,7 @@ class _HorarioPageState extends State<HorarioPage> {
   Future<void> _downloadPdfLegacy() async {
     try {
       final document = pw.Document();
-      final sorted = [..._classes]
-        ..sort((a, b) {
+      final sorted = [..._classes]..sort((a, b) {
           final day = a.diaSemana.compareTo(b.diaSemana);
           return day != 0 ? day : a.horaInicio.compareTo(b.horaInicio);
         });
@@ -337,6 +336,9 @@ class _HorarioPageState extends State<HorarioPage> {
   }
 
   Future<void> _showDownloadOptions() async {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -345,7 +347,7 @@ class _HorarioPageState extends State<HorarioPage> {
           margin: const EdgeInsets.all(12),
           padding: const EdgeInsets.fromLTRB(18, 10, 18, 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
@@ -357,23 +359,26 @@ class _HorarioPageState extends State<HorarioPage> {
                   width: 42,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD9D9E3),
+                    color: isDark
+                        ? const Color(0xFF5A5A6A)
+                        : const Color(0xFFD9D9E3),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
               const SizedBox(height: 18),
-              const Text(
+              Text(
                 'Descargar horario',
                 style: TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.w800,
+                  color: colors.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Selecciona el formato que deseas guardar',
-                style: TextStyle(color: _muted, fontSize: 12),
+                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
               ),
               const SizedBox(height: 16),
               _DownloadOption(
@@ -432,36 +437,36 @@ class _HorarioPageState extends State<HorarioPage> {
         children: [
           SafeArea(
             child: RefreshIndicator(
-          color: _primary,
-          onRefresh: _load,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(child: _buildHeader()),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 100),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    if (_loading)
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(36),
-                          child: CircularProgressIndicator(color: _primary),
-                        ),
-                      )
-                    else
-                      _WeeklyTimetable(
-                        classes: _classes,
-                        captureKey: _scheduleKey,
-                        highlightToday: !_exportingSchedule,
-                        onClassTap: _openForm,
-                        onClassLongPress: _delete,
-                      ),
-                  ]),
-                ),
+              color: _primary,
+              onRefresh: _load,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(child: _buildHeader()),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 100),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        if (_loading)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(36),
+                              child: CircularProgressIndicator(color: _primary),
+                            ),
+                          )
+                        else
+                          _WeeklyTimetable(
+                            classes: _classes,
+                            captureKey: _scheduleKey,
+                            highlightToday: !_exportingSchedule,
+                            onClassTap: _openForm,
+                            onClassLongPress: _delete,
+                          ),
+                      ]),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
             ),
           ),
           if (_generatingPdf)
@@ -577,7 +582,6 @@ class _HorarioPageState extends State<HorarioPage> {
       ),
     );
   }
-
 }
 
 class _DownloadOption extends StatelessWidget {
@@ -736,110 +740,112 @@ class _WeeklyTimetable extends StatelessWidget {
                 height: _totalHeight,
                 child: Stack(
                   children: [
-              const Positioned.fill(child: ColoredBox(color: Colors.white)),
-              ...List.generate(visibleDays.length, (index) {
-                final day = visibleDays[index];
-                if (!highlightToday ||
-                    DateTime.now().weekday != day) {
-                  return const SizedBox.shrink();
-                }
-                return Positioned(
-                  left: _timeWidth + index * dayWidth,
-                  top: _headerHeight,
-                  bottom: 0,
-                  width: dayWidth,
-                  child: const ColoredBox(color: Color(0xFFFAF9FF)),
-                );
-              }),
-              ...List.generate(visibleDays.length + 1, (index) {
-                final left = _timeWidth + index * dayWidth;
-                return Positioned(
-                  left: left,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(width: 1, color: const Color(0xFFECECF2)),
-                );
-              }),
-              ...List.generate(_endHour - _startHour + 1, (index) {
-                final top = _headerHeight + index * _hourHeight;
-                return Positioned(
-                  left: 0,
-                  right: 0,
-                  top: top,
-                  child: Container(height: 1, color: const Color(0xFFECECF2)),
-                );
-              }),
-              Positioned(
-                left: 0,
-                top: 0,
-                right: 0,
-                height: _headerHeight,
-                child: Container(color: const Color(0xFFF8F7FF)),
-              ),
-              ...List.generate(visibleDays.length, (index) {
-                final day = visibleDays[index];
-                final isToday = highlightToday &&
-                    DateTime.now().weekday == day;
-                return Positioned(
-                  left: _timeWidth + index * dayWidth,
-                  top: 0,
-                  width: dayWidth,
-                  height: _headerHeight,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isToday
-                            ? _HorarioPageState._primary
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Text(
-                        _days[day - 1],
-                        style: TextStyle(
-                          color: isToday
-                              ? Colors.white
-                              : _HorarioPageState._muted,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
+                    const Positioned.fill(
+                        child: ColoredBox(color: Colors.white)),
+                    ...List.generate(visibleDays.length, (index) {
+                      final day = visibleDays[index];
+                      if (!highlightToday || DateTime.now().weekday != day) {
+                        return const SizedBox.shrink();
+                      }
+                      return Positioned(
+                        left: _timeWidth + index * dayWidth,
+                        top: _headerHeight,
+                        bottom: 0,
+                        width: dayWidth,
+                        child: const ColoredBox(color: Color(0xFFFAF9FF)),
+                      );
+                    }),
+                    ...List.generate(visibleDays.length + 1, (index) {
+                      final left = _timeWidth + index * dayWidth;
+                      return Positioned(
+                        left: left,
+                        top: 0,
+                        bottom: 0,
+                        child:
+                            Container(width: 1, color: const Color(0xFFECECF2)),
+                      );
+                    }),
+                    ...List.generate(_endHour - _startHour + 1, (index) {
+                      final top = _headerHeight + index * _hourHeight;
+                      return Positioned(
+                        left: 0,
+                        right: 0,
+                        top: top,
+                        child: Container(
+                            height: 1, color: const Color(0xFFECECF2)),
+                      );
+                    }),
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      right: 0,
+                      height: _headerHeight,
+                      child: Container(color: const Color(0xFFF8F7FF)),
+                    ),
+                    ...List.generate(visibleDays.length, (index) {
+                      final day = visibleDays[index];
+                      final isToday =
+                          highlightToday && DateTime.now().weekday == day;
+                      return Positioned(
+                        left: _timeWidth + index * dayWidth,
+                        top: 0,
+                        width: dayWidth,
+                        height: _headerHeight,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isToday
+                                  ? _HorarioPageState._primary
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Text(
+                              _days[day - 1],
+                              style: TextStyle(
+                                color: isToday
+                                    ? Colors.white
+                                    : _HorarioPageState._muted,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
                         ),
+                      );
+                    }),
+                    ...List.generate(_endHour - _startHour, (index) {
+                      final hour = _startHour + index;
+                      return Positioned(
+                        left: 0,
+                        top: _headerHeight + index * _hourHeight - 7,
+                        width: _timeWidth - 5,
+                        child: Text(
+                          '${hour.toString().padLeft(2, '0')}:00',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            color: _HorarioPageState._muted,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }),
+                    ...classes.where((item) {
+                      final start = _minutes(item.horaInicio);
+                      return visibleDays.contains(item.diaSemana) &&
+                          start < _endHour * 60 &&
+                          _minutes(item.horaFin) > _startHour * 60;
+                    }).map(
+                      (item) => _classBlock(
+                        item,
+                        dayWidth,
+                        visibleDays.indexOf(item.diaSemana),
                       ),
                     ),
-                  ),
-                );
-              }),
-              ...List.generate(_endHour - _startHour, (index) {
-                final hour = _startHour + index;
-                return Positioned(
-                  left: 0,
-                  top: _headerHeight + index * _hourHeight - 7,
-                  width: _timeWidth - 5,
-                  child: Text(
-                    '${hour.toString().padLeft(2, '0')}:00',
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      color: _HorarioPageState._muted,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                );
-              }),
-                ...classes.where((item) {
-                  final start = _minutes(item.horaInicio);
-                  return visibleDays.contains(item.diaSemana) &&
-                      start < _endHour * 60 &&
-                      _minutes(item.horaFin) > _startHour * 60;
-                }).map(
-                  (item) => _classBlock(
-                    item,
-                    dayWidth,
-                    visibleDays.indexOf(item.diaSemana),
-                  ),
-                ),
                   ],
                 ),
               ),
@@ -855,20 +861,22 @@ class _WeeklyTimetable extends StatelessWidget {
     double dayWidth,
     int columnIndex,
   ) {
-    final start = _minutes(item.horaInicio).clamp(
-      _startHour * 60,
-      _endHour * 60,
-    ).toInt();
-    final end = _minutes(item.horaFin).clamp(
-      _startHour * 60,
-      _endHour * 60,
-    ).toInt();
-    final top = _headerHeight +
-        (start - _startHour * 60) / 60 * _hourHeight +
-        2;
-    final height = ((end - start) / 60 * _hourHeight - 4)
-        .clamp(42.0, 500.0)
-        .toDouble();
+    final start = _minutes(item.horaInicio)
+        .clamp(
+          _startHour * 60,
+          _endHour * 60,
+        )
+        .toInt();
+    final end = _minutes(item.horaFin)
+        .clamp(
+          _startHour * 60,
+          _endHour * 60,
+        )
+        .toInt();
+    final top =
+        _headerHeight + (start - _startHour * 60) / 60 * _hourHeight + 2;
+    final height =
+        ((end - start) / 60 * _hourHeight - 4).clamp(42.0, 500.0).toDouble();
     final color = Color(item.color);
     final foreground = Color.lerp(
       color,
@@ -1051,7 +1059,8 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
     _salon = TextEditingController(text: item?.salon ?? '');
     _materiaId = item?.materiaId ?? widget.materias.first['id'].toString();
     _day = item?.diaSemana ?? 1;
-    _start = _parseTime(item?.horaInicio) ?? const TimeOfDay(hour: 7, minute: 0);
+    _start =
+        _parseTime(item?.horaInicio) ?? const TimeOfDay(hour: 7, minute: 0);
     _end = _parseTime(item?.horaFin) ?? const TimeOfDay(hour: 9, minute: 0);
   }
 
@@ -1214,11 +1223,14 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
   }
 
   InputDecoration _decoration(String label, IconData icon) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon, size: 20),
+      prefixIcon: Icon(icon, size: 20, color: colors.primary),
       filled: true,
-      fillColor: const Color(0xFFF3F3F6),
+      fillColor: isDark ? const Color(0xFF292934) : const Color(0xFFF3F3F6),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -1230,8 +1242,8 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: _HorarioPageState._primary,
+        borderSide: BorderSide(
+          color: colors.primary,
           width: 1.2,
         ),
       ),
@@ -1248,6 +1260,9 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(20),
@@ -1255,13 +1270,15 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
         constraints: const BoxConstraints(maxWidth: 430),
         padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x1A000000),
+              color: isDark
+                  ? Colors.black.withOpacity(0.35)
+                  : const Color(0x1A000000),
               blurRadius: 28,
-              offset: Offset(0, 12),
+              offset: const Offset(0, 12),
             ),
           ],
         ),
@@ -1278,12 +1295,14 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
                       width: 46,
                       height: 46,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEDEAFF),
+                        color: isDark
+                            ? const Color(0xFF342E5A)
+                            : const Color(0xFFEDEAFF),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.calendar_today_outlined,
-                        color: _HorarioPageState._primary,
+                        color: colors.primary,
                         size: 24,
                       ),
                     ),
@@ -1296,16 +1315,17 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
                             widget.horario == null
                                 ? 'Agregar clase'
                                 : 'Editar clase',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 21,
                               fontWeight: FontWeight.w800,
+                              color: colors.onSurface,
                             ),
                           ),
                           const SizedBox(height: 3),
-                          const Text(
+                          Text(
                             'Completa los datos de tu horario',
                             style: TextStyle(
-                              color: _HorarioPageState._muted,
+                              color: colors.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),
@@ -1315,7 +1335,7 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
                     IconButton(
                       tooltip: 'Cerrar',
                       onPressed: _saving ? null : () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
+                      icon: Icon(Icons.close, color: colors.onSurface),
                     ),
                   ],
                 ),
@@ -1337,16 +1357,15 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
                 ),
                 const SizedBox(height: 13),
                 _MateriaDetailsCard(
-                  profesor:
-                      (_selectedMateria['profesor'] ?? 'Sin profesor').toString(),
+                  profesor: (_selectedMateria['profesor'] ?? 'Sin profesor')
+                      .toString(),
                   color: _selectedMateriaColor,
                 ),
                 const SizedBox(height: 13),
                 TextFormField(
                   controller: _salon,
                   textInputAction: TextInputAction.done,
-                  decoration:
-                      _decoration('Salón', Icons.meeting_room_outlined),
+                  decoration: _decoration('Salón', Icons.meeting_room_outlined),
                   validator: (value) => value == null || value.trim().isEmpty
                       ? 'Ingresa el salón'
                       : null,
@@ -1398,7 +1417,8 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        onPressed: _saving ? null : () => Navigator.pop(context),
+                        onPressed:
+                            _saving ? null : () => Navigator.pop(context),
                         child: const Text('Cancelar'),
                       ),
                     ),
@@ -1451,8 +1471,11 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
   }
 
   Widget _timeButton(String label, TimeOfDay value, bool start) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Material(
-      color: const Color(0xFFF3F3F6),
+      color: isDark ? const Color(0xFF292934) : const Color(0xFFF3F3F6),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -1461,10 +1484,10 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.schedule_outlined,
                 size: 20,
-                color: _HorarioPageState._primary,
+                color: colors.primary,
               ),
               const SizedBox(width: 9),
               Expanded(
@@ -1473,17 +1496,18 @@ class _HorarioFormDialogState extends State<_HorarioFormDialog> {
                   children: [
                     Text(
                       label,
-                      style: const TextStyle(
-                        color: _HorarioPageState._muted,
+                      style: TextStyle(
+                        color: colors.onSurfaceVariant,
                         fontSize: 10,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       value.format(context),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
+                        color: colors.onSurface,
                       ),
                     ),
                   ],

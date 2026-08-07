@@ -14,9 +14,9 @@ class ThemeService extends ChangeNotifier {
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    _themeMode = (prefs.getBool(_preferenceKey) ?? false)
-        ? ThemeMode.dark
-        : ThemeMode.light;
+    final enabled = prefs.getBool(_preferenceKey) ?? false;
+    _themeMode = enabled ? ThemeMode.dark : ThemeMode.light;
+    notifyListeners();
   }
 
   Future<void> setDarkMode(bool enabled) async {

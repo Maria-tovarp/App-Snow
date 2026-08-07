@@ -8,6 +8,7 @@ class Proyecto {
   final String? fechaFin;
   final int avancePorcentual;
   final String userId;
+  final String? fase;
 
   Proyecto({
     required this.id,
@@ -19,6 +20,7 @@ class Proyecto {
     this.fechaFin,
     required this.avancePorcentual,
     required this.userId,
+    this.fase,
   });
 
   factory Proyecto.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class Proyecto {
       fechaFin: json['fecha_fin']?.toString(),
       avancePorcentual: (json['avance_porcentual'] ?? 0) as int,
       userId: json['user_id'] as String,
+      fase: json['fase'] as String?,
     );
   }
 }

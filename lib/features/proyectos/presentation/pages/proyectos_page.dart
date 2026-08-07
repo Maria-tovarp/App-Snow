@@ -249,22 +249,94 @@ class _ProyectosPageState extends State<ProyectosPage> {
     }
   }
 
+  String _getFaseLabel(ProyectoModel p) {
+    if (p.fase != null && p.fase!.isNotEmpty) {
+      return p.fase!;
+    }
+
+    // Fallback: calcular desde porcentaje
+    final avance = p.avancePorcentual;
+    if (avance == 0) {
+      return 'Iniciado';
+    } else if (avance <= 33) {
+      return 'En Progreso';
+    } else if (avance <= 66) {
+      return 'Casi Listo';
+    } else if (avance < 100) {
+      return 'Casi Listo';
+    } else {
+      return 'Completado';
+    }
+  }
+
+  Color _colorFase(String fase) {
+    switch (fase) {
+      case 'Iniciado':
+        return const Color(0xFF3B82F6); // Azul
+      case 'En Progreso':
+        return const Color(0xFF8B5CF6); // Púrpura
+      case 'Casi Listo':
+        return const Color(0xFFF59E0B); // Ámbar
+      case 'Completado':
+        return const Color(0xFF22C55E); // Verde
+      default:
+        return primary;
+    }
+  }
+
+  IconData _iconFase(String fase) {
+    switch (fase) {
+      case 'Iniciado':
+        return Icons.radio_button_unchecked;
+      case 'En Progreso':
+        return Icons.pending;
+      case 'Casi Listo':
+        return Icons.hourglass_bottom;
+      case 'Completado':
+        return Icons.check_circle;
+      default:
+        return Icons.info;
+    }
+  }
+
   Future<void> _showUpdateProgressDialog(ProyectoModel proyecto) async {
-    double avance = proyecto.avancePorcentual.toDouble();
+    final fases = {
+      'Iniciado': 0,
+      'En Progreso': 33,
+      'Casi Listo': 66,
+      'Completado': 100,
+    };
+
+    late String faseSeleccionada;
+    final avanceActual = proyecto.avancePorcentual;
+
+    // Preferir la fase guardada; si no existe, calcular desde porcentaje
+    if (proyecto.fase != null && proyecto.fase!.isNotEmpty) {
+      faseSeleccionada = proyecto.fase!;
+    } else if (avanceActual == 0) {
+      faseSeleccionada = 'Iniciado';
+    } else if (avanceActual <= 33) {
+      faseSeleccionada = 'En Progreso';
+    } else if (avanceActual <= 66) {
+      faseSeleccionada = 'Casi Listo';
+    } else {
+      faseSeleccionada = 'Completado';
+    }
 
     await showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final colors = Theme.of(context).colorScheme;
             return Dialog(
-              insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16),
               backgroundColor: Colors.transparent,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                padding: const EdgeInsets.fromLTRB(24, 18, 24, 26),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(6),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.18),
@@ -275,66 +347,171 @@ class _ProyectosPageState extends State<ProyectosPage> {
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
                       children: [
                         const Expanded(child: SizedBox()),
-                        const Text(
+                        Text(
                           'Actualizar avance',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                            color: colors.onSurface,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                         Expanded(
                           child: Align(
                             alignment: Alignment.centerRight,
-                            child: IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.close),
+                            child: InkWell(
+                              onTap: () => Navigator.pop(context),
+                              borderRadius: BorderRadius.circular(20),
+                              child: Padding(
+                                padding: const EdgeInsets.all(5),
+                                child: Icon(
+                                  Icons.close,
+                                  color: colors.onSurface,
+                                  size: 22,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     Text(
                       proyecto.titulo,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF8A8A9B),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     Text(
-                      '${avance.round()}%',
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: primary,
+                      'Selecciona la fase del proyecto',
+                      style: TextStyle(
+                        color: colors.onSurface,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Slider(
-                      value: avance,
-                      min: 0,
-                      max: 100,
-                      divisions: 20,
-                      onChanged: (value) {
-                        setDialogState(() {
-                          avance = value;
-                        });
-                      },
+                    const SizedBox(height: 14),
+                    Column(
+                      children: fases.entries.map((entry) {
+                        final selected = faseSeleccionada == entry.key;
+                        return GestureDetector(
+                          onTap: () {
+                            setDialogState(() {
+                              faseSeleccionada = entry.key;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(16),
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeOutBack,
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? primary.withOpacity(0.12)
+                                  : colors.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: selected ? primary : colors.outline,
+                                width: selected ? 2 : 1,
+                              ),
+                              boxShadow: selected
+                                  ? [
+                                      BoxShadow(
+                                        color: primary.withOpacity(0.15),
+                                        blurRadius: 12,
+                                        spreadRadius: 0,
+                                      ),
+                                    ]
+                                  : [],
+                            ),
+                            child: Transform.scale(
+                              scale: selected ? 1.02 : 1.0,
+                              child: Row(
+                                children: [
+                                  AnimatedContainer(
+                                    width: 24,
+                                    height: 24,
+                                    duration: const Duration(milliseconds: 250),
+                                    curve: Curves.easeOut,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color:
+                                            selected ? primary : colors.outline,
+                                        width: 2,
+                                      ),
+                                      color: selected
+                                          ? primary
+                                          : Colors.transparent,
+                                    ),
+                                    child: Center(
+                                      child: AnimatedOpacity(
+                                        opacity: selected ? 1.0 : 0.0,
+                                        duration:
+                                            const Duration(milliseconds: 200),
+                                        child: selected
+                                            ? const Icon(Icons.check,
+                                                size: 14, color: Colors.white)
+                                            : null,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        AnimatedDefaultTextStyle(
+                                          duration:
+                                              const Duration(milliseconds: 200),
+                                          curve: Curves.easeOut,
+                                          style: TextStyle(
+                                            color: colors.onSurface,
+                                            fontSize: selected ? 16 : 15,
+                                            fontWeight: selected
+                                                ? FontWeight.w700
+                                                : FontWeight.w600,
+                                          ),
+                                          child: Text(entry.key),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${entry.value}% completado',
+                                          style: TextStyle(
+                                            color: colors.onSurfaceVariant,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 22),
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
+                      height: 48,
                       child: ElevatedButton(
                         onPressed: () async {
                           await repo.updateAvance(
                             id: proyecto.id,
-                            avancePorcentual: avance.round(),
+                            avancePorcentual: fases[faseSeleccionada] ?? 0,
+                            fase: faseSeleccionada,
                           );
 
                           if (!mounted) return;
@@ -347,14 +524,14 @@ class _ProyectosPageState extends State<ProyectosPage> {
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                         ),
                         child: const Text(
                           'Guardar',
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
@@ -362,18 +539,27 @@ class _ProyectosPageState extends State<ProyectosPage> {
                     const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
-                      height: 48,
+                      height: 44,
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                            color: Color(0xFFD9D9E3),
+                          foregroundColor: colors.onSurface,
+                          side: BorderSide(
+                            color: colors.outline,
+                            width: 1,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                         ),
-                        child: const Text('Cancelar'),
+                        child: Text(
+                          'Cancelar',
+                          style: TextStyle(
+                            color: colors.onSurface,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -663,6 +849,41 @@ class _ProyectosPageState extends State<ProyectosPage> {
                         ),
                       ),
                       const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _colorFase(_getFaseLabel(p)).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color:
+                                _colorFase(_getFaseLabel(p)).withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _iconFase(_getFaseLabel(p)),
+                              size: 14,
+                              color: _colorFase(_getFaseLabel(p)),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              _getFaseLabel(p),
+                              style: TextStyle(
+                                color: _colorFase(_getFaseLabel(p)),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       if (p.materiaNombre != null &&
                           p.materiaNombre!.isNotEmpty)
                         Container(
@@ -671,12 +892,14 @@ class _ProyectosPageState extends State<ProyectosPage> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFF292934)
-                                : Colors.white,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF292934)
+                                    : Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Theme.of(context).brightness == Brightness.dark
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
                                   ? const Color(0xFF454553)
                                   : const Color(0xFFD7D7E1),
                             ),
@@ -726,11 +949,23 @@ class _ProyectosPageState extends State<ProyectosPage> {
                 const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: p.avancePorcentual / 100,
-                    minHeight: 10,
-                    backgroundColor: const Color(0xFFE2DFFF),
-                    valueColor: const AlwaysStoppedAnimation(primary),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(
+                      begin: 0.0,
+                      end: p.avancePorcentual / 100,
+                    ),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeInOutCubic,
+                    builder: (context, value, child) {
+                      return LinearProgressIndicator(
+                        value: value,
+                        minHeight: 10,
+                        backgroundColor: const Color(0xFFE2DFFF),
+                        valueColor: AlwaysStoppedAnimation(
+                          value >= 1.0 ? Colors.green : primary,
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -1102,7 +1337,7 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
         materias.any((m) => m['id'] == materiaId) ? materiaId : null;
 
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16),
       backgroundColor: Colors.transparent,
       child: AnimatedPadding(
         duration: const Duration(milliseconds: 150),
@@ -1115,10 +1350,10 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.86,
           ),
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+          padding: const EdgeInsets.fromLTRB(24, 18, 24, 26),
           decoration: BoxDecoration(
             color: colors.surface,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(6),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.18),
@@ -1130,38 +1365,50 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   children: [
                     const Expanded(child: SizedBox()),
                     Text(
                       isEdit ? 'Editar Proyecto' : 'Nuevo Proyecto',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.onSurface,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     Expanded(
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close),
+                        child: InkWell(
+                          onTap: () => Navigator.pop(context),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.all(5),
+                            child: Icon(
+                              Icons.close,
+                              color: colors.onSurface,
+                              size: 22,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                const Text(
+                const SizedBox(height: 10),
+                Text(
                   'Completa la información del proyecto',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Color(0xFF8A8A9B),
+                    color: colors.onSurfaceVariant,
                     fontSize: 14,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 24),
                 TextField(
                   controller: tituloCtrl,
                   decoration: _decoration('Título *'),

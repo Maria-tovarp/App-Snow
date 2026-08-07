@@ -167,23 +167,30 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _saveProfile(Map<String, dynamic> data) {
+  Future<void> _saveProfile(Map<String, dynamic> data) async {
     final updatedProfile = Map<String, dynamic>.from(profile);
 
     updatedProfile.addAll(data);
     updatedProfile['email'] = _email;
     updatedProfile['identificacion'] = _identification;
 
-    _store.profile
-      ..clear()
-      ..addAll(updatedProfile);
+    try {
+      await _store.updateProfile(updatedProfile);
+      if (!mounted) return;
+      _store.profile
+        ..clear()
+        ..addAll(updatedProfile);
 
-    setState(() {
-      profile = updatedProfile;
-      showEditForm = false;
-    });
+      setState(() {
+        profile = updatedProfile;
+        showEditForm = false;
+      });
 
-    _showMessage('Perfil actualizado');
+      _showMessage('Perfil actualizado');
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage('No se pudo actualizar el perfil: $error', isError: true);
+    }
   }
 
   void _toggleEditForm() {
@@ -360,9 +367,7 @@ class _ThemeSettingsCard extends StatelessWidget {
             color: colors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark
-                  ? const Color(0xFF363642)
-                  : const Color(0xFFE7E7EF),
+              color: isDark ? const Color(0xFF363642) : const Color(0xFFE7E7EF),
             ),
           ),
           child: Row(
@@ -377,9 +382,7 @@ class _ThemeSettingsCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: Icon(
-                  isDark
-                      ? Icons.dark_mode_outlined
-                      : Icons.light_mode_outlined,
+                  isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
                   color: isDark
                       ? const Color(0xFFC5BEFF)
                       : _ProfilePageState.primary,
@@ -436,16 +439,9 @@ class _Header extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _ProfilePageState.primaryDark,
-            _ProfilePageState.primary,
-          ],
-        ),
+      padding: const EdgeInsets.fromLTRB(24, 38, 20, 24),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF211B52) : _ProfilePageState.primary,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -544,13 +540,10 @@ class _ProfileCard extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark
-                  ? const Color(0xFF302B55)
-                  : const Color(0xFFEDEBFF),
+              color: isDark ? const Color(0xFF302B55) : const Color(0xFFEDEBFF),
               border: Border.all(
-                color: isDark
-                    ? const Color(0xFF5F55A5)
-                    : const Color(0xFFD5D0FF),
+                color:
+                    isDark ? const Color(0xFF5F55A5) : const Color(0xFFD5D0FF),
                 width: 4,
               ),
             ),
@@ -590,9 +583,7 @@ class _ProfileCard extends StatelessWidget {
               vertical: 7,
             ),
             decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF292934)
-                  : const Color(0xFFF0F0F4),
+              color: isDark ? const Color(0xFF292934) : const Color(0xFFF0F0F4),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
@@ -626,7 +617,7 @@ class _EditProfileCard extends StatefulWidget {
   final String career;
   final String semester;
   final String university;
-  final ValueChanged<Map<String, dynamic>> onSave;
+  final Future<void> Function(Map<String, dynamic>) onSave;
   final VoidCallback onCancel;
 
   const _EditProfileCard({
@@ -715,8 +706,8 @@ class _EditProfileCardState extends State<_EditProfileCard> {
     );
   }
 
-  void _save() {
-    widget.onSave({
+  Future<void> _save() async {
+    await widget.onSave({
       'nombre': nameCtrl.text.trim(),
       'identificacion': widget.idNumber,
       'carrera': careerCtrl.text.trim(),
@@ -1162,9 +1153,7 @@ class _ProfileBottomNav extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         border: Border(
           top: BorderSide(
-            color: isDark
-                ? const Color(0xFF393947)
-                : const Color(0xFFE7E7EF),
+            color: isDark ? const Color(0xFF393947) : const Color(0xFFE7E7EF),
           ),
         ),
       ),

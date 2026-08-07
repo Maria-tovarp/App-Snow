@@ -29,7 +29,8 @@ class LocalDataStore {
       if (raw == null) continue;
       try {
         _cache[collection] = List<Map<String, dynamic>>.from(
-          (jsonDecode(raw) as List).map((item) => Map<String, dynamic>.from(item)),
+          (jsonDecode(raw) as List)
+              .map((item) => Map<String, dynamic>.from(item)),
         );
       } catch (_) {
         await prefs.remove('data_${userId}_$collection');
@@ -59,6 +60,38 @@ class LocalDataStore {
 
   Future<void> initialize() async {
     await _loadProfile();
+  }
+
+  Future<void> updateProfile(Map<String, dynamic> data) async {
+    final user = _client.auth.currentUser;
+    if (user == null) throw Exception('No hay usuario autenticado');
+
+    final payload = <String, dynamic>{
+      'id': user.id,
+      'email':
+          (data['email'] ?? profile['email'] ?? user.email ?? '').toString(),
+      'nombre': (data['nombre'] ?? profile['nombre'] ?? '').toString(),
+      'identificacion':
+          (data['identificacion'] ?? profile['identificacion'] ?? '')
+              .toString(),
+      'carrera': (data['carrera'] ?? profile['carrera'] ?? '').toString(),
+      'semestre': (data['semestre'] ?? profile['semestre'] ?? '').toString(),
+      'universidad':
+          (data['universidad'] ?? profile['universidad'] ?? '').toString(),
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+
+    await _client.from('profiles').upsert(payload, onConflict: 'id');
+
+    final previousProfile = Map<String, dynamic>.from(profile);
+    profile
+      ..clear()
+      ..addAll({...previousProfile, ...data, 'email': payload['email']});
+    profile['nombre'] = payload['nombre'];
+    profile['identificacion'] = payload['identificacion'];
+    profile['carrera'] = payload['carrera'];
+    profile['semestre'] = payload['semestre'];
+    profile['universidad'] = payload['universidad'];
   }
 
   String? get _userId => _client.auth.currentUser?.id;

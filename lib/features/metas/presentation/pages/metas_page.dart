@@ -76,14 +76,14 @@ class _MetasPageState extends State<MetasPage> {
       builder: (_) {
         final colors = Theme.of(context).colorScheme;
         return Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 30),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16),
           backgroundColor: Colors.transparent,
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            padding: const EdgeInsets.fromLTRB(24, 18, 24, 26),
             decoration: BoxDecoration(
               color: colors.surface,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(6),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.18),
@@ -97,35 +97,47 @@ class _MetasPageState extends State<MetasPage> {
                 return SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Row(
                         children: [
                           const Expanded(child: SizedBox()),
                           Text(
                             meta == null ? 'Nueva Meta' : 'Editar Meta',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colors.onSurface,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                           Expanded(
                             child: Align(
                               alignment: Alignment.centerRight,
-                              child: IconButton(
-                                onPressed: () => Navigator.pop(context),
-                                icon: const Icon(Icons.close),
+                              child: InkWell(
+                                onTap: () => Navigator.pop(context),
+                                borderRadius: BorderRadius.circular(20),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(5),
+                                  child: Icon(
+                                    Icons.close,
+                                    color: colors.onSurface,
+                                    size: 22,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
+                      const SizedBox(height: 10),
+                      Text(
                         'Define tus objetivos académicos para el semestre',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Color(0xFF8A8A9B),
+                          color: colors.onSurfaceVariant,
                           fontSize: 14,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 18),

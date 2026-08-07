@@ -75,10 +75,15 @@ class ProyectoRepository implements ProyectoRepositoryPort {
   Future<void> updateAvance({
     required String id,
     required int avancePorcentual,
+    String? fase,
   }) async {
-    await _client.from('proyectos').update({
+    final data = <String, dynamic>{
       'avance_porcentual': avancePorcentual,
-    }).eq('id', id);
+    };
+    if (fase != null) {
+      data['fase'] = fase;
+    }
+    await _client.from('proyectos').update(data).eq('id', id);
   }
 
   Future<void> deleteProyecto(String id) async {
