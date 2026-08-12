@@ -1,1 +1,0 @@
- C:\\Users\\Maria\\Downloads\\Snow-Git\\.dart_tool\\flutter_build\\3ca05854b6221935062ea38b1c6ebebb\\native_assets.json: 

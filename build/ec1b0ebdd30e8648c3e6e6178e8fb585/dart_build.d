@@ -1,1 +1,0 @@
- C:\\Users\\Maria\\Downloads\\Snow-Git\\build\\ec1b0ebdd30e8648c3e6e6178e8fb585\\dart_build_result.json:  C:\\Users\\Maria\\Downloads\\Snow-Git\\.dart_tool\\package_config.json C:\\Users\\Maria\\Downloads\\Snow-Git\\pubspec.yaml C:\\flutter\\flutter\\bin\\cache\\dart-sdk\\version c:\\users\\maria\\downloads\\snow-git\\.dart_tool\\package_config.json
