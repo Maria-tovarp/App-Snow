@@ -68,7 +68,7 @@ class LocalDataStore {
 
     final payload = <String, dynamic>{
       'id': user.id,
-      'email':
+      'correo_electronico':
           (data['email'] ?? profile['email'] ?? user.email ?? '').toString(),
       'nombre': (data['nombre'] ?? profile['nombre'] ?? '').toString(),
       'identificacion':
@@ -86,7 +86,11 @@ class LocalDataStore {
     final previousProfile = Map<String, dynamic>.from(profile);
     profile
       ..clear()
-      ..addAll({...previousProfile, ...data, 'email': payload['email']});
+      ..addAll({
+        ...previousProfile,
+        ...data,
+        'email': payload['correo_electronico'],
+      });
     profile['nombre'] = payload['nombre'];
     profile['identificacion'] = payload['identificacion'];
     profile['carrera'] = payload['carrera'];
@@ -126,7 +130,8 @@ class LocalDataStore {
           ..['semestre'] = (row['semestre'] ?? profile['semestre']).toString()
           ..['universidad'] =
               (row['universidad'] ?? profile['universidad']).toString()
-          ..['email'] = (row['email'] ?? profile['email']).toString();
+          ..['email'] =
+              (row['correo_electronico'] ?? profile['email']).toString();
       }
     } catch (_) {}
   }
@@ -322,7 +327,7 @@ class LocalDataStore {
         DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
     final response = await _client
         .from('pomodoro_sessions')
-        .select('tipo ')
+        .select('tipo, duracion_minutos')
         .eq('user_id', userId)
         .gte('created_at', start)
         .lte('created_at', end);
@@ -335,5 +340,58 @@ class LocalDataStore {
       }
     }
     return {'sesionesEstudio': sesiones, 'minutosEstudio': minutos};
+  }
+
+  Future<List<Map<String, dynamic>>> getGrades() async {
+    final userId = _userId;
+    if (userId == null) return const [];
+    final response = await _client.from('grades').select('''
+      id, nombre, calificacion, porcentaje, materia_id, created_at,
+      materias(nombre)
+    ''').eq('user_id', userId).order('created_at', ascending: false);
+    return _rows(response).map((row) {
+      final materia = row['materias'];
+      return {
+        ...row,
+        'materia_nombre':
+            materia is Map<String, dynamic> ? materia['nombre'] : null,
+      };
+    }).toList();
+  }
+
+  Future<void> createGrade({
+    required String nombre,
+    required double calificacion,
+    required double porcentaje,
+    String? materiaId,
+  }) async {
+    final userId = _userId;
+    if (userId == null) throw Exception('No hay usuario autenticado');
+    await _client.from('grades').insert({
+      'user_id': userId,
+      'materia_id': materiaId,
+      'nombre': nombre,
+      'calificacion': calificacion,
+      'porcentaje': porcentaje,
+    });
+  }
+
+  Future<void> deleteGrade(String id) async {
+    await _client.from('grades').delete().eq('id', id);
+  }
+
+  Future<void> updateGrade({
+    required String id,
+    required String nombre,
+    required double calificacion,
+    required double porcentaje,
+    String? materiaId,
+  }) async {
+    await _client.from('grades').update({
+      'materia_id': materiaId,
+      'nombre': nombre,
+      'calificacion': calificacion,
+      'porcentaje': porcentaje,
+    }).eq('id', id);
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:helloworld/features/materias/data/materia_repository.dart';
+import 'package:snow/features/materias/data/materia_repository.dart';
 
 class CreateMateriaPage extends StatefulWidget {
   const CreateMateriaPage({super.key});

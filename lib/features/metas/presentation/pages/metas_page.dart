@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:helloworld/core/services/local_data_store.dart';
+import 'package:snow/core/widgets/app_drawer.dart';
+import 'package:snow/core/widgets/app_section_header.dart';
+import 'package:snow/core/services/local_data_store.dart';
 
 import '../../data/meta_model.dart';
 import '../../data/meta_repository.dart';
@@ -265,11 +267,15 @@ class _MetasPageState extends State<MetasPage> {
   }
 
   InputDecoration _inputDecoration(String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Color(0xFF7A7A8C)),
+      labelStyle: TextStyle(
+        color: isDark ? const Color(0xFFB9B7C9) : const Color(0xFF7A7A8C),
+      ),
       filled: true,
-      fillColor: const Color(0xFFF3F3F7),
+      fillColor:
+          isDark ? const Color(0xFF242534) : const Color(0xFFF3F3F7),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -699,47 +705,16 @@ class _MetasPageState extends State<MetasPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: const AppDrawer(currentRoute: '/metas'),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
-              color: const Color(0xFF5B4CF0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => context.go('/home'),
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      ),
-                      const Text(
-                        'Metas Académicas',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12),
-                    child: Text(
-                      '${completadas.length}/${metas.length} completadas',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            AppSectionHeader(
+              title: 'Metas Académicas',
+              subtitle: '${completadas.length}/${metas.length} completadas',
             ),
             Padding(
               padding: const EdgeInsets.all(16),

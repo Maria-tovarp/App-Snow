@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:helloworld/core/services/local_data_store.dart';
+import 'package:snow/core/widgets/app_drawer.dart';
+import 'package:snow/core/widgets/app_section_header.dart';
+import 'package:snow/core/services/local_data_store.dart';
+import 'package:snow/features/premium/data/premium_service.dart';
+import 'package:snow/features/premium/presentation/widgets/premium_limit_dialog.dart';
 
 class MateriasPage extends StatefulWidget {
   const MateriasPage({super.key});
@@ -49,7 +53,18 @@ class _MateriasPageState extends State<MateriasPage> {
     return primary;
   }
 
-  void _openCreateModal() {
+  Future<void> _openCreateModal() async {
+    final premium = PremiumService.instance;
+    await premium.initialize();
+    if (!mounted) return;
+    if (!premium.isPremium && materias.length >= 5) {
+      await showPremiumLimitDialog(
+        context,
+        title: 'Llegaste al límite gratuito',
+        message: 'El plan gratis permite hasta 5 materias. Activa Premium para agregar materias ilimitadas.',
+      );
+      return;
+    }
     showDialog(
       context: context,
       barrierColor: Colors.black54,
@@ -259,6 +274,7 @@ class _MateriasPageState extends State<MateriasPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: const AppDrawer(currentRoute: '/materias'),
       body: Column(
         children: [
           Expanded(
@@ -268,53 +284,9 @@ class _MateriasPageState extends State<MateriasPage> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.zero,
                 children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
-                    decoration: const BoxDecoration(
-                      color: primary,
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        InkWell(
-                          onTap: () => context.go('/home'),
-                          borderRadius: BorderRadius.circular(30),
-                          child: const Padding(
-                            padding: EdgeInsets.only(top: 4, right: 12),
-                            child: Icon(
-                              Icons.arrow_back,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                        ),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Mis Materias',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              SizedBox(height: 6),
-                              Text(
-                                'Gestiona tus asignaturas',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                  const AppSectionHeader(
+                    title: 'Mis Materias',
+                    subtitle: 'Gestiona tus asignaturas',
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
@@ -423,7 +395,7 @@ class _MateriaCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      height: 132,
+      constraints: const BoxConstraints(minHeight: 116),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -434,7 +406,8 @@ class _MateriaCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 7,
+            width: 8,
+            height: 128,
             decoration: BoxDecoration(
               color: color,
               borderRadius: const BorderRadius.only(
@@ -627,6 +600,7 @@ class _MateriaModalState extends State<_MateriaModal> {
   }
 
   InputDecoration _decoration() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(9),
       borderSide: BorderSide.none,
@@ -634,7 +608,8 @@ class _MateriaModalState extends State<_MateriaModal> {
 
     return InputDecoration(
       filled: true,
-      fillColor: const Color(0xFFF0F0F3),
+      fillColor:
+          isDark ? const Color(0xFF242534) : const Color(0xFFF0F0F3),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: border,
       enabledBorder: border,
@@ -660,13 +635,16 @@ class _MateriaModalState extends State<_MateriaModal> {
     required TextEditingController controller,
     TextInputType? keyboardType,
   }) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF20202A),
+          style: TextStyle(
+            color: isDark ? colors.onSurfaceVariant : const Color(0xFF20202A),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -675,7 +653,15 @@ class _MateriaModalState extends State<_MateriaModal> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
+          style: TextStyle(
+            color: colors.onSurface,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+          cursorColor: colors.primary,
           decoration: _decoration().copyWith(
+            hintStyle: TextStyle(color: colors.onSurfaceVariant),
+            errorStyle: TextStyle(color: colors.error),
             errorText: label == 'Nombre de la materia' && nombreError
                 ? 'Ingresa el nombre de la materia'
                 : label == 'Profesor' && profesorError

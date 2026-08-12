@@ -12,6 +12,8 @@ import '../features/metas/presentation/pages/metas_page.dart';
 import '../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../features/pomodoro/presentation/pages/pomodoro_page.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
+import '../features/premium/presentation/pages/premium_page.dart';
+import '../features/premium/presentation/pages/premium_module_page.dart';
 import '../features/proyectos/presentation/pages/proyectos_page.dart';
 import '../features/tareas/presentation/pages/tareas_page.dart';
 
@@ -93,5 +95,16 @@ final appRouter = GoRouter(
         child: const HorarioPage(),
       ),
     ),
+    GoRoute(
+      path: '/premium',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: const PremiumPage(),
+      ),
+    ),
+    GoRoute(path: '/premium/insights', builder: (_, __) => const PremiumModulePage(module: PremiumModule.insights)),
+    GoRoute(path: '/premium/grades', builder: (_, __) => const PremiumModulePage(module: PremiumModule.grades)),
+    GoRoute(path: '/premium/planner', builder: (_, __) => const PremiumModulePage(module: PremiumModule.planner)),
+    GoRoute(path: '/premium/assistant', builder: (_, __) => const PremiumModulePage(module: PremiumModule.assistant)),
   ],
 );

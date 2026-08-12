@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:snow/core/widgets/app_drawer.dart';
+import 'package:snow/core/widgets/app_section_header.dart';
 
-import 'package:helloworld/core/services/auth_session_service.dart';
-import 'package:helloworld/core/services/local_data_store.dart';
-import 'package:helloworld/core/services/theme_service.dart';
+import 'package:snow/core/services/auth_session_service.dart';
+import 'package:snow/core/services/local_data_store.dart';
+import 'package:snow/core/services/theme_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -98,9 +100,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _logout() async {
-    await _auth.signOut();
-    if (!mounted) return;
-    context.go('/login');
+    await AppDrawer.logout(context);
   }
 
   String get _name {
@@ -203,6 +203,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: const AppDrawer(currentRoute: '/perfil'),
       body: Column(
         children: [
           Expanded(
@@ -213,7 +214,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
                     child: _ProfileCard(
                       initials: _initials,
                       name: _name,
@@ -225,7 +226,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 if (showEditForm)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
                       child: _EditProfileCard(
                         name: _name,
                         idNumber: _identification,
@@ -243,7 +244,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -434,68 +435,16 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 38, 20, 24),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF211B52) : _ProfilePageState.primary,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: () => context.go('/home'),
-            borderRadius: BorderRadius.circular(18),
-            child: const Padding(
-              padding: EdgeInsets.only(top: 6, right: 12, bottom: 6),
-              child: Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-          ),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Mi Perfil',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Información personal y estadísticas',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          InkWell(
-            onTap: onEdit,
-            borderRadius: BorderRadius.circular(18),
-            child: const Padding(
-              padding: EdgeInsets.all(6),
-              child: Icon(
-                Icons.edit_outlined,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return AppSectionHeader(
+      title: 'Mi Perfil',
+      subtitle: 'Información personal y estadísticas',
+      actions: [
+        IconButton(
+          tooltip: 'Editar perfil',
+          onPressed: onEdit,
+          icon: const Icon(Icons.edit_outlined, color: Colors.white, size: 24),
+        ),
+      ],
     );
   }
 }

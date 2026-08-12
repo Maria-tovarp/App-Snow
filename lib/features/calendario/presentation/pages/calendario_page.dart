@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:snow/core/widgets/app_drawer.dart';
+import 'package:snow/core/widgets/app_section_header.dart';
 
-import 'package:helloworld/core/services/local_data_store.dart';
+import 'package:snow/core/services/local_data_store.dart';
 
 class CalendarioPage extends StatefulWidget {
   const CalendarioPage({super.key});
@@ -243,12 +245,13 @@ class _CalendarioPageState extends State<CalendarioPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: const AppDrawer(currentRoute: '/calendario'),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            _HeaderCalendario(onBack: () => context.go('/home')),
+            const _HeaderCalendario(),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               child: Column(
@@ -314,59 +317,13 @@ class _CalendarioPageState extends State<CalendarioPage> {
 }
 
 class _HeaderCalendario extends StatelessWidget {
-  final VoidCallback onBack;
-
-  const _HeaderCalendario({required this.onBack});
+  const _HeaderCalendario();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
-      decoration: const BoxDecoration(
-        color: _CalendarioPageState.primary,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: onBack,
-            borderRadius: BorderRadius.circular(30),
-            child: const Padding(
-              padding: EdgeInsets.only(top: 4, right: 12),
-              child: Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-          ),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Calendario Académico',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Visualiza tus fechas importantes',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return const AppSectionHeader(
+      title: 'Calendario Académico',
+      subtitle: 'Visualiza tus fechas importantes',
     );
   }
 }
@@ -534,8 +491,12 @@ class _CalendarMonth extends StatelessWidget {
                     color: isSelected
                         ? _CalendarioPageState.primary
                         : isToday
-                            ? const Color(0xFFF3F0FF)
-                            : Colors.white,
+                            ? (isDark
+                                ? const Color(0xFF302B5E)
+                                : const Color(0xFFF3F0FF))
+                            : (isDark
+                                ? const Color(0xFF242534)
+                                : Colors.white),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isSelected
@@ -544,7 +505,9 @@ class _CalendarMonth extends StatelessWidget {
                               ? _CalendarioPageState.primary
                               : hasEvent
                                   ? const Color(0xFFA699FF)
-                                  : const Color(0xFFE4E4EC),
+                                  : (isDark
+                                      ? const Color(0xFF414154)
+                                      : const Color(0xFFE4E4EC)),
                       width: isToday || isSelected || hasEvent ? 1.5 : 1,
                     ),
                   ),
@@ -558,7 +521,7 @@ class _CalendarMonth extends StatelessWidget {
                               ? const Color(0xFFB9B9C3)
                               : isSelected
                                   ? Colors.white
-                                  : Colors.black,
+                                  : colors.onSurface,
                           fontSize: 13,
                           fontWeight:
                               isToday ? FontWeight.w800 : FontWeight.w500,

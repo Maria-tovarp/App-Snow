@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:helloworld/features/materias/data/materia_model.dart';
-import 'package:helloworld/features/materias/data/materia_repository.dart';
+import 'package:snow/features/materias/data/materia_model.dart';
+import 'package:snow/features/materias/data/materia_repository.dart';
 
 import '../../data/tarea_repository.dart';
 

@@ -19,7 +19,9 @@ abstract class ProyectoRepositoryPort {
     String? fechaFin,
     required int avancePorcentual,
   });
-  Future<void> updateAvance(
-      {required String id, required int avancePorcentual});
+  Future<void> updateAvance({
+    required String id,
+    required int avancePorcentual,
+  });
   Future<void> deleteProyecto(String id);
 }

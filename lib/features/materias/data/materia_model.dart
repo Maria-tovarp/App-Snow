@@ -1,3 +1,3 @@
-import 'package:helloworld/features/materias/domain/entities/materia.dart';
+import 'package:snow/features/materias/domain/entities/materia.dart';
 
 typedef MateriaModel = Materia;

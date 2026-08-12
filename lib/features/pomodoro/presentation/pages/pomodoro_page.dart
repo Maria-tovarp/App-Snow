@@ -2,12 +2,15 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:math';
-import 'package:helloworld/core/services/local_data_store.dart';
+import 'package:snow/core/services/local_data_store.dart';
+import 'package:snow/core/widgets/app_drawer.dart';
+import 'package:snow/core/widgets/app_section_header.dart';
 import '../../data/pomodoro_repository.dart';
 
-import 'package:helloworld/core/widgets/app_notification.dart';
+import 'package:snow/core/widgets/app_notification.dart';
 
 class PomodoroPage extends StatefulWidget {
   const PomodoroPage({super.key});
@@ -17,6 +20,7 @@ class PomodoroPage extends StatefulWidget {
 }
 
 class _PomodoroPageState extends State<PomodoroPage> {
+  static const _focusChannel = MethodChannel('snow/focus_mode');
   final PomodoroRepository _repo = PomodoroRepository();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -140,10 +144,21 @@ class _PomodoroPageState extends State<PomodoroPage> {
   Future<void> _tryLeavePomodoro() async {
     if (isRunning) {
       await _showExitBlockedMessage();
+      return;
     }
 
     if (!mounted) return;
     context.go('/home');
+  }
+
+  Future<void> _setDeviceFocus(bool enabled) async {
+    try {
+      await _focusChannel.invokeMethod(enabled ? 'start' : 'stop');
+    } on PlatformException {
+      // En plataformas sin fijación, PopScope mantiene la navegación bloqueada.
+    } on MissingPluginException {
+      // Web y escritorio continúan con el bloqueo interno de navegación.
+    }
   }
 
   void _start() {
@@ -152,6 +167,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
     setState(() {
       isRunning = true;
     });
+    _setDeviceFocus(true);
 
     _timer?.cancel();
 
@@ -182,6 +198,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
       isRunning = false;
       remainingSeconds = 0;
     });
+    await _setDeviceFocus(false);
 
     try {
       await _audioPlayer
@@ -253,6 +270,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
   void _pause() {
     _timer?.cancel();
     setState(() => isRunning = false);
+    _setDeviceFocus(false);
   }
 
   void _reset() {
@@ -261,6 +279,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
       isRunning = false;
       remainingSeconds = totalSeconds;
     });
+    _setDeviceFocus(false);
   }
 
   void _setMode(bool breakMode) {
@@ -281,6 +300,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _setDeviceFocus(false);
     _audioPlayer.dispose();
     super.dispose();
   }
@@ -291,9 +311,15 @@ class _PomodoroPageState extends State<PomodoroPage> {
     final sec = (remainingSeconds % 60).toString().padLeft(2, '0');
     final progress = (remainingSeconds / totalSeconds).clamp(0.0, 1.0);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SingleChildScrollView(
+    return PopScope(
+      canPop: !isRunning,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && isRunning) _showExitBlockedMessage();
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        drawer: const AppDrawer(currentRoute: '/pomodoro'),
+        body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -328,60 +354,17 @@ class _PomodoroPageState extends State<PomodoroPage> {
             ),
           ],
         ),
+        ),
       ),
     );
   }
 
   Widget _header() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 38, 20, 24),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF211B52) : primary,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: _tryLeavePomodoro,
-            borderRadius: BorderRadius.circular(30),
-            child: const Padding(
-              padding: EdgeInsets.only(top: 4, right: 14),
-              child: Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-          ),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Cronómetro Pomodoro',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Técnica de estudio enfocado',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return AppSectionHeader(
+      title: 'Cronómetro Pomodoro',
+      subtitle: 'Técnica de estudio enfocado',
+      menuEnabled: !isRunning,
+      onMenuBlocked: _showExitBlockedMessage,
     );
   }
 

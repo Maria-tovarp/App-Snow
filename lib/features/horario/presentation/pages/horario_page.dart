@@ -4,12 +4,14 @@ import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
+import 'package:snow/core/widgets/app_drawer.dart';
+import 'package:snow/core/widgets/app_section_header.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-import 'package:helloworld/core/services/local_data_store.dart';
-import 'package:helloworld/features/horario/data/horario_model.dart';
-import 'package:helloworld/features/horario/data/horario_repository.dart';
+import 'package:snow/core/services/local_data_store.dart';
+import 'package:snow/features/horario/data/horario_model.dart';
+import 'package:snow/features/horario/data/horario_repository.dart';
 
 class HorarioPage extends StatefulWidget {
   const HorarioPage({super.key});
@@ -426,6 +428,7 @@ class _HorarioPageState extends State<HorarioPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: const AppDrawer(currentRoute: '/horario'),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: _primary,
         foregroundColor: Colors.white,
@@ -480,7 +483,7 @@ class _HorarioPageState extends State<HorarioPage> {
                       vertical: 20,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Column(
@@ -541,45 +544,16 @@ class _HorarioPageState extends State<HorarioPage> {
   }
 
   Widget _buildHeader() {
-    return Container(
-      color: _primary,
-      padding: const EdgeInsets.fromLTRB(18, 24, 18, 22),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => context.go('/home'),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-          ),
-          const SizedBox(width: 4),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Horario semanal',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Organiza tus clases de la semana',
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.calendar_view_week_outlined, color: Colors.white),
-          const SizedBox(width: 4),
+    return AppSectionHeader(
+      title: 'Horario semanal',
+      subtitle: 'Organiza tus clases de la semana',
+      actions: [
           IconButton(
             tooltip: 'Descargar horario',
             icon: const Icon(Icons.download_outlined, color: Colors.white),
             onPressed: _showDownloadOptions,
           ),
-        ],
-      ),
+      ],
     );
   }
 }
@@ -714,9 +688,18 @@ class _WeeklyTimetable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tableBackground =
+        isDark ? const Color(0xFF1C1D2A) : Colors.white;
+    final headerBackground =
+        isDark ? const Color(0xFF242534) : const Color(0xFFF8F7FF);
+    final todayBackground =
+        isDark ? const Color(0xFF22233A) : const Color(0xFFFAF9FF);
+    final gridColor =
+        isDark ? const Color(0xFF343445) : const Color(0xFFECECF2);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: tableBackground,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: _HorarioPageState._border),
       ),
@@ -740,8 +723,8 @@ class _WeeklyTimetable extends StatelessWidget {
                 height: _totalHeight,
                 child: Stack(
                   children: [
-                    const Positioned.fill(
-                        child: ColoredBox(color: Colors.white)),
+                    Positioned.fill(
+                        child: ColoredBox(color: tableBackground)),
                     ...List.generate(visibleDays.length, (index) {
                       final day = visibleDays[index];
                       if (!highlightToday || DateTime.now().weekday != day) {
@@ -752,7 +735,7 @@ class _WeeklyTimetable extends StatelessWidget {
                         top: _headerHeight,
                         bottom: 0,
                         width: dayWidth,
-                        child: const ColoredBox(color: Color(0xFFFAF9FF)),
+                        child: ColoredBox(color: todayBackground),
                       );
                     }),
                     ...List.generate(visibleDays.length + 1, (index) {
@@ -762,7 +745,7 @@ class _WeeklyTimetable extends StatelessWidget {
                         top: 0,
                         bottom: 0,
                         child:
-                            Container(width: 1, color: const Color(0xFFECECF2)),
+                            Container(width: 1, color: gridColor),
                       );
                     }),
                     ...List.generate(_endHour - _startHour + 1, (index) {
@@ -771,8 +754,7 @@ class _WeeklyTimetable extends StatelessWidget {
                         left: 0,
                         right: 0,
                         top: top,
-                        child: Container(
-                            height: 1, color: const Color(0xFFECECF2)),
+                        child: Container(height: 1, color: gridColor),
                       );
                     }),
                     Positioned(
@@ -780,7 +762,7 @@ class _WeeklyTimetable extends StatelessWidget {
                       top: 0,
                       right: 0,
                       height: _headerHeight,
-                      child: Container(color: const Color(0xFFF8F7FF)),
+                      child: Container(color: headerBackground),
                     ),
                     ...List.generate(visibleDays.length, (index) {
                       final day = visibleDays[index];

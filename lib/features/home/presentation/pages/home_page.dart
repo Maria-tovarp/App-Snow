@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:snow/core/services/ad_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:helloworld/core/services/auth_session_service.dart';
-import 'package:helloworld/core/services/app_prefs.dart';
-import 'package:helloworld/core/services/local_data_store.dart';
-import 'package:helloworld/features/auth/presentation/widgets/force_change_password_dialog.dart';
+import 'package:snow/core/services/auth_session_service.dart';
+import 'package:snow/core/services/app_prefs.dart';
+import 'package:snow/core/services/local_data_store.dart';
+import 'package:snow/core/widgets/app_drawer.dart';
+import 'package:snow/features/auth/presentation/widgets/force_change_password_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -322,6 +324,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: const AppDrawer(currentRoute: '/home'),
       body: RefreshIndicator(
         color: _primary,
         onRefresh: _loadData,
@@ -331,7 +334,6 @@ class _HomePageState extends State<HomePage> {
             SliverToBoxAdapter(
               child: _Header(
                 nombre: primerNombre,
-                onProfile: () => context.go('/perfil'),
               ),
             ),
             SliverPadding(
@@ -369,6 +371,7 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
+      bottomNavigationBar: const FreeBannerAd(),
     );
   }
 }
@@ -494,22 +497,17 @@ class _HomeLoadingSkeleton extends StatelessWidget {
 class _Header extends StatelessWidget {
   const _Header({
     required this.nombre,
-    required this.onProfile,
   });
 
   final String nombre;
-  final VoidCallback onProfile;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 38, 20, 24),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF211B52) : _HomePageState._primary,
-      ),
+      height: 104,
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      decoration: const BoxDecoration(color: _HomePageState._primary),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -538,13 +536,15 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            tooltip: 'Ir a perfil',
-            onPressed: onProfile,
-            icon: const Icon(
-              Icons.person_outline,
+          Builder(
+            builder: (context) => IconButton(
+              tooltip: 'Abrir menú',
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              icon: const Icon(
+              Icons.menu_rounded,
               color: Colors.white,
               size: 28,
+            ),
             ),
           ),
         ],
@@ -976,6 +976,11 @@ class _ShortcutsGrid extends StatelessWidget {
         'Metas',
         '/metas',
       ),
+      _ShortcutItem(
+        Icons.workspace_premium_outlined,
+        'Snow Premium',
+        '/premium',
+      ),
     ];
 
     return GridView.count(
@@ -984,7 +989,7 @@ class _ShortcutsGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 0,
       mainAxisSpacing: 12,
-      childAspectRatio: 2.15,
+      mainAxisExtent: 72,
       children: items
           .map(
             (item) => _ShortcutCard(
@@ -1046,8 +1051,11 @@ class _ShortcutCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 item.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 17,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
               ),

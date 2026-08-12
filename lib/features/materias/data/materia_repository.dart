@@ -1,9 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:helloworld/core/services/local_data_store.dart';
+import 'package:snow/core/services/local_data_store.dart';
 
-import 'package:helloworld/features/materias/data/materia_model.dart';
+import 'package:snow/features/materias/data/materia_model.dart';
 
-import 'package:helloworld/features/materias/domain/repositories/materia_repository_port.dart';
+import 'package:snow/features/materias/domain/repositories/materia_repository_port.dart';
 
 class MateriaRepository implements MateriaRepositoryPort {
   final SupabaseClient _client = Supabase.instance.client;

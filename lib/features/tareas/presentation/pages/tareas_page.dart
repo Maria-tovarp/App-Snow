@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:helloworld/features/materias/data/materia_repository.dart';
-import 'package:helloworld/features/materias/data/materia_model.dart';
-import 'package:helloworld/core/services/local_data_store.dart';
+import 'package:snow/core/widgets/app_drawer.dart';
+import 'package:snow/core/widgets/app_section_header.dart';
+import 'package:snow/features/materias/data/materia_repository.dart';
+import 'package:snow/features/materias/data/materia_model.dart';
+import 'package:snow/core/services/local_data_store.dart';
+import 'package:snow/features/premium/data/premium_service.dart';
+import 'package:snow/features/premium/presentation/widgets/premium_limit_dialog.dart';
 
-import 'package:helloworld/core/widgets/app_notification.dart';
+import 'package:snow/core/widgets/app_notification.dart';
 import '../../data/tarea_model.dart';
 import '../../data/tarea_repository.dart';
 
@@ -75,6 +79,7 @@ class _TareasPageState extends State<TareasPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: const AppDrawer(currentRoute: '/tareas'),
       resizeToAvoidBottomInset: true,
       body: RefreshIndicator(
         onRefresh: load,
@@ -112,37 +117,9 @@ class _TareasPageState extends State<TareasPage> {
   }
 
   Widget _header() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
-      decoration: const BoxDecoration(color: primary),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => context.go('/home'),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Tareas y Exámenes',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  '${pendientes.length} pendientes',
-                  style: const TextStyle(color: Colors.white70, fontSize: 15),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return AppSectionHeader(
+      title: 'Tareas y Exámenes',
+      subtitle: '${pendientes.length} pendientes',
     );
   }
 
@@ -367,20 +344,20 @@ class _TareasPageState extends State<TareasPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       GestureDetector(
-                        onTap: isDone
-                            ? null
-                            : () async {
+                        onTap: () async {
                                 await repo.updateEstado(
                                   id: t.id,
-                                  estado: 'completada',
+                                  estado: isDone ? 'pendiente' : 'completada',
                                 );
                                 await load();
 
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: const Text(
-                                      'Tarea marcada como completada',
+                                    content: Text(
+                                      isDone
+                                          ? 'Tarea devuelta a pendientes'
+                                          : 'Tarea marcada como completada',
                                     ),
                                     backgroundColor: primary,
                                     behavior: SnackBarBehavior.floating,
@@ -776,6 +753,17 @@ class _TareasPageState extends State<TareasPage> {
   }
 
   Future<void> _openCreateModal() async {
+    final premium = PremiumService.instance;
+    await premium.initialize();
+    if (!mounted) return;
+    if (!premium.isPremium && pendientes.length >= 20) {
+      await showPremiumLimitDialog(
+        context,
+        title: 'Llegaste al límite gratuito',
+        message: 'El plan gratis permite hasta 20 tareas activas. Activa Premium para crear tareas ilimitadas.',
+      );
+      return;
+    }
     final creado = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black54,
@@ -1010,14 +998,16 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
     String label, {
     String? errorText,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecoration(
       labelText: label,
       errorText: errorText,
-      labelStyle: const TextStyle(
-        color: Color(0xFF7A7A8C),
+      labelStyle: TextStyle(
+        color: isDark ? const Color(0xFFB9B7C9) : const Color(0xFF7A7A8C),
       ),
       filled: true,
-      fillColor: const Color(0xFFF3F3F7),
+      fillColor:
+          isDark ? const Color(0xFF242534) : const Color(0xFFF3F3F7),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 16,

@@ -1,10 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:helloworld/core/network/supabase_client_provider.dart';
-import 'package:helloworld/core/storage/session_storage.dart';
-import 'package:helloworld/core/storage/shared_preferences_session_storage.dart';
-import 'package:helloworld/features/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:helloworld/features/auth/domain/repositories/auth_repository_port.dart';
+import 'package:snow/core/network/supabase_client_provider.dart';
+import 'package:snow/core/storage/session_storage.dart';
+import 'package:snow/core/storage/shared_preferences_session_storage.dart';
+import 'package:snow/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:snow/features/auth/domain/repositories/auth_repository_port.dart';
 
 class AuthRepository implements AuthRepositoryPort {
   final AuthRemoteDataSource _remoteDataSource;

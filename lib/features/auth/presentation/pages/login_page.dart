@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:snow/core/services/theme_service.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:helloworld/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:snow/features/auth/presentation/controllers/auth_controller.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -39,6 +40,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             email: _emailCtrl.text.trim(),
             password: _passwordCtrl.text.trim(),
           );
+      await ThemeService.instance.restoreForCurrentUser();
 
       if (!mounted) return;
       _formKey.currentState?.reset();

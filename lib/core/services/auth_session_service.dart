@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthResponse;
 
-import 'package:helloworld/core/storage/shared_preferences_session_storage.dart';
+import 'package:snow/core/storage/shared_preferences_session_storage.dart';
 
 class LocalUser {
   final String id;

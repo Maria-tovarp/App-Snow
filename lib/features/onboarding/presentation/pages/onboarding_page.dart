@@ -1,4 +1,4 @@
-import 'package:helloworld/core/services/app_prefs.dart';
+import 'package:snow/core/services/app_prefs.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -141,19 +141,23 @@ class OnboardingPage extends StatelessWidget {
                               size: 18,
                             ),
                             SizedBox(width: 7),
-                            Text(
+                            Flexible(
+                              child: Text(
                               'Organización Académica',
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
+                              ),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 28),
                         const Text(
-                          'Tu compañero perfecto para gestionar\nmaterias, tareas, proyectos y alcanzar tus meta\nacadémicas',
+                          'Tu compañero perfecto para gestionar materias, tareas, proyectos y alcanzar tus metas académicas.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
@@ -163,19 +167,19 @@ class OnboardingPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 42),
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        const Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 22,
+                          runSpacing: 18,
                           children: [
                             _MiniFeature(
                               icon: Icons.menu_book_outlined,
                               label: 'Materias',
                             ),
-                            SizedBox(width: 28),
                             _MiniFeature(
                               icon: Icons.school_outlined,
                               label: 'Proyectos',
                             ),
-                            SizedBox(width: 28),
                             _MiniFeature(
                               icon: Icons.cruelty_free_outlined,
                               label: 'Metas',
@@ -212,6 +216,7 @@ class OnboardingPage extends StatelessWidget {
                         const SizedBox(height: 42),
                         const Text(
                           'Mantén tu semestre organizado • Versión 1.0',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white54,
                             fontSize: 11,

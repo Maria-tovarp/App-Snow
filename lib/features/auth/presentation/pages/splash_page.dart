@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:helloworld/core/services/app_prefs.dart';
-import 'package:helloworld/core/services/local_data_store.dart';
-import 'package:helloworld/core/storage/shared_preferences_session_storage.dart';
+import 'package:snow/core/services/app_prefs.dart';
+import 'package:snow/core/services/local_data_store.dart';
+import 'package:snow/core/storage/shared_preferences_session_storage.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});

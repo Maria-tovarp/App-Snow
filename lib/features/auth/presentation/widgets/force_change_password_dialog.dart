@@ -217,6 +217,7 @@ class _ForceChangePasswordDialogState extends State<ForceChangePasswordDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return PopScope(
       canPop: false,
       child: Dialog(
@@ -227,7 +228,7 @@ class _ForceChangePasswordDialogState extends State<ForceChangePasswordDialog> {
           constraints: const BoxConstraints(maxWidth: 390),
           padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(

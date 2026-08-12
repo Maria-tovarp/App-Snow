@@ -1,9 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:helloworld/core/services/local_data_store.dart';
+import 'package:snow/core/services/local_data_store.dart';
 
 import 'proyecto_model.dart';
 
-import 'package:helloworld/features/proyectos/domain/repositories/proyecto_repository_port.dart';
+import 'package:snow/features/proyectos/domain/repositories/proyecto_repository_port.dart';
 
 class ProyectoRepository implements ProyectoRepositoryPort {
   final SupabaseClient _client = Supabase.instance.client;
@@ -75,18 +75,15 @@ class ProyectoRepository implements ProyectoRepositoryPort {
   Future<void> updateAvance({
     required String id,
     required int avancePorcentual,
-    String? fase,
   }) async {
     final data = <String, dynamic>{
       'avance_porcentual': avancePorcentual,
     };
-    if (fase != null) {
-      data['fase'] = fase;
-    }
     await _client.from('proyectos').update(data).eq('id', id);
   }
 
   Future<void> deleteProyecto(String id) async {
     await _client.from('proyectos').delete().eq('id', id);
   }
+
 }

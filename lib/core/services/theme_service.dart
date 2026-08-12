@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ThemeService extends ChangeNotifier {
   ThemeService._();
 
   static final ThemeService instance = ThemeService._();
-  static const _preferenceKey = 'snow_dark_mode';
+  static const _preferenceKeyPrefix = 'snow_dark_mode_';
 
   ThemeMode _themeMode = ThemeMode.light;
 
@@ -13,8 +14,18 @@ class ThemeService extends ChangeNotifier {
   bool get isDark => _themeMode == ThemeMode.dark;
 
   Future<void> load() async {
+    await restoreForCurrentUser();
+  }
+
+  Future<void> restoreForCurrentUser() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      _themeMode = ThemeMode.light;
+      notifyListeners();
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
-    final enabled = prefs.getBool(_preferenceKey) ?? false;
+    final enabled = prefs.getBool('$_preferenceKeyPrefix$userId') ?? false;
     _themeMode = enabled ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
   }
@@ -26,7 +37,15 @@ class ThemeService extends ChangeNotifier {
     _themeMode = nextMode;
     notifyListeners();
 
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_preferenceKey, enabled);
+    await prefs.setBool('$_preferenceKeyPrefix$userId', enabled);
+  }
+
+  void useLoggedOutTheme() {
+    if (_themeMode == ThemeMode.light) return;
+    _themeMode = ThemeMode.light;
+    notifyListeners();
   }
 }

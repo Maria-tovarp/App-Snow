@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:helloworld/features/pomodoro/domain/repositories/pomodoro_repository_port.dart';
+import 'package:snow/features/pomodoro/domain/repositories/pomodoro_repository_port.dart';
 
 class PomodoroRepository implements PomodoroRepositoryPort {
   final SupabaseClient _client = Supabase.instance.client;

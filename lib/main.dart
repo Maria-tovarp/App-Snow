@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/app.dart';
 import 'core/config/supabase_config.dart';
 import 'core/services/theme_service.dart';
+import 'core/services/ad_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +18,7 @@ Future<void> main() async {
     anonKey: SupabaseConfig.anonKey,
   );
   await ThemeService.instance.load();
+  await AdService.initialize();
 
   runApp(const ProviderScope(child: MyApp()));
 }

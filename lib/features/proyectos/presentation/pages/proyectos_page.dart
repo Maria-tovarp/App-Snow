@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:helloworld/core/services/local_data_store.dart';
+import 'package:snow/core/widgets/app_drawer.dart';
+import 'package:snow/core/widgets/app_section_header.dart';
+import 'package:snow/core/services/local_data_store.dart';
+import 'package:snow/features/premium/data/premium_service.dart';
+import 'package:snow/features/premium/presentation/widgets/premium_limit_dialog.dart';
 
 import '../../data/proyecto_model.dart';
 import '../../data/proyecto_repository.dart';
@@ -149,7 +153,18 @@ class _ProyectosPageState extends State<ProyectosPage> {
     );
   }
 
-  void _openCreateModal() {
+  Future<void> _openCreateModal() async {
+    final premium = PremiumService.instance;
+    await premium.initialize();
+    if (!mounted) return;
+    if (!premium.isPremium && proyectos.length >= 3) {
+      await showPremiumLimitDialog(
+        context,
+        title: 'Llegaste al límite gratuito',
+        message: 'El plan gratis permite hasta 3 proyectos. Con Premium puedes crear proyectos ilimitados.',
+      );
+      return;
+    }
     showDialog<bool>(
       context: context,
       barrierColor: Colors.black54,
@@ -250,23 +265,14 @@ class _ProyectosPageState extends State<ProyectosPage> {
   }
 
   String _getFaseLabel(ProyectoModel p) {
-    if (p.fase != null && p.fase!.isNotEmpty) {
-      return p.fase!;
-    }
+    return _faseDesdeAvance(p.avancePorcentual);
+  }
 
-    // Fallback: calcular desde porcentaje
-    final avance = p.avancePorcentual;
-    if (avance == 0) {
-      return 'Iniciado';
-    } else if (avance <= 33) {
-      return 'En Progreso';
-    } else if (avance <= 66) {
-      return 'Casi Listo';
-    } else if (avance < 100) {
-      return 'Casi Listo';
-    } else {
-      return 'Completado';
-    }
+  String _faseDesdeAvance(int avance) {
+    if (avance <= 0) return 'Iniciado';
+    if (avance < 66) return 'En Progreso';
+    if (avance < 100) return 'Casi Listo';
+    return 'Completado';
   }
 
   Color _colorFase(String fase) {
@@ -300,28 +306,14 @@ class _ProyectosPageState extends State<ProyectosPage> {
   }
 
   Future<void> _showUpdateProgressDialog(ProyectoModel proyecto) async {
-    final fases = {
+    const hitos = <String, int>{
       'Iniciado': 0,
-      'En Progreso': 33,
-      'Casi Listo': 66,
+      'En progreso': 33,
+      'Casi listo': 66,
       'Completado': 100,
     };
-
-    late String faseSeleccionada;
-    final avanceActual = proyecto.avancePorcentual;
-
-    // Preferir la fase guardada; si no existe, calcular desde porcentaje
-    if (proyecto.fase != null && proyecto.fase!.isNotEmpty) {
-      faseSeleccionada = proyecto.fase!;
-    } else if (avanceActual == 0) {
-      faseSeleccionada = 'Iniciado';
-    } else if (avanceActual <= 33) {
-      faseSeleccionada = 'En Progreso';
-    } else if (avanceActual <= 66) {
-      faseSeleccionada = 'Casi Listo';
-    } else {
-      faseSeleccionada = 'Completado';
-    }
+    var avanceSeleccionado = proyecto.avancePorcentual.clamp(0, 100);
+    var guardando = false;
 
     await showDialog(
       context: context,
@@ -329,11 +321,12 @@ class _ProyectosPageState extends State<ProyectosPage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             final colors = Theme.of(context).colorScheme;
+            final fase = _faseDesdeAvance(avanceSeleccionado);
             return Dialog(
               insetPadding: const EdgeInsets.symmetric(horizontal: 16),
               backgroundColor: Colors.transparent,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(24, 18, 24, 26),
+                padding: const EdgeInsets.fromLTRB(22, 18, 22, 22),
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(6),
@@ -390,114 +383,109 @@ class _ProyectosPageState extends State<ProyectosPage> {
                         fontWeight: FontWeight.w400,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: primary.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  fase,
+                                  style: TextStyle(
+                                    color: colors.onSurface,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '$avanceSeleccionado%',
+                                style: const TextStyle(
+                                  color: primary,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: avanceSeleccionado / 100,
+                              minHeight: 9,
+                              backgroundColor: colors.surface,
+                              color: avanceSeleccionado == 100
+                                  ? Colors.green
+                                  : primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
                     Text(
-                      'Selecciona la fase del proyecto',
+                      'Ajusta el porcentaje completado',
                       style: TextStyle(
                         color: colors.onSurface,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    Column(
-                      children: fases.entries.map((entry) {
-                        final selected = faseSeleccionada == entry.key;
-                        return GestureDetector(
-                          onTap: () {
-                            setDialogState(() {
-                              faseSeleccionada = entry.key;
-                            });
-                          },
-                          child: AnimatedContainer(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.all(16),
-                            duration: const Duration(milliseconds: 200),
-                            curve: Curves.easeOutBack,
-                            decoration: BoxDecoration(
-                              color: selected
-                                  ? primary.withOpacity(0.12)
-                                  : colors.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: selected ? primary : colors.outline,
-                                width: selected ? 2 : 1,
+                    Slider(
+                      value: avanceSeleccionado.toDouble(),
+                      min: 0,
+                      max: 100,
+                      divisions: 100,
+                      label: '$avanceSeleccionado%',
+                      activeColor: primary,
+                      inactiveColor: colors.outlineVariant,
+                      thumbColor: const Color(0xFF8E84FF),
+                      onChanged: guardando
+                          ? null
+                          : (value) => setDialogState(
+                                () => avanceSeleccionado = value.round(),
                               ),
-                              boxShadow: selected
-                                  ? [
-                                      BoxShadow(
-                                        color: primary.withOpacity(0.15),
-                                        blurRadius: 12,
-                                        spreadRadius: 0,
-                                      ),
-                                    ]
-                                  : [],
+                    ),
+                    Wrap(
+                      spacing: 7,
+                      runSpacing: 7,
+                      children: hitos.entries.map((hito) {
+                        final seleccionado = avanceSeleccionado == hito.value;
+                        return ChoiceChip(
+                          label: Text(
+                            '${hito.key} ${hito.value}%',
+                            style: TextStyle(
+                              color: seleccionado
+                                  ? Colors.white
+                                  : colors.onSurface,
+                              fontWeight: seleccionado
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                             ),
-                            child: Transform.scale(
-                              scale: selected ? 1.02 : 1.0,
-                              child: Row(
-                                children: [
-                                  AnimatedContainer(
-                                    width: 24,
-                                    height: 24,
-                                    duration: const Duration(milliseconds: 250),
-                                    curve: Curves.easeOut,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color:
-                                            selected ? primary : colors.outline,
-                                        width: 2,
-                                      ),
-                                      color: selected
-                                          ? primary
-                                          : Colors.transparent,
-                                    ),
-                                    child: Center(
-                                      child: AnimatedOpacity(
-                                        opacity: selected ? 1.0 : 0.0,
-                                        duration:
-                                            const Duration(milliseconds: 200),
-                                        child: selected
-                                            ? const Icon(Icons.check,
-                                                size: 14, color: Colors.white)
-                                            : null,
-                                      ),
-                                    ),
+                          ),
+                          selected: seleccionado,
+                          showCheckmark: true,
+                          checkmarkColor: Colors.white,
+                          onSelected: guardando
+                              ? null
+                              : (_) => setDialogState(
+                                    () => avanceSeleccionado = hito.value,
                                   ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        AnimatedDefaultTextStyle(
-                                          duration:
-                                              const Duration(milliseconds: 200),
-                                          curve: Curves.easeOut,
-                                          style: TextStyle(
-                                            color: colors.onSurface,
-                                            fontSize: selected ? 16 : 15,
-                                            fontWeight: selected
-                                                ? FontWeight.w700
-                                                : FontWeight.w600,
-                                          ),
-                                          child: Text(entry.key),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${entry.value}% completado',
-                                          style: TextStyle(
-                                            color: colors.onSurfaceVariant,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          backgroundColor: colors.surfaceContainerHighest,
+                          selectedColor: primary,
+                          disabledColor: colors.surfaceContainerHighest,
+                          side: BorderSide(
+                            color: seleccionado
+                                ? const Color(0xFFAFA8FF)
+                                : colors.outline,
+                            width: seleccionado ? 1.5 : 1,
                           ),
                         );
                       }).toList(),
@@ -507,17 +495,34 @@ class _ProyectosPageState extends State<ProyectosPage> {
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: () async {
-                          await repo.updateAvance(
-                            id: proyecto.id,
-                            avancePorcentual: fases[faseSeleccionada] ?? 0,
-                            fase: faseSeleccionada,
-                          );
+                        onPressed: guardando ? null : () async {
+                          setDialogState(() => guardando = true);
+                          try {
+                            await repo.updateAvance(
+                              id: proyecto.id,
+                              avancePorcentual: avanceSeleccionado,
+                            );
+                          } catch (_) {
+                            if (!context.mounted) return;
+                            setDialogState(() => guardando = false);
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              const SnackBar(
+                                content: Text('No se pudo actualizar el avance'),
+                              ),
+                            );
+                            return;
+                          }
 
-                          if (!mounted) return;
-
+                          if (!context.mounted || !mounted) return;
                           Navigator.pop(context);
-                          load();
+                          await load();
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Avance actualizado correctamente'),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primary,
@@ -527,8 +532,8 @@ class _ProyectosPageState extends State<ProyectosPage> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                         ),
-                        child: const Text(
-                          'Guardar',
+                        child: Text(
+                          guardando ? 'Guardando...' : 'Guardar avance',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
@@ -582,6 +587,7 @@ class _ProyectosPageState extends State<ProyectosPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: const AppDrawer(currentRoute: '/proyectos'),
       body: RefreshIndicator(
         onRefresh: load,
         child: ListView(
@@ -646,42 +652,9 @@ class _ProyectosPageState extends State<ProyectosPage> {
 
     final textoFinalizados =
         '$proyectosFinalizados ${proyectosFinalizados == 1 ? "finalizado" : "finalizados"}';
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 38, 20, 24),
-      decoration: const BoxDecoration(
-        color: primary,
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => context.go('/home'),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Proyectos',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  '$textoActivos • $textoFinalizados',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return AppSectionHeader(
+      title: 'Proyectos',
+      subtitle: '$textoActivos • $textoFinalizados',
     );
   }
 
@@ -828,27 +801,10 @@ class _ProyectosPageState extends State<ProyectosPage> {
                     ),
                   ),
                 if (p.materiaNombre != null && p.materiaNombre!.isNotEmpty)
-                  Row(
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _colorEstadoProyecto(p).withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          _estadoProyecto(p),
-                          style: TextStyle(
-                            color: _colorEstadoProyecto(p),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
@@ -883,7 +839,6 @@ class _ProyectosPageState extends State<ProyectosPage> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 10),
                       if (p.materiaNombre != null &&
                           p.materiaNombre!.isNotEmpty)
                         Container(
@@ -969,48 +924,28 @@ class _ProyectosPageState extends State<ProyectosPage> {
                   ),
                 ),
                 const SizedBox(height: 18),
-                if (p.avancePorcentual < 100)
-                  Center(
-                    child: TextButton.icon(
-                      onPressed: () {
-                        _showUpdateProgressDialog(p);
-                      },
-                      icon: const Icon(
-                        Icons.trending_up_rounded,
-                        color: primary,
-                        size: 20,
-                      ),
-                      label: const Text(
-                        'Actualizar avance',
-                        style: TextStyle(
-                          color: primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      ),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => _showUpdateProgressDialog(p),
+                    icon: Icon(
+                      p.avancePorcentual >= 100
+                          ? Icons.replay_rounded
+                          : Icons.trending_up_rounded,
+                      color: primary,
+                      size: 20,
                     ),
-                  )
-                else
-                  const Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: Colors.green,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Proyecto completado',
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
+                    label: Text(
+                      p.avancePorcentual >= 100
+                          ? 'Reabrir o corregir avance'
+                          : 'Actualizar avance',
+                      style: const TextStyle(
+                        color: primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
+                ),
                 const SizedBox(height: 18),
                 Row(
                   children: [
@@ -1191,14 +1126,17 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
   }
 
   InputDecoration _decoration(String label) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(
-        color: Color(0xFF7A7A8C),
+      labelStyle: TextStyle(
+        color: isDark ? colors.onSurfaceVariant : const Color(0xFF7A7A8C),
         fontSize: 13,
       ),
       filled: true,
-      fillColor: const Color(0xFFF3F3F7),
+      fillColor:
+          isDark ? const Color(0xFF242534) : const Color(0xFFF3F3F7),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 15,
@@ -1209,7 +1147,9 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
+        borderSide: BorderSide(
+          color: isDark ? const Color(0xFF3E3E50) : Colors.transparent,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -1226,6 +1166,8 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
     required String value,
     required VoidCallback onTap,
   }) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1233,9 +1175,10 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
           padding: const EdgeInsets.only(left: 4, bottom: 6),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF8A8A9B),
+              color:
+                  isDark ? colors.onSurfaceVariant : const Color(0xFF8A8A9B),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -1247,8 +1190,12 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
             height: 56,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF3F3F7),
+              color:
+                  isDark ? const Color(0xFF242534) : const Color(0xFFF3F3F7),
               borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark ? const Color(0xFF3E3E50) : Colors.transparent,
+              ),
             ),
             child: Row(
               children: [
@@ -1256,17 +1203,17 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
                   child: Text(
                     value,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: Colors.black87,
+                      color: colors.onSurface,
                     ),
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Icon(
+                Icon(
                   Icons.calendar_today_outlined,
                   size: 17,
-                  color: Color(0xFF4D4D55),
+                  color: colors.onSurfaceVariant,
                 ),
               ],
             ),
@@ -1411,17 +1358,24 @@ class _CreateProyectoModalState extends State<_CreateProyectoModal> {
                 const SizedBox(height: 24),
                 TextField(
                   controller: tituloCtrl,
+                  style: TextStyle(color: colors.onSurface),
+                  cursorColor: primary,
                   decoration: _decoration('Título *'),
                 ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: descripcionCtrl,
                   maxLines: 3,
+                  style: TextStyle(color: colors.onSurface),
+                  cursorColor: primary,
                   decoration: _decoration('Descripción'),
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String?>(
                   value: safeMateriaId,
+                  dropdownColor: colors.surfaceContainerHighest,
+                  style: TextStyle(color: colors.onSurface, fontSize: 14),
+                  iconEnabledColor: colors.onSurfaceVariant,
                   decoration: _decoration('Materia *'),
                   isExpanded: true,
                   items: [
