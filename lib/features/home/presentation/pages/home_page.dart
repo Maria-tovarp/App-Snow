@@ -8,6 +8,7 @@ import 'package:snow/core/services/auth_session_service.dart';
 import 'package:snow/core/services/app_prefs.dart';
 import 'package:snow/core/services/local_data_store.dart';
 import 'package:snow/core/widgets/app_drawer.dart';
+import 'package:snow/core/widgets/app_section_header.dart';
 import 'package:snow/features/auth/presentation/widgets/force_change_password_dialog.dart';
 
 class HomePage extends StatefulWidget {
@@ -332,8 +333,9 @@ class _HomePageState extends State<HomePage> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
-              child: _Header(
-                nombre: primerNombre,
+              child: AppSectionHeader(
+                title: 'Hola, $primerNombre 👋',
+                subtitle: 'Organiza tu semestre universitario',
               ),
             ),
             SliverPadding(
@@ -365,13 +367,14 @@ class _HomePageState extends State<HomePage> {
                   _ShortcutsGrid(
                     onTap: (route) => context.go(route),
                   ),
+                  const SizedBox(height: 12),
+                  const FreeBannerAd(),
                 ]),
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: const FreeBannerAd(),
     );
   }
 }
@@ -490,65 +493,6 @@ class _HomeLoadingSkeleton extends StatelessWidget {
         block(120),
         const SizedBox(height: 18),
       ],
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.nombre,
-  });
-
-  final String nombre;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 104,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-      decoration: const BoxDecoration(color: _HomePageState._primary),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hola $nombre ! 👋',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w600,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Organiza tu semestre universitario',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 15,
-                    height: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Builder(
-            builder: (context) => IconButton(
-              tooltip: 'Abrir menú',
-              onPressed: () => Scaffold.of(context).openDrawer(),
-              icon: const Icon(
-              Icons.menu_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

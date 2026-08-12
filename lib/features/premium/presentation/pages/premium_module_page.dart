@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:snow/core/services/local_data_store.dart';
@@ -7,6 +8,8 @@ import 'package:snow/core/widgets/app_section_header.dart';
 import 'package:snow/features/horario/data/horario_model.dart';
 import 'package:snow/features/horario/data/horario_repository.dart';
 import '../../data/premium_service.dart';
+import '../../data/snow_assistant_history_service.dart';
+import '../../data/snow_assistant_service.dart';
 
 enum PremiumModule { insights, grades, planner, assistant }
 
@@ -22,6 +25,12 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
   final store = LocalDataStore.instance;
   bool loading = true;
   bool premium = false;
+  bool assistantSending = false;
+  int assistantLimit = 50;
+  int assistantUsed = 0;
+  int assistantRemaining = 50;
+  DateTime? assistantResetAt;
+  String? assistantConversationId;
   List<Map<String, dynamic>> tareas = [];
   List<Map<String, dynamic>> materias = [];
   List<Map<String, dynamic>> proyectos = [];
@@ -59,6 +68,9 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
   void initState() {
     super.initState();
     _load();
+    if (widget.module == PremiumModule.assistant) {
+      _loadAssistantUsage();
+    }
   }
 
   @override
@@ -81,7 +93,7 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
         false,
       ));
     }
-    premium = PremiumService.instance.isPremium;
+    premium = PremiumService.instance.isSubscriptionActive;
     if (premium) {
       final results = await Future.wait([
         store.getTareas(),
@@ -104,7 +116,25 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
         }
       }
     }
+    if (premium && widget.module == PremiumModule.assistant) {
+      await _loadAssistantHistory();
+    }
     if (mounted) setState(() => loading = false);
+  }
+
+  Future<void> _loadAssistantUsage() async {
+    try {
+      final usage = await SnowAssistantService.instance.getUsage();
+      if (!mounted) return;
+      setState(() {
+        assistantLimit = usage.limit;
+        assistantUsed = usage.used;
+        assistantRemaining = usage.remaining;
+        assistantResetAt = usage.resetAt;
+      });
+    } catch (e) {
+      debugPrint('Error cargando uso Snow Assistant: $e');
+    }
   }
 
   @override
@@ -123,12 +153,12 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
                             child: _assistant(),
                           )
                         : RefreshIndicator(
-                        onRefresh: _load,
-                        child: ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: [_content()],
-                        ),
-                      )
+                            onRefresh: _load,
+                            child: ListView(
+                              padding: const EdgeInsets.all(16),
+                              children: [_content()],
+                            ),
+                          )
                     : _locked(),
           ),
         ]),
@@ -146,7 +176,7 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
                 style:
                     const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
-            const Text('Activa tu prueba o suscripción para continuar.',
+            const Text('Activa tu suscripción para continuar.',
                 textAlign: TextAlign.center),
             const SizedBox(height: 20),
             FilledButton(
@@ -166,7 +196,8 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
   Widget _insights() {
     final done = tareas.where((t) => t['estado'] == 'completada').length;
     final pending = tareas.length - done;
-    final progress = tareas.isEmpty ? 0 : ((done / tareas.length) * 100).round();
+    final progress =
+        tareas.isEmpty ? 0 : ((done / tareas.length) * 100).round();
     final activeProjects = proyectos
         .where((p) => (num.tryParse('${p['avance_porcentual']}') ?? 0) < 100)
         .length;
@@ -174,17 +205,33 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
       Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [Color(0xFF211B52), Color(0xFF5B4CF0)]),
+          gradient: const LinearGradient(
+              colors: [Color(0xFF211B52), Color(0xFF5B4CF0)]),
           borderRadius: BorderRadius.circular(22),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Tu progreso académico', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+          const Text('Tu progreso académico',
+              style: TextStyle(
+                  color: Colors.white70, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          Text('$progress% completado', style: const TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w900)),
+          Text('$progress% completado',
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 27,
+                  fontWeight: FontWeight.w900)),
           const SizedBox(height: 14),
-          LinearProgressIndicator(value: progress / 100, minHeight: 10, color: const Color(0xFFFFD76A), backgroundColor: Colors.white24, borderRadius: BorderRadius.circular(10)),
+          LinearProgressIndicator(
+              value: progress / 100,
+              minHeight: 10,
+              color: const Color(0xFFFFD76A),
+              backgroundColor: Colors.white24,
+              borderRadius: BorderRadius.circular(10)),
           const SizedBox(height: 10),
-          Text(done == 0 ? 'Completa tu primera tarea para comenzar tu progreso.' : 'Has completado $done de ${tareas.length} tareas.', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(
+              done == 0
+                  ? 'Completa tu primera tarea para comenzar tu progreso.'
+                  : 'Has completado $done de ${tareas.length} tareas.',
+              style: const TextStyle(color: Colors.white70, fontSize: 12)),
         ]),
       ),
       const SizedBox(height: 20),
@@ -198,17 +245,26 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
         mainAxisSpacing: 10,
         childAspectRatio: 1.55,
         children: [
-          _metric('$pending', 'Tareas pendientes', Icons.pending_actions_rounded, const Color(0xFFFF8A65)),
-          _metric('${pomodoro['minutosEstudio'] ?? 0} min', 'Tiempo estudiado hoy', Icons.timer_rounded, const Color(0xFF26A69A)),
-          _metric('$activeProjects', 'Proyectos activos', Icons.folder_rounded, const Color(0xFF42A5F5)),
-          _metric('${pomodoro['sesionesEstudio'] ?? 0}', 'Sesiones completadas', Icons.local_fire_department_rounded, const Color(0xFFEF5350)),
+          _metric('$pending', 'Tareas pendientes',
+              Icons.pending_actions_rounded, const Color(0xFFFF8A65)),
+          _metric(
+              '${pomodoro['minutosEstudio'] ?? 0} min',
+              'Tiempo estudiado hoy',
+              Icons.timer_rounded,
+              const Color(0xFF26A69A)),
+          _metric('$activeProjects', 'Proyectos activos', Icons.folder_rounded,
+              const Color(0xFF42A5F5)),
+          _metric('${pomodoro['sesionesEstudio'] ?? 0}', 'Sesiones completadas',
+              Icons.local_fire_department_rounded, const Color(0xFFEF5350)),
         ],
       ),
       const SizedBox(height: 20),
       _card('Carga académica', Icons.school_outlined, [
-        Text('${materias.length} materias activas', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+        Text('${materias.length} materias activas',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
         const SizedBox(height: 4),
-        const Text('Mantén tus tareas distribuidas para evitar sobrecarga.', style: TextStyle(fontSize: 12)),
+        const Text('Mantén tus tareas distribuidas para evitar sobrecarga.',
+            style: TextStyle(fontSize: 12)),
       ]),
     ]);
   }
@@ -222,12 +278,29 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: const Color(0xFF5B4CF0), borderRadius: BorderRadius.circular(22)),
+        decoration: BoxDecoration(
+            color: const Color(0xFF5B4CF0),
+            borderRadius: BorderRadius.circular(22)),
         child: Row(children: [
-          const CircleAvatar(radius: 27, backgroundColor: Colors.white24, child: Icon(Icons.school_rounded, color: Colors.white)),
+          const CircleAvatar(
+              radius: 27,
+              backgroundColor: Colors.white24,
+              child: Icon(Icons.school_rounded, color: Colors.white)),
           const SizedBox(width: 15),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Promedio ponderado', style: TextStyle(color: Colors.white70)), Text(weighted.toStringAsFixed(2), style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900))])),
-          Text('${grades.length} notas', style: const TextStyle(color: Colors.white70)),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                const Text('Promedio ponderado',
+                    style: TextStyle(color: Colors.white70)),
+                Text(weighted.toStringAsFixed(2),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900))
+              ])),
+          Text('${grades.length} notas',
+              style: const TextStyle(color: Colors.white70)),
         ]),
       ),
       const SizedBox(height: 14),
@@ -292,7 +365,13 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
                 title: Text('${g['nombre']}'),
                 subtitle: Text(
                     '${g['materia_nombre'] ?? 'Sin materia'} · ${g['porcentaje']}%'),
-                leading: CircleAvatar(backgroundColor: const Color(0xFF5B4CF0).withValues(alpha: .12), child: Text('${g['calificacion']}', style: const TextStyle(color: Color(0xFF5B4CF0), fontWeight: FontWeight.w900))),
+                leading: CircleAvatar(
+                    backgroundColor:
+                        const Color(0xFF5B4CF0).withValues(alpha: .12),
+                    child: Text('${g['calificacion']}',
+                        style: const TextStyle(
+                            color: Color(0xFF5B4CF0),
+                            fontWeight: FontWeight.w900))),
                 onTap: () => _addGrade(g),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -319,59 +398,175 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
 
   Widget _planner() {
     final pending = tareas.where((t) => t['estado'] != 'completada').toList()
-      ..sort((a, b) => '${a['fecha_vencimiento']}'
-          .compareTo('${b['fecha_vencimiento']}'));
+      ..sort((a, b) =>
+          '${a['fecha_vencimiento']}'.compareTo('${b['fecha_vencimiento']}'));
     if (pending.isEmpty) return const _Empty('No tienes entregas pendientes.');
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: const Color(0xFF5B4CF0).withValues(alpha: .10), borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(
+            color: const Color(0xFF5B4CF0).withValues(alpha: .10),
+            borderRadius: BorderRadius.circular(20)),
         child: Row(children: [
-          const CircleAvatar(backgroundColor: Color(0xFF5B4CF0), child: Icon(Icons.auto_awesome, color: Colors.white)),
+          const CircleAvatar(
+              backgroundColor: Color(0xFF5B4CF0),
+              child: Icon(Icons.auto_awesome, color: Colors.white)),
           const SizedBox(width: 13),
-          Expanded(child: Text('Snow organizó ${pending.length} ${pending.length == 1 ? 'entrega' : 'entregas'} según fecha y prioridad.', style: const TextStyle(fontWeight: FontWeight.w700, height: 1.35))),
+          Expanded(
+              child: Text(
+                  'Snow organizó ${pending.length} ${pending.length == 1 ? 'entrega' : 'entregas'} según fecha y prioridad.',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, height: 1.35))),
         ]),
       ),
       const SizedBox(height: 18),
       ...pending.take(12).toList().asMap().entries.map((entry) {
         final t = entry.value;
         final priority = '${t['prioridad'] ?? 'media'}';
-        final priorityColor = priority.toLowerCase() == 'alta' ? const Color(0xFFEF5350) : priority.toLowerCase() == 'baja' ? const Color(0xFF26A69A) : const Color(0xFFFFA726);
+        final priorityColor = priority.toLowerCase() == 'alta'
+            ? const Color(0xFFEF5350)
+            : priority.toLowerCase() == 'baja'
+                ? const Color(0xFF26A69A)
+                : const Color(0xFFFFA726);
         return Container(
           margin: const EdgeInsets.only(bottom: 11),
           padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(18), border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)),
+          decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant)),
           child: Row(children: [
-            Column(children: [CircleAvatar(radius: 17, backgroundColor: const Color(0xFF5B4CF0).withValues(alpha: .12), child: Text('${entry.key + 1}', style: const TextStyle(color: Color(0xFF5B4CF0), fontWeight: FontWeight.w900))), Container(width: 2, height: 28, color: const Color(0xFF5B4CF0).withValues(alpha: .18))]),
+            Column(children: [
+              CircleAvatar(
+                  radius: 17,
+                  backgroundColor:
+                      const Color(0xFF5B4CF0).withValues(alpha: .12),
+                  child: Text('${entry.key + 1}',
+                      style: const TextStyle(
+                          color: Color(0xFF5B4CF0),
+                          fontWeight: FontWeight.w900))),
+              Container(
+                  width: 2,
+                  height: 28,
+                  color: const Color(0xFF5B4CF0).withValues(alpha: .18))
+            ]),
             const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('${t['titulo']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)), const SizedBox(height: 7), Row(children: [const Icon(Icons.calendar_today_outlined, size: 14), const SizedBox(width: 5), Expanded(child: Text(_friendlyDate(t['fecha_vencimiento']), style: const TextStyle(fontSize: 12)))])])),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text('${t['titulo']}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 7),
+                  Row(children: [
+                    const Icon(Icons.calendar_today_outlined, size: 14),
+                    const SizedBox(width: 5),
+                    Expanded(
+                        child: Text(_friendlyDate(t['fecha_vencimiento']),
+                            style: const TextStyle(fontSize: 12)))
+                  ])
+                ])),
             const SizedBox(width: 8),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5), decoration: BoxDecoration(color: priorityColor.withValues(alpha: .12), borderRadius: BorderRadius.circular(20)), child: Text(priority, style: TextStyle(color: priorityColor, fontSize: 10, fontWeight: FontWeight.w800))),
+            Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                    color: priorityColor.withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(20)),
+                child: Text(priority,
+                    style: TextStyle(
+                        color: priorityColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800))),
           ]),
         );
       }),
     ]);
   }
 
-  Widget _assistant() => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+  Widget _assistant() =>
+      Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16)),
           child: Row(children: [
-            const CircleAvatar(radius: 19, backgroundColor: Color(0xFF5B4CF0), child: Text('🐰')),
+            const CircleAvatar(
+                radius: 19,
+                backgroundColor: Color(0xFF5B4CF0),
+                child: Text('🐰')),
             const SizedBox(width: 10),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Snow Assistant', style: TextStyle(fontWeight: FontWeight.w900)), Row(children: [Container(width: 7, height: 7, decoration: const BoxDecoration(color: Color(0xFF36C76C), shape: BoxShape.circle)), const SizedBox(width: 5), const Text('En línea · Responde con tus datos académicos', style: TextStyle(fontSize: 10))])])),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  const Text('Snow Assistant',
+                      style: TextStyle(fontWeight: FontWeight.w900)),
+                  Row(children: [
+                    Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                            color: Color(0xFF36C76C), shape: BoxShape.circle)),
+                    const SizedBox(width: 5),
+                    const Expanded(
+                        child: Text('Consultas sobre tus módulos de Snow',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 10)))
+                  ]),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF5B4CF0).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      assistantRemaining > 0
+                          ? '🐰 $assistantRemaining de $assistantLimit consultas disponibles'
+                          : '🐰 Límite mensual alcanzado',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: assistantRemaining > 0
+                            ? const Color(0xFF5B4CF0)
+                            : Colors.redAccent,
+                      ),
+                    ),
+                  ),
+                ])),
+            IconButton(
+              tooltip: 'Historial',
+              onPressed: _showAssistantHistory,
+              icon: const Icon(Icons.history_rounded),
+            ),
+            IconButton(
+              tooltip: 'Nueva conversación',
+              onPressed: _startNewAssistantConversation,
+              icon: const Icon(Icons.add_comment_outlined),
+            ),
           ]),
         ),
         const SizedBox(height: 10),
         Expanded(
           child: Container(
-            decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)),
+            decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant)),
             child: ListView.builder(
               controller: assistantScrollCtrl,
               padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
               itemCount: assistantMessages.length,
-              itemBuilder: (context, index) => _ChatBubble(message: assistantMessages[index]),
+              itemBuilder: (context, index) =>
+                  _ChatBubble(message: assistantMessages[index]),
             ),
           ),
         ),
@@ -379,7 +574,12 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
         Wrap(
           spacing: 6,
           runSpacing: 4,
-          children: ['Clases de hoy', 'Organiza mi semana', '¿Qué hago primero?', 'Mi promedio'].map((text) {
+          children: [
+            'Clases de hoy',
+            'Organiza mi semana',
+            '¿Qué hago primero?',
+            'Mi promedio'
+          ].map((text) {
             final question = switch (text) {
               'Clases de hoy' => '¿Qué clases tengo hoy?',
               'Mi promedio' => '¿Cuál es mi promedio?',
@@ -390,29 +590,90 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
               labelStyle: const TextStyle(fontSize: 11),
               avatar: const Icon(Icons.auto_awesome, size: 14),
               label: Text(text),
-              onPressed: () { assistantCtrl.text = question; _generateAdvice(); },
+              onPressed: assistantRemaining <= 0 || assistantSending
+                  ? null
+                  : () {
+                      assistantCtrl.text = question;
+                      _generateAdvice();
+                    },
             );
           }).toList(),
         ),
         const SizedBox(height: 8),
+        if (assistantRemaining <= 0)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF5B4CF0).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFF5B4CF0).withValues(alpha: 0.18),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('🐰', style: TextStyle(fontSize: 18)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Has utilizado tus $assistantLimit consultas de Snow Assistant este mes.\n'
+                    'Se renovarán automáticamente el ${_assistantResetText()}.',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.4,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Expanded(child: TextField(
+          Expanded(
+              child: TextField(
             controller: assistantCtrl,
+            enabled: assistantRemaining > 0 && !assistantSending,
             minLines: 1,
             maxLines: 3,
             textInputAction: TextInputAction.send,
             onSubmitted: (_) => _generateAdvice(),
             decoration: InputDecoration(
-              hintText: 'Pregúntale algo a Snow…',
-              prefixIcon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+              hintText: assistantRemaining > 0
+                  ? 'Pregúntale algo a Snow…'
+                  : 'Consultas agotadas hasta ${_assistantResetText()}',
+              prefixIcon:
+                  const Icon(Icons.chat_bubble_outline_rounded, size: 20),
               filled: true,
               fillColor: Theme.of(context).colorScheme.surface,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(24)), borderSide: BorderSide.none),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              border: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(24)),
+                  borderSide: BorderSide.none),
             ),
           )),
           const SizedBox(width: 9),
-          SizedBox(width: 50, height: 50, child: FilledButton(onPressed: _generateAdvice, style: FilledButton.styleFrom(backgroundColor: const Color(0xFF5B4CF0), padding: EdgeInsets.zero, shape: const CircleBorder()), child: const Icon(Icons.send_rounded))),
+          SizedBox(
+              width: 50,
+              height: 50,
+              child: FilledButton(
+                  onPressed: assistantRemaining > 0 && !assistantSending
+                      ? _generateAdvice
+                      : null,
+                  style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF5B4CF0),
+                      padding: EdgeInsets.zero,
+                      shape: const CircleBorder()),
+                  child: assistantSending
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.send_rounded))),
         ]),
       ]);
 
@@ -425,15 +686,23 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
   Widget _card(String title, IconData icon, List<Widget> children) => Card(
         child: Padding(
           padding: const EdgeInsets.all(18),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [Icon(icon, color: const Color(0xFF5B4CF0)), const SizedBox(width: 9), Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))]),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Icon(icon, color: const Color(0xFF5B4CF0)),
+              const SizedBox(width: 9),
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w800))
+            ]),
             const SizedBox(height: 16),
             Wrap(spacing: 10, runSpacing: 10, children: children),
           ]),
         ),
       );
 
-  Widget _metric(String value, String label, IconData icon, Color accent) => Container(
+  Widget _metric(String value, String label, IconData icon, Color accent) =>
+      Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
@@ -441,7 +710,9 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Icon(icon, color: accent, size: 21),
           const Spacer(),
-          Text(value, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
           Text(label, style: const TextStyle(fontSize: 12)),
         ]),
       );
@@ -449,52 +720,652 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
   Widget _sectionTitle(String text, IconData icon) => Row(children: [
         Icon(icon, color: const Color(0xFF5B4CF0), size: 21),
         const SizedBox(width: 8),
-        Text(text, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+        Text(text,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
       ]);
 
-  void _generateAdvice() {
+  Future<void> _generateAdvice() async {
+    final message = assistantCtrl.text.trim();
+    if (assistantRemaining <= 0) {
+      _showAssistantLimitMessage();
+      return;
+    }
+    if (message.isEmpty || assistantSending) return;
+
+    assistantCtrl.clear();
+    setState(() {
+      assistantSending = true;
+      assistantMessages.add(_AssistantMessage(message, true));
+    });
+
+    try {
+      final result = await SnowAssistantService.instance.ask(
+        message: message,
+        context: _buildAssistantContext(),
+      );
+      if (!mounted) return;
+      setState(() {
+        assistantMessages.add(_AssistantMessage(result.answer, false));
+        if (result.limit != null) assistantLimit = result.limit!;
+        if (result.used != null) assistantUsed = result.used!;
+        if (result.remaining != null) {
+          assistantRemaining = result.remaining!;
+        }
+        if (result.resetAt != null) assistantResetAt = result.resetAt;
+      });
+      await _saveAssistantExchange(message, result.answer);
+    } catch (e) {
+      debugPrint('Snow Assistant error: $e');
+      await _loadAssistantUsage();
+      if (!mounted) return;
+      if (assistantRemaining <= 0) {
+        _showAssistantLimitMessage();
+        return;
+      }
+      setState(() => assistantMessages.add(const _AssistantMessage(
+            '🐰 Lo siento, no pude conectarme en este momento. Intenta nuevamente.',
+            false,
+          )));
+    } finally {
+      if (mounted) setState(() => assistantSending = false);
+      _scrollAssistantToBottom();
+    }
+  }
+
+  String get _assistantWelcomeMessage =>
+      '¡Hola, $userName! 👋 Soy Snow, tu asistente académico. '
+      'Estoy listo para ayudarte a organizar tu día. ¿Qué quieres consultar?';
+
+  void _showAssistantWelcome() {
+    assistantMessages
+      ..clear()
+      ..add(_AssistantMessage(_assistantWelcomeMessage, false));
+  }
+
+  Future<void> _loadAssistantHistory() async {
+    try {
+      final conversations =
+          await SnowAssistantHistoryService.instance.getConversations(limit: 1);
+      if (conversations.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          assistantConversationId = null;
+          _showAssistantWelcome();
+        });
+        return;
+      }
+      await _openAssistantConversation(conversations.first['id'].toString());
+    } catch (e) {
+      debugPrint('Error cargando historial Snow: $e');
+      if (mounted) setState(_showAssistantWelcome);
+    }
+  }
+
+  Future<void> _saveAssistantExchange(String message, String answer) async {
+    try {
+      var id = assistantConversationId;
+      if (id == null) {
+        id = await SnowAssistantHistoryService.instance
+            .createConversation(message);
+        if (mounted) setState(() => assistantConversationId = id);
+      }
+      await SnowAssistantHistoryService.instance.saveExchange(
+        conversationId: id,
+        userMessage: message,
+        assistantMessage: answer,
+      );
+    } catch (e) {
+      debugPrint('Error guardando conversación Snow: $e');
+    }
+  }
+
+  void _startNewAssistantConversation() {
+    setState(() {
+      assistantConversationId = null;
+      _showAssistantWelcome();
+    });
+    _scrollAssistantToBottom();
+  }
+
+  Future<void> _openAssistantConversation(String conversationId) async {
+    try {
+      final messages = await SnowAssistantHistoryService.instance
+          .getMessages(conversationId);
+      if (!mounted) return;
+      setState(() {
+        assistantConversationId = conversationId;
+        assistantMessages
+          ..clear()
+          ..add(_AssistantMessage(_assistantWelcomeMessage, false))
+          ..addAll(messages.map((message) => _AssistantMessage(
+                message['content'].toString(),
+                message['role'] == 'user',
+              )));
+      });
+      _scrollAssistantToBottom();
+    } catch (e) {
+      debugPrint('Error abriendo conversación Snow: $e');
+    }
+  }
+
+  Future<void> _showAssistantHistory() async {
+    try {
+      var conversations =
+          await SnowAssistantHistoryService.instance.getConversations();
+      if (!mounted) return;
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        builder: (sheetContext) => StatefulBuilder(
+          builder: (context, setModalState) => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Row(children: [
+                  const Expanded(
+                    child: Text('Conversaciones',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.w900)),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(sheetContext);
+                      _startNewAssistantConversation();
+                    },
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Nueva'),
+                  ),
+                ]),
+                if (conversations.length >= 2)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: sheetContext,
+                          builder: (dialogContext) => AlertDialog(
+                            icon: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFFFE8E8),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.delete_sweep_outlined,
+                                color: Color(0xFFD32F2F),
+                              ),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                            title: const Text(
+                              'Eliminar todo el historial',
+                              textAlign: TextAlign.center,
+                            ),
+                            content: const Text(
+                              'Se eliminarán todas tus conversaciones '
+                              'de Snow Assistant.\n\n'
+                              'Esta acción no se puede deshacer.',
+                              textAlign: TextAlign.center,
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(dialogContext, false),
+                                child: const Text('Cancelar'),
+                              ),
+                              FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFFD32F2F),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: () =>
+                                    Navigator.pop(dialogContext, true),
+                                child: const Text('Eliminar todo'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed != true) return;
+
+                        try {
+                          await SnowAssistantHistoryService.instance
+                              .clearHistory();
+
+                          if (!sheetContext.mounted) return;
+
+                          setModalState(() {
+                            conversations.clear();
+                          });
+
+                          _startNewAssistantConversation();
+
+                          if (sheetContext.mounted) {
+                            Navigator.pop(sheetContext);
+                          }
+                        } catch (e) {
+                          debugPrint(
+                            'Error eliminando historial Snow: $e',
+                          );
+                        }
+                      },
+                      icon: const Icon(
+                        Icons.delete_sweep_outlined,
+                        size: 18,
+                      ),
+                      label: const Text('Eliminar todo'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.redAccent,
+                      ),
+                    ),
+                  ),
+                if (conversations.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(30),
+                    child: Text('Todavía no tienes conversaciones guardadas.'),
+                  )
+                else
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 430),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: conversations.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (_, index) {
+                        final conversation = conversations[index];
+
+                        final id = conversation['id'].toString();
+
+                        final title =
+                            conversation['title']?.toString() ?? 'Conversación';
+
+                        final updated = DateTime.tryParse(
+                          conversation['updated_at']?.toString() ?? '',
+                        );
+
+                        final isCurrent = assistantConversationId == id;
+                        return Material(
+                          color: isCurrent
+                              ? const Color(0xFF5B4CF0).withValues(alpha: 0.08)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(14),
+                          child: ListTile(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              side: isCurrent
+                                  ? BorderSide(
+                                      color: const Color(0xFF5B4CF0)
+                                          .withValues(alpha: 0.25),
+                                    )
+                                  : BorderSide.none,
+                            ),
+
+                            // =====================================
+                            // ICONO
+                            // =====================================
+
+                            leading: CircleAvatar(
+                              backgroundColor: isCurrent
+                                  ? const Color(0xFF5B4CF0)
+                                  : const Color(0xFF5B4CF0)
+                                      .withValues(alpha: 0.12),
+                              child: Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                color: isCurrent
+                                    ? Colors.white
+                                    : const Color(0xFF5B4CF0),
+                                size: 18,
+                              ),
+                            ),
+
+                            // =====================================
+                            // TÍTULO + ETIQUETA ACTUAL
+                            // =====================================
+
+                            title: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontWeight: isCurrent
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                if (isCurrent) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF5B4CF0),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Text(
+                                      'Actual',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+
+                            // =====================================
+                            // FECHA
+                            // =====================================
+
+                            subtitle: updated == null
+                                ? null
+                                : Padding(
+                                    padding: const EdgeInsets.only(top: 3),
+                                    child: Text(
+                                      DateFormat(
+                                        'dd/MM/yyyy · HH:mm',
+                                      ).format(
+                                        updated.toLocal(),
+                                      ),
+                                    ),
+                                  ),
+
+                            // =====================================
+                            // ABRIR CONVERSACIÓN
+                            // =====================================
+
+                            onTap: () {
+                              Navigator.pop(sheetContext);
+                              _openAssistantConversation(id);
+                            },
+
+                            // =====================================
+                            // ELIMINAR CONVERSACIÓN
+                            // =====================================
+
+                            trailing: IconButton(
+                              tooltip: 'Eliminar conversación',
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                              ),
+                              onPressed: () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: sheetContext,
+                                  builder: (dialogContext) => AlertDialog(
+                                    icon: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFFFE8E8),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.delete_outline_rounded,
+                                        color: Color(0xFFD32F2F),
+                                      ),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(28),
+                                    ),
+                                    title: const Text(
+                                      'Eliminar conversación',
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    content: Text(
+                                      'Se eliminará la conversación:\n\n'
+                                      '“$title”\n\n'
+                                      'Esta acción no se puede deshacer.',
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(
+                                          dialogContext,
+                                          false,
+                                        ),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      FilledButton(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFFD32F2F,
+                                          ),
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                          ),
+                                        ),
+                                        onPressed: () => Navigator.pop(
+                                          dialogContext,
+                                          true,
+                                        ),
+                                        child: const Text('Eliminar'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+
+                                if (confirmed != true) return;
+
+                                try {
+                                  await SnowAssistantHistoryService.instance
+                                      .deleteConversation(id);
+
+                                  if (!sheetContext.mounted) {
+                                    return;
+                                  }
+
+                                  // Quitar inmediatamente de la lista
+                                  setModalState(() {
+                                    conversations.removeWhere(
+                                      (conversation) =>
+                                          conversation['id'].toString() == id,
+                                    );
+                                  });
+
+                                  // Si borramos la conversación abierta,
+                                  // comenzar una nueva.
+                                  if (assistantConversationId == id) {
+                                    _startNewAssistantConversation();
+                                  }
+                                } catch (e) {
+                                  debugPrint(
+                                    'Error eliminando conversación Snow: $e',
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ]),
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error mostrando historial Snow: $e');
+    }
+  }
+
+  void _scrollAssistantToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!assistantScrollCtrl.hasClients) return;
+      assistantScrollCtrl.animateTo(
+        assistantScrollCtrl.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  String _assistantResetText() {
+    final date = assistantResetAt;
+    if (date == null) return 'el próximo mes';
+    final resetDate = date.toUtc();
+    return '${resetDate.day.toString().padLeft(2, '0')}/'
+        '${resetDate.month.toString().padLeft(2, '0')}/${resetDate.year}';
+  }
+
+  void _showAssistantLimitMessage() {
+    if (!mounted) return;
+    setState(() {
+      final alreadyShown = assistantMessages.isNotEmpty &&
+          assistantMessages.last.text.contains('Has utilizado tus');
+      if (!alreadyShown) {
+        assistantMessages.add(_AssistantMessage(
+          '🐰 **Has utilizado tus $assistantLimit consultas de Snow Assistant este mes.**\n\n'
+          'Tus consultas se renovarán automáticamente el ${_assistantResetText()}.',
+          false,
+        ));
+      }
+    });
+    _scrollAssistantToBottom();
+  }
+
+  Map<String, dynamic> _buildAssistantContext() {
+    return {
+      'nombre_estudiante': userName,
+      'fecha_actual': DateTime.now().toIso8601String(),
+      'materias': materias
+          .map((materia) => {
+                'nombre': materia['nombre'],
+                'profesor': materia['profesor'],
+                'creditos': materia['creditos'],
+              })
+          .toList(),
+      'tareas': tareas
+          .map((tarea) => {
+                'titulo': tarea['titulo'],
+                'descripcion': tarea['descripcion'],
+                'estado': tarea['estado'],
+                'prioridad': tarea['prioridad'],
+                'dificultad': tarea['dificultad'],
+                'materia': tarea['materia_nombre'],
+                'fecha_vencimiento': tarea['fecha_vencimiento'],
+              })
+          .toList(),
+      'proyectos': proyectos
+          .map((proyecto) => {
+                'titulo': proyecto['titulo'],
+                'descripcion': proyecto['descripcion'],
+                'materia': proyecto['materia_nombre'],
+                'avance': proyecto['avance_porcentual'],
+                'fecha_fin': proyecto['fecha_fin'],
+                'fase': proyecto['fase'],
+              })
+          .toList(),
+      'notas': grades
+          .map((nota) => {
+                'nombre': nota['nombre'],
+                'materia': nota['materia_nombre'],
+                'calificacion': nota['calificacion'],
+                'porcentaje': nota['porcentaje'],
+              })
+          .toList(),
+      'horario': horarios
+          .map((horario) => {
+                'materia': horario.materiaNombre,
+                'profesor': horario.profesor,
+                'salon': horario.salon,
+                'dia_semana': horario.diaSemana,
+                'hora_inicio': horario.horaInicio,
+                'hora_fin': horario.horaFin,
+              })
+          .toList(),
+      'pomodoro': {
+        'sesiones_estudio': pomodoro['sesionesEstudio'] ?? 0,
+        'minutos_estudio': pomodoro['minutosEstudio'] ?? 0,
+      },
+      'conversacion_reciente': assistantMessages
+          .skip(
+            assistantMessages.length > 8 ? assistantMessages.length - 8 : 0,
+          )
+          .map((mensaje) => {
+                'rol': mensaje.fromUser ? 'estudiante' : 'snow',
+                'mensaje': mensaje.text,
+              })
+          .toList(),
+    };
+  }
+
+  // Se conserva como respaldo mientras se valida la Edge Function.
+  // ignore: unused_element
+  void _generateLocalAdvice() {
     final question = assistantCtrl.text.trim();
     if (question.isEmpty) {
       return;
     }
     final normalized = _normalize(question);
     final pending = tareas.where((t) => t['estado'] != 'completada').toList();
-    final urgent = pending.where((t) => '${t['prioridad']}'.toLowerCase() == 'alta').toList();
-    final first = urgent.isNotEmpty ? urgent.first : (pending.isNotEmpty ? pending.first : null);
+    final urgent = pending
+        .where((t) => '${t['prioridad']}'.toLowerCase() == 'alta')
+        .toList();
+    final first = urgent.isNotEmpty
+        ? urgent.first
+        : (pending.isNotEmpty ? pending.first : null);
     late String answer;
-      if (_isGreeting(normalized)) {
-        answer = '¡Hola de nuevo, $userName! 😊 Podemos revisar tus clases de hoy, tareas pendientes, proyectos, notas o tiempo de estudio. ¿Por dónde empezamos?';
-      } else if (_asksAboutClasses(normalized) && normalized.contains('hoy')) {
-        answer = _classesForDay(DateTime.now().weekday, 'hoy', normalized);
-      } else if (_asksAboutClasses(normalized) && normalized.contains('manana')) {
-        final tomorrow = DateTime.now().add(const Duration(days: 1)).weekday;
-        answer = _classesForDay(tomorrow, 'mañana', normalized);
-      } else if (normalized.contains('horario')) {
-        answer = _weeklyScheduleAnswer();
-      } else if (normalized.contains('profesor') ||
-          normalized.contains('docente') ||
-          normalized.contains('quien da')) {
-        answer = _teacherAnswer(normalized);
-      } else if (normalized.contains('materias') || normalized.contains('asignaturas')) {
-        answer = materias.isEmpty
-            ? 'No tienes materias registradas.'
-            : 'Tienes ${materias.length} materias: ${materias.map((m) => m['nombre']).join(', ')}.';
-      } else if (normalized.contains('tareas') || normalized.contains('pendientes')) {
-        answer = _tasksAnswer(normalized, pending);
-      } else if (normalized.contains('proyectos')) {
-        final active = proyectos.where((p) => (num.tryParse('${p['avance_porcentual']}') ?? 0) < 100).toList();
-        answer = active.isEmpty
-            ? 'No tienes proyectos activos.'
-            : 'Tienes ${active.length} proyectos activos: ${active.map((p) => p['titulo']).join(', ')}.';
-      } else if (normalized.contains('notas') || normalized.contains('promedio')) {
-        answer = _gradesAnswer();
-      } else if (normalized.contains('pomodoro') || normalized.contains('estudiado') || normalized.contains('estudio hoy')) {
-        answer = 'Hoy registras ${pomodoro['sesionesEstudio'] ?? 0} sesiones Pomodoro y ${pomodoro['minutosEstudio'] ?? 0} minutos de estudio.';
-      } else {
-        answer = first == null
-            ? 'No tienes tareas pendientes. Puedes dedicar hoy a repasar la materia que más te cueste.'
-            : _priorityAdvice(first, pending.length - 1);
-      }
+    if (_isGreeting(normalized)) {
+      answer =
+          '¡Hola de nuevo, $userName! 😊 Podemos revisar tus clases de hoy, tareas pendientes, proyectos, notas o tiempo de estudio. ¿Por dónde empezamos?';
+    } else if (!_isAppRelatedQuestion(normalized)) {
+      answer =
+          'No tengo conocimiento sobre ese tema. Solo puedo ayudarte con los módulos de Snow: materias, tareas, proyectos, metas, horario, calendario, Pomodoro, notas y planificación académica.';
+    } else if (_asksAboutClasses(normalized) && normalized.contains('hoy')) {
+      answer = _classesForDay(DateTime.now().weekday, 'hoy', normalized);
+    } else if (_asksAboutClasses(normalized) && normalized.contains('manana')) {
+      final tomorrow = DateTime.now().add(const Duration(days: 1)).weekday;
+      answer = _classesForDay(tomorrow, 'mañana', normalized);
+    } else if (normalized.contains('horario')) {
+      answer = _weeklyScheduleAnswer();
+    } else if (normalized.contains('profesor') ||
+        normalized.contains('docente') ||
+        normalized.contains('quien da')) {
+      answer = _teacherAnswer(normalized);
+    } else if (normalized.contains('materias') ||
+        normalized.contains('asignaturas')) {
+      answer = materias.isEmpty
+          ? 'No tienes materias registradas.'
+          : 'Tienes ${materias.length} materias: ${materias.map((m) => m['nombre']).join(', ')}.';
+    } else if (normalized.contains('tareas') ||
+        normalized.contains('pendientes')) {
+      answer = _tasksAnswer(normalized, pending);
+    } else if (normalized.contains('proyectos')) {
+      final active = proyectos
+          .where((p) => (num.tryParse('${p['avance_porcentual']}') ?? 0) < 100)
+          .toList();
+      answer = active.isEmpty
+          ? 'No tienes proyectos activos.'
+          : 'Tienes ${active.length} proyectos activos: ${active.map((p) => p['titulo']).join(', ')}.';
+    } else if (normalized.contains('notas') ||
+        normalized.contains('promedio')) {
+      answer = _gradesAnswer();
+    } else if (normalized.contains('pomodoro') ||
+        normalized.contains('estudiado') ||
+        normalized.contains('estudio hoy')) {
+      answer =
+          'Hoy registras ${pomodoro['sesionesEstudio'] ?? 0} sesiones Pomodoro y ${pomodoro['minutosEstudio'] ?? 0} minutos de estudio.';
+    } else {
+      answer = first == null
+          ? 'No tienes tareas pendientes. Puedes dedicar hoy a repasar la materia que más te cueste.'
+          : _priorityAdvice(first, pending.length - 1);
+    }
     assistantCtrl.clear();
     setState(() {
       assistantMessages.add(_AssistantMessage(question, true));
@@ -537,9 +1408,8 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
   }
 
   String _classesForDay(int weekday, String label, [String? question]) {
-    final mentionedSubject = question == null
-        ? null
-        : _findMentionedSubject(question);
+    final mentionedSubject =
+        question == null ? null : _findMentionedSubject(question);
     final classes = horarios.where((h) {
       if (h.diaSemana != weekday) return false;
       if (mentionedSubject == null) return true;
@@ -555,9 +1425,8 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
     }
     lastReferencedClasses = List<HorarioModel>.from(classes);
     final details = classes.map((h) {
-      final room = h.salon.trim().isEmpty
-          ? ''
-          : '\n   📍 Salón ${h.salon.trim()}';
+      final room =
+          h.salon.trim().isEmpty ? '' : '\n   📍 Salón ${h.salon.trim()}';
       return '• ${h.materiaNombre}\n'
           '   🕒 ${_formatClassTime(h.horaInicio)} – ${_formatClassTime(h.horaFin)}$room';
     }).join('\n\n');
@@ -574,8 +1443,17 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
 
   Map<String, dynamic>? _findMentionedSubject(String question) {
     const ignoredWords = {
-      'tengo', 'clase', 'clases', 'materia', 'hoy', 'manana',
-      'profesor', 'docente', 'tarea', 'tareas', 'pendientes',
+      'tengo',
+      'clase',
+      'clases',
+      'materia',
+      'hoy',
+      'manana',
+      'profesor',
+      'docente',
+      'tarea',
+      'tareas',
+      'pendientes',
     };
     for (final subject in materias) {
       final normalizedName = _normalize('${subject['nombre'] ?? ''}');
@@ -635,8 +1513,8 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
           .toList();
     } else if (question.contains('semana')) {
       periodLabel = 'para esta semana';
-      final end = DateTime(now.year, now.month, now.day)
-          .add(const Duration(days: 7));
+      final end =
+          DateTime(now.year, now.month, now.day).add(const Duration(days: 7));
       scopedTasks = scopedTasks.where((task) {
         final date = _taskDate(task);
         return date != null && !date.isBefore(now) && date.isBefore(end);
@@ -720,14 +1598,34 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
 
   String _weeklyScheduleAnswer() {
     if (horarios.isEmpty) return 'No tienes clases registradas en el horario.';
-    const days = ['', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-    return horarios.take(10).map((h) => '${days[h.diaSemana]}: ${h.materiaNombre} ${h.horaInicio}-${h.horaFin}').join('; ');
+    const days = [
+      '',
+      'lunes',
+      'martes',
+      'miércoles',
+      'jueves',
+      'viernes',
+      'sábado',
+      'domingo'
+    ];
+    return horarios
+        .take(10)
+        .map((h) =>
+            '${days[h.diaSemana]}: ${h.materiaNombre} ${h.horaInicio}-${h.horaFin}')
+        .join('; ');
   }
 
   String _gradesAnswer() {
     if (grades.isEmpty) return 'Aún no tienes notas registradas en Mis notas.';
-    final totalWeight = grades.fold<double>(0, (sum, g) => sum + (double.tryParse('${g['porcentaje']}') ?? 0));
-    final weighted = grades.fold<double>(0, (sum, g) => sum + (double.tryParse('${g['calificacion']}') ?? 0) * (double.tryParse('${g['porcentaje']}') ?? 0) / 100);
+    final totalWeight = grades.fold<double>(
+        0, (sum, g) => sum + (double.tryParse('${g['porcentaje']}') ?? 0));
+    final weighted = grades.fold<double>(
+        0,
+        (sum, g) =>
+            sum +
+            (double.tryParse('${g['calificacion']}') ?? 0) *
+                (double.tryParse('${g['porcentaje']}') ?? 0) /
+                100);
     return 'Tu promedio ponderado registrado es ${weighted.toStringAsFixed(2)} con $totalWeight% evaluado.';
   }
 
@@ -747,6 +1645,63 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
         greeting == 'buenas tardes' ||
         greeting == 'buenas noches' ||
         greeting == 'hey';
+  }
+
+  bool _isAppRelatedQuestion(String question) {
+    const moduleWords = {
+      'snow',
+      'app',
+      'materia',
+      'materias',
+      'asignatura',
+      'asignaturas',
+      'tarea',
+      'tareas',
+      'examen',
+      'examenes',
+      'pendiente',
+      'pendientes',
+      'entrega',
+      'entregas',
+      'proyecto',
+      'proyectos',
+      'meta',
+      'metas',
+      'horario',
+      'horarios',
+      'clase',
+      'clases',
+      'profesor',
+      'docente',
+      'salon',
+      'calendario',
+      'nota',
+      'notas',
+      'promedio',
+      'calificacion',
+      'pomodoro',
+      'planificador',
+      'planificar',
+      'prioridad',
+      'estudio',
+      'estudiado',
+      'sesion',
+      'sesiones',
+      'perfil',
+      'premium',
+      'suscripcion',
+    };
+
+    final words = question
+        .split(RegExp(r'[^a-z0-9]+'))
+        .where((word) => word.isNotEmpty)
+        .toSet();
+    if (words.any(moduleWords.contains)) return true;
+
+    return question.contains('organiza mi semana') ||
+        question.contains('organizar mi semana') ||
+        question.contains('que hago primero') ||
+        question.contains('que debo hacer primero');
   }
 
   Future<void> _addGrade([Map<String, dynamic>? existing]) async {
@@ -812,7 +1767,8 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
                           width: 46,
                           height: 46,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF5B4CF0).withValues(alpha: .12),
+                            color:
+                                const Color(0xFF5B4CF0).withValues(alpha: .12),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Icon(Icons.school_rounded,
@@ -852,15 +1808,14 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
                                       overflow: TextOverflow.ellipsis),
                                 ))
                             .toList(),
-                        onChanged: (value) =>
-                            setModal(() => materiaId = value),
+                        onChanged: (value) => setModal(() => materiaId = value),
                       ),
                       const SizedBox(height: 12),
                       TextField(
                         controller: name,
                         textCapitalization: TextCapitalization.sentences,
-                        decoration: fieldDecoration(
-                            'Nombre de la actividad', Icons.assignment_outlined),
+                        decoration: fieldDecoration('Nombre de la actividad',
+                            Icons.assignment_outlined),
                       ),
                       const SizedBox(height: 12),
                       Row(children: [
@@ -901,10 +1856,10 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
                               borderRadius: BorderRadius.circular(14)),
                         ),
                         onPressed: () {
-                          final value = double.tryParse(
-                              grade.text.replaceAll(',', '.'));
-                          final percentage = double.tryParse(
-                              weight.text.replaceAll(',', '.'));
+                          final value =
+                              double.tryParse(grade.text.replaceAll(',', '.'));
+                          final percentage =
+                              double.tryParse(weight.text.replaceAll(',', '.'));
                           if (materiaId == null ||
                               name.text.trim().isEmpty ||
                               value == null ||
@@ -988,10 +1943,14 @@ class _ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final textColor = message.fromUser ? Colors.white : colors.onSurface;
     return Align(
-      alignment: message.fromUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment:
+          message.fromUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 260),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.72,
+        ),
         margin: const EdgeInsets.only(bottom: 11),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
@@ -1005,14 +1964,55 @@ class _ChatBubble extends StatelessWidget {
             bottomRight: Radius.circular(message.fromUser ? 4 : 18),
           ),
         ),
-        child: Text(
-          message.text,
-          style: TextStyle(
-            color: message.fromUser ? Colors.white : colors.onSurface,
-            height: 1.4,
-            fontSize: 13,
-          ),
-        ),
+        child: message.fromUser
+            ? Text(
+                message.text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  height: 1.4,
+                  fontSize: 13,
+                ),
+              )
+            : MarkdownBody(
+                data: message.text,
+                selectable: true,
+                styleSheet:
+                    MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                  p: TextStyle(color: textColor, height: 1.4, fontSize: 13),
+                  strong: TextStyle(
+                    color: textColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                  em: TextStyle(
+                    color: textColor,
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  h1: TextStyle(
+                    color: textColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  h2: TextStyle(
+                    color: textColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  h3: TextStyle(
+                    color: textColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  code: TextStyle(
+                    color: textColor,
+                    fontSize: 12,
+                    fontFamily: 'monospace',
+                    backgroundColor: colors.surfaceContainerHigh,
+                  ),
+                ),
+              ),
       ),
     );
   }

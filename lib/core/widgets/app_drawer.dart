@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:snow/core/services/auth_session_service.dart';
 import 'package:snow/core/services/theme_service.dart';
+import 'package:snow/features/premium/data/premium_service.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key, required this.currentRoute});
@@ -202,30 +203,10 @@ class AppDrawer extends StatelessWidget {
                     selected: currentRoute.startsWith('/premium'),
                     onTap: () => _open(context, '/premium'),
                   ),
-                  _MenuItem(
-                      icon: Icons.insights_rounded,
-                      label: 'Estadísticas',
-                      route: '/premium/insights',
-                      currentRoute: currentRoute,
-                      onTap: (route) => _open(context, route)),
-                  _MenuItem(
-                      icon: Icons.school_rounded,
-                      label: 'Mis notas',
-                      route: '/premium/grades',
-                      currentRoute: currentRoute,
-                      onTap: (route) => _open(context, route)),
-                  _MenuItem(
-                      icon: Icons.auto_awesome_rounded,
-                      label: 'Planificador',
-                      route: '/premium/planner',
-                      currentRoute: currentRoute,
-                      onTap: (route) => _open(context, route)),
-                  _MenuItem(
-                      icon: Icons.smart_toy_rounded,
-                      label: 'Snow Assistant',
-                      route: '/premium/assistant',
-                      currentRoute: currentRoute,
-                      onTap: (route) => _open(context, route)),
+                  _PremiumDrawerModules(
+                    currentRoute: currentRoute,
+                    onOpen: (route) => _open(context, route),
+                  ),
                   const _SectionLabel('CUENTA'),
                   _MenuItem(
                       icon: Icons.person_rounded,
@@ -259,6 +240,80 @@ class AppDrawer extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PremiumDrawerModules extends StatefulWidget {
+  const _PremiumDrawerModules({
+    required this.currentRoute,
+    required this.onOpen,
+  });
+
+  final String currentRoute;
+  final ValueChanged<String> onOpen;
+
+  @override
+  State<_PremiumDrawerModules> createState() =>
+      _PremiumDrawerModulesState();
+}
+
+class _PremiumDrawerModulesState extends State<_PremiumDrawerModules> {
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPremiumStatus();
+  }
+
+  Future<void> _loadPremiumStatus() async {
+    await PremiumService.instance.initialize();
+    if (mounted) setState(() => _loaded = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: PremiumService.instance,
+      builder: (context, _) {
+        if (!_loaded || !PremiumService.instance.isSubscriptionActive) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          children: [
+            _MenuItem(
+              icon: Icons.insights_rounded,
+              label: 'Estadísticas',
+              route: '/premium/insights',
+              currentRoute: widget.currentRoute,
+              onTap: widget.onOpen,
+            ),
+            _MenuItem(
+              icon: Icons.school_rounded,
+              label: 'Mis notas',
+              route: '/premium/grades',
+              currentRoute: widget.currentRoute,
+              onTap: widget.onOpen,
+            ),
+            _MenuItem(
+              icon: Icons.auto_awesome_rounded,
+              label: 'Planificador',
+              route: '/premium/planner',
+              currentRoute: widget.currentRoute,
+              onTap: widget.onOpen,
+            ),
+            _MenuItem(
+              icon: Icons.smart_toy_rounded,
+              label: 'Snow Assistant',
+              route: '/premium/assistant',
+              currentRoute: widget.currentRoute,
+              onTap: widget.onOpen,
+            ),
+          ],
+        );
+      },
     );
   }
 }

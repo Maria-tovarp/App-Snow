@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:snow/core/widgets/app_bottom_nav.dart';
 import 'package:snow/core/widgets/app_drawer.dart';
 import 'package:snow/core/widgets/app_section_header.dart';
 
@@ -344,7 +345,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
           ),
-          const _ProfileBottomNav(),
+          const AppBottomNav(currentRoute: '/perfil'),
         ],
       ),
     );

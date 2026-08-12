@@ -24,14 +24,8 @@ class OnboardingPage extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
-                    MediaQuery.of(context).padding.top -
-                    MediaQuery.of(context).padding.bottom,
-              ),
-              child: Stack(
+          child: LayoutBuilder(
+            builder: (context, constraints) => Stack(
                 children: [
                   const Positioned(
                     top: 95,
@@ -57,13 +51,21 @@ class OnboardingPage extends StatelessWidget {
                     child:
                         _BubbleIcon(icon: Icons.cruelty_free_sharp, size: 28),
                   ),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 26),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                  Positioned.fill(
+                    child: SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 26,
+                              vertical: 24,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
                         Stack(
                           clipBehavior: Clip.none,
                           alignment: Alignment.center,
@@ -223,14 +225,16 @@ class OnboardingPage extends StatelessWidget {
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        ],
+                                const SizedBox(height: 24),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
           ),
         ),
       ),

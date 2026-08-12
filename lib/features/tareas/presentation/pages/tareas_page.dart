@@ -7,6 +7,7 @@ import 'package:snow/features/materias/data/materia_model.dart';
 import 'package:snow/core/services/local_data_store.dart';
 import 'package:snow/features/premium/data/premium_service.dart';
 import 'package:snow/features/premium/presentation/widgets/premium_limit_dialog.dart';
+import 'package:snow/core/widgets/app_bottom_nav.dart';
 
 import 'package:snow/core/widgets/app_notification.dart';
 import '../../data/tarea_model.dart';
@@ -25,6 +26,7 @@ class _TareasPageState extends State<TareasPage> {
   List<TareaModel> tareas = [];
   bool loading = true;
   int tabIndex = 0;
+  final Set<String> _expandedTaskIds = <String>{};
 
   String filtroPrioridad = 'Todas';
 
@@ -109,10 +111,7 @@ class _TareasPageState extends State<TareasPage> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: const _BottomNav(currentIndex: 2),
-      ),
+      bottomNavigationBar: const AppBottomNav(currentRoute: '/tareas'),
     );
   }
 
@@ -153,7 +152,7 @@ class _TareasPageState extends State<TareasPage> {
           },
           itemBuilder: (context) => const [
             PopupMenuItem(
-              value: 'Prioridad',
+              value: 'Todas',
               child: Text('Todas'),
             ),
             PopupMenuItem(
@@ -284,6 +283,8 @@ class _TareasPageState extends State<TareasPage> {
   }
 
   Widget _card(TareaModel t) {
+    final isExpanded = _expandedTaskIds.contains(t.id);
+    final description = (t.descripcion ?? '').trim();
     DateTime? fecha;
 
     if (t.fechaVencimiento != null) {
@@ -405,10 +406,14 @@ class _TareasPageState extends State<TareasPage> {
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
-                            if ((t.descripcion ?? '').trim().isNotEmpty) ...[
+                            if (description.isNotEmpty) ...[
                               const SizedBox(height: 6),
                               Text(
-                                t.descripcion!,
+                                description,
+                                maxLines: isExpanded ? null : 3,
+                                overflow: isExpanded
+                                    ? TextOverflow.visible
+                                    : TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontSize: 14,
                                   height: 1.4,
@@ -416,6 +421,46 @@ class _TareasPageState extends State<TareasPage> {
                                 ),
                               ),
                             ],
+                            const SizedBox(height: 4),
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (isExpanded) {
+                                    _expandedTaskIds.remove(t.id);
+                                  } else {
+                                    _expandedTaskIds.add(t.id);
+                                  }
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 5,
+                                  horizontal: 2,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      isExpanded ? 'Ver menos' : 'Ver más',
+                                      style: const TextStyle(
+                                        color: primary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Icon(
+                                      isExpanded
+                                          ? Icons.expand_less_rounded
+                                          : Icons.expand_more_rounded,
+                                      color: primary,
+                                      size: 18,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -460,7 +505,7 @@ class _TareasPageState extends State<TareasPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 14),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -475,8 +520,8 @@ class _TareasPageState extends State<TareasPage> {
                       _taskChip(t.dificultad),
                     ],
                   ),
-                  const SizedBox(height: 22),
-                  if (!isDone)
+                  if (!isDone) ...[
+                    const SizedBox(height: 18),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -537,6 +582,7 @@ class _TareasPageState extends State<TareasPage> {
                         ],
                       ),
                     ),
+                  ],
                 ],
               ),
             ),
@@ -1082,13 +1128,7 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16),
       backgroundColor: Colors.transparent,
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
+      child: Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(24, 18, 24, 26),
           decoration: BoxDecoration(
@@ -1303,7 +1343,6 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
               ],
             ),
           ),
-        ),
       ),
     );
   }

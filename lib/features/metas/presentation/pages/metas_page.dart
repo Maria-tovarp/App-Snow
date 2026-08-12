@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:snow/core/widgets/app_drawer.dart';
+import 'package:snow/core/widgets/app_bottom_nav.dart';
 import 'package:snow/core/widgets/app_section_header.dart';
 import 'package:snow/core/services/local_data_store.dart';
 
@@ -791,46 +792,7 @@ class _MetasPageState extends State<MetasPage> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 3,
-        onTap: (i) {
-          switch (i) {
-            case 0:
-              context.go('/home');
-              break;
-            case 1:
-              context.go('/materias');
-              break;
-            case 2:
-              context.go('/tareas');
-              break;
-            case 3:
-              context.go('/metas');
-              break;
-            case 4:
-              context.go('/perfil');
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined), label: 'Inicio'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.menu_book), label: 'Materias'),
-          BottomNavigationBarItem(icon: Icon(Icons.checklist), label: 'Tareas'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.track_changes), label: 'Metas'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: 'Perfil'),
-        ],
-        selectedItemColor: const Color(0xFF5B4CF0),
-        unselectedItemColor: const Color(0xFF8B8B9B),
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF20202B)
-            : Colors.white,
-        elevation: 0,
-        type: BottomNavigationBarType.fixed,
-      ),
+      bottomNavigationBar: const AppBottomNav(currentRoute: '/metas'),
     );
   }
 }

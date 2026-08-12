@@ -11,7 +11,25 @@ class AppSectionHeader extends StatelessWidget {
   });
 
   static const Color backgroundColor = Color(0xFF5B4CF0);
-  static const double height = 104;
+  static const double height = 80;
+  static const TextStyle titleStyle = TextStyle(
+    inherit: false,
+    fontFamily: 'Roboto',
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    height: 1.15,
+    letterSpacing: 0,
+  );
+  static const TextStyle subtitleStyle = TextStyle(
+    inherit: false,
+    fontFamily: 'Roboto',
+    color: Color(0xFFDCD8FF),
+    fontSize: 11,
+    fontWeight: FontWeight.w400,
+    height: 1.2,
+    letterSpacing: 0,
+  );
 
   final String title;
   final String subtitle;
@@ -21,13 +39,15 @@ class AppSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final topInset = MediaQuery.paddingOf(context).top;
+
     return SizedBox(
       width: double.infinity,
-      height: height,
+      height: height + topInset,
       child: ColoredBox(
         color: backgroundColor,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 12, 12),
+          padding: EdgeInsets.fromLTRB(16, topInset + 8, 12, 8),
           child: Row(
             children: [
               Builder(
@@ -56,22 +76,16 @@ class AppSectionHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title,
+                        textScaler: TextScaler.noScaling,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            height: 1.15,
-                            fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 5),
+                        style: titleStyle),
+                    const SizedBox(height: 4),
                     Text(subtitle,
+                        textScaler: TextScaler.noScaling,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            color: Color(0xFFDCD8FF),
-                            fontSize: 13,
-                            height: 1.15,
-                            fontWeight: FontWeight.w500)),
+                        style: subtitleStyle),
                   ],
                 ),
               ),

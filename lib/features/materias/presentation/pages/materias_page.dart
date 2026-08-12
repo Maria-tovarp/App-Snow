@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:snow/core/widgets/app_bottom_nav.dart';
 import 'package:snow/core/widgets/app_drawer.dart';
 import 'package:snow/core/widgets/app_section_header.dart';
 import 'package:snow/core/services/local_data_store.dart';
@@ -365,7 +366,7 @@ class _MateriasPageState extends State<MateriasPage> {
               ),
             ),
           ),
-          const _BottomNavMaterias(),
+          const AppBottomNav(currentRoute: '/materias'),
         ],
       ),
     );
