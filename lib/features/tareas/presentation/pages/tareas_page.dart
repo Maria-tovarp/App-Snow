@@ -7,7 +7,6 @@ import 'package:snow/features/materias/data/materia_model.dart';
 import 'package:snow/core/services/local_data_store.dart';
 import 'package:snow/features/premium/data/premium_service.dart';
 import 'package:snow/features/premium/presentation/widgets/premium_limit_dialog.dart';
-import 'package:snow/core/widgets/app_bottom_nav.dart';
 
 import 'package:snow/core/widgets/app_notification.dart';
 import '../../data/tarea_model.dart';
@@ -111,7 +110,6 @@ class _TareasPageState extends State<TareasPage> {
           ],
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(currentRoute: '/tareas'),
     );
   }
 
@@ -346,29 +344,29 @@ class _TareasPageState extends State<TareasPage> {
                     children: [
                       GestureDetector(
                         onTap: () async {
-                                await repo.updateEstado(
-                                  id: t.id,
-                                  estado: isDone ? 'pendiente' : 'completada',
-                                );
-                                await load();
+                          await repo.updateEstado(
+                            id: t.id,
+                            estado: isDone ? 'pendiente' : 'completada',
+                          );
+                          await load();
 
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      isDone
-                                          ? 'Tarea devuelta a pendientes'
-                                          : 'Tarea marcada como completada',
-                                    ),
-                                    backgroundColor: primary,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    margin: const EdgeInsets.all(16),
-                                  ),
-                                );
-                              },
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isDone
+                                    ? 'Tarea devuelta a pendientes'
+                                    : 'Tarea marcada como completada',
+                              ),
+                              backgroundColor: primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              margin: const EdgeInsets.all(16),
+                            ),
+                          );
+                        },
                         child: Container(
                           width: 22,
                           height: 22,
@@ -806,7 +804,8 @@ class _TareasPageState extends State<TareasPage> {
       await showPremiumLimitDialog(
         context,
         title: 'Llegaste al límite gratuito',
-        message: 'El plan gratis permite hasta 20 tareas activas. Activa Premium para crear tareas ilimitadas.',
+        message:
+            'El plan gratis permite hasta 20 tareas activas. Activa Premium para crear tareas ilimitadas.',
       );
       return;
     }
@@ -1052,8 +1051,7 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
         color: isDark ? const Color(0xFFB9B7C9) : const Color(0xFF7A7A8C),
       ),
       filled: true,
-      fillColor:
-          isDark ? const Color(0xFF242534) : const Color(0xFFF3F3F7),
+      fillColor: isDark ? const Color(0xFF242534) : const Color(0xFFF3F3F7),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 16,
@@ -1129,282 +1127,221 @@ class _CreateTareaModalState extends State<_CreateTareaModal> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 16),
       backgroundColor: Colors.transparent,
       child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(24, 18, 24, 26),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(6),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.18),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(24, 18, 24, 26),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.18),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Expanded(child: SizedBox()),
+                  Text(
+                    isEdit ? 'Editar Tarea' : 'Nueva Tarea',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colors.onSurface,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: InkWell(
+                        onTap: () => Navigator.pop(context),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(5),
+                          child: Icon(
+                            Icons.close,
+                            color: colors.onSurface,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Completa la información de la tarea',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.onSurfaceVariant,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 22),
+              TextField(
+                controller: tituloCtrl,
+                onChanged: (_) {
+                  if (tituloError != null) {
+                    setState(() => tituloError = null);
+                  }
+                },
+                decoration: _decoration(
+                  'Título *',
+                  errorText: tituloError,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: descCtrl,
+                maxLines: 3,
+                decoration: _decoration('Descripción'),
+              ),
+              const SizedBox(height: 14),
+              DropdownButtonFormField<String?>(
+                value: safeMateriaId,
+                decoration: _decoration(
+                  'Materia *',
+                  errorText: materiaError,
+                ),
+                isExpanded: true,
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('Selecciona una materia'),
+                  ),
+                  ...materias.map(
+                    (m) => DropdownMenuItem<String?>(
+                      value: m.id,
+                      child: Text(
+                        m.nombre,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    materiaId = value;
+                    materiaError = null;
+                  });
+                },
+              ),
+              const SizedBox(height: 14),
+              InkWell(
+                onTap: _pickFecha,
+                borderRadius: BorderRadius.circular(12),
+                child: InputDecorator(
+                  decoration: _decoration(
+                    'Fecha de entrega *',
+                    errorText: fechaError,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _fechaLabel(),
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const Icon(Icons.calendar_today_outlined, size: 18),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _dropdownField(
+                      label: 'Tipo',
+                      value: tipo,
+                      values: const ['tarea', 'examen'],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => tipo = value);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _dropdownField(
+                      label: 'Prioridad',
+                      value: prioridad,
+                      values: const ['baja', 'media', 'alta'],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => prioridad = value);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _dropdownField(
+                label: 'Dificultad',
+                value: dificultad,
+                values: const ['baja', 'media', 'alta'],
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => dificultad = value);
+                },
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: loading ? null : save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5B4CF0),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(0xFF5B4CF0),
+                    disabledForegroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: loading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          isEdit ? 'Guardar cambios' : 'Crear',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
               ),
             ],
           ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(child: SizedBox()),
-                    Text(
-                      isEdit ? 'Editar Tarea' : 'Nueva Tarea',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: colors.onSurface,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: InkWell(
-                          onTap: () => Navigator.pop(context),
-                          borderRadius: BorderRadius.circular(20),
-                          child: Padding(
-                            padding: const EdgeInsets.all(5),
-                            child: Icon(
-                              Icons.close,
-                              color: colors.onSurface,
-                              size: 22,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Completa la información de la tarea',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 22),
-                TextField(
-                  controller: tituloCtrl,
-                  onChanged: (_) {
-                    if (tituloError != null) {
-                      setState(() => tituloError = null);
-                    }
-                  },
-                  decoration: _decoration(
-                    'Título *',
-                    errorText: tituloError,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: descCtrl,
-                  maxLines: 3,
-                  decoration: _decoration('Descripción'),
-                ),
-                const SizedBox(height: 14),
-                DropdownButtonFormField<String?>(
-                  value: safeMateriaId,
-                  decoration: _decoration(
-                    'Materia *',
-                    errorText: materiaError,
-                  ),
-                  isExpanded: true,
-                  items: [
-                    const DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text('Selecciona una materia'),
-                    ),
-                    ...materias.map(
-                      (m) => DropdownMenuItem<String?>(
-                        value: m.id,
-                        child: Text(
-                          m.nombre,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      materiaId = value;
-                      materiaError = null;
-                    });
-                  },
-                ),
-                const SizedBox(height: 14),
-                InkWell(
-                  onTap: _pickFecha,
-                  borderRadius: BorderRadius.circular(12),
-                  child: InputDecorator(
-                    decoration: _decoration(
-                      'Fecha de entrega *',
-                      errorText: fechaError,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _fechaLabel(),
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const Icon(Icons.calendar_today_outlined, size: 18),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _dropdownField(
-                        label: 'Tipo',
-                        value: tipo,
-                        values: const ['tarea', 'examen'],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => tipo = value);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _dropdownField(
-                        label: 'Prioridad',
-                        value: prioridad,
-                        values: const ['baja', 'media', 'alta'],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => prioridad = value);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                _dropdownField(
-                  label: 'Dificultad',
-                  value: dificultad,
-                  values: const ['baja', 'media', 'alta'],
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => dificultad = value);
-                  },
-                ),
-                const SizedBox(height: 22),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: loading ? null : save,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5B4CF0),
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: const Color(0xFF5B4CF0),
-                      disabledForegroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: loading
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            isEdit ? 'Guardar cambios' : 'Crear',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancelar'),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        ),
       ),
-    );
-  }
-}
-
-class _BottomNav extends StatelessWidget {
-  final int currentIndex;
-
-  const _BottomNav({required this.currentIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: (i) {
-        switch (i) {
-          case 0:
-            context.go('/home');
-            break;
-          case 1:
-            context.go('/materias');
-            break;
-          case 2:
-            context.go('/tareas');
-            break;
-          case 3:
-            context.go('/metas');
-            break;
-          case 4:
-            context.go('/perfil');
-            break;
-        }
-      },
-      selectedItemColor: const Color(0xFF5B4CF0),
-      unselectedItemColor: const Color(0xFF8A8A9B),
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: isDark ? const Color(0xFF20202B) : Colors.white,
-      elevation: 0,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          label: 'Inicio',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu_book_outlined),
-          label: 'Materias',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.checklist_outlined),
-          label: 'Tareas',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.track_changes_outlined),
-          label: 'Metas',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          label: 'Perfil',
-        ),
-      ],
     );
   }
 }

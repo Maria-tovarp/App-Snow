@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:snow/core/widgets/app_drawer.dart';
-import 'package:snow/core/widgets/app_bottom_nav.dart';
 import 'package:snow/core/widgets/app_section_header.dart';
 import 'package:snow/core/services/local_data_store.dart';
 
@@ -275,8 +274,7 @@ class _MetasPageState extends State<MetasPage> {
         color: isDark ? const Color(0xFFB9B7C9) : const Color(0xFF7A7A8C),
       ),
       filled: true,
-      fillColor:
-          isDark ? const Color(0xFF242534) : const Color(0xFFF3F3F7),
+      fillColor: isDark ? const Color(0xFF242534) : const Color(0xFFF3F3F7),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -792,7 +790,7 @@ class _MetasPageState extends State<MetasPage> {
           ],
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(currentRoute: '/metas'),
     );
   }
 }
+

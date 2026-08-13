@@ -1,14 +1,18 @@
-﻿
-# Snow - archivos generados y privados
+
+# Variables privadas
 .env
 .env.*
 !.env.example
 
+# Flutter
 .dart_tool/
 build/
 .flutter-plugins-dependencies
+
+# Android
 android/.gradle/
 
+# iOS generados
 ios/Flutter/Generated.xcconfig
 ios/Flutter/flutter_export_environment.sh
 ios/Flutter/ephemeral/

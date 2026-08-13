@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:snow/core/widgets/app_bottom_nav.dart';
 import 'package:snow/core/widgets/app_drawer.dart';
 import 'package:snow/core/widgets/app_section_header.dart';
 import 'package:snow/core/services/local_data_store.dart';
@@ -62,7 +60,8 @@ class _MateriasPageState extends State<MateriasPage> {
       await showPremiumLimitDialog(
         context,
         title: 'Llegaste al límite gratuito',
-        message: 'El plan gratis permite hasta 5 materias. Activa Premium para agregar materias ilimitadas.',
+        message:
+            'El plan gratis permite hasta 5 materias. Activa Premium para agregar materias ilimitadas.',
       );
       return;
     }
@@ -366,7 +365,6 @@ class _MateriasPageState extends State<MateriasPage> {
               ),
             ),
           ),
-          const AppBottomNav(currentRoute: '/materias'),
         ],
       ),
     );
@@ -609,8 +607,7 @@ class _MateriaModalState extends State<_MateriaModal> {
 
     return InputDecoration(
       filled: true,
-      fillColor:
-          isDark ? const Color(0xFF242534) : const Color(0xFFF0F0F3),
+      fillColor: isDark ? const Color(0xFF242534) : const Color(0xFFF0F0F3),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: border,
       enabledBorder: border,
@@ -667,9 +664,9 @@ class _MateriaModalState extends State<_MateriaModal> {
                 ? 'Ingresa el nombre de la materia'
                 : label == 'Profesor' && profesorError
                     ? 'Ingresa el nombre del profesor'
-                : label == 'Créditos' && creditosError
-                    ? 'Ingresa los créditos'
-                    : null,
+                    : label == 'Créditos' && creditosError
+                        ? 'Ingresa los créditos'
+                        : null,
           ),
           onChanged: (_) {
             if (label == 'Nombre de la materia' && nombreError) {
@@ -861,136 +858,6 @@ class _MateriaModalState extends State<_MateriaModal> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomNavMaterias extends StatelessWidget {
-  const _BottomNavMaterias();
-
-  static const Color primary = Color(0xFF5B4CF0);
-  static const Color muted = Color(0xFF7C7C90);
-
-  void _go(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        context.go('/home');
-        break;
-      case 1:
-        context.go('/materias');
-        break;
-      case 2:
-        context.go('/tareas');
-        break;
-      case 3:
-        context.go('/metas');
-        break;
-      case 4:
-        context.go('/perfil');
-        break;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(
-          top: BorderSide(
-            color: isDark
-                ? const Color(0xFF393947)
-                : const Color(0xFFE7E7EF),
-          ),
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                label: 'Inicio',
-                active: false,
-                onTap: () => _go(context, 0),
-              ),
-              _NavItem(
-                icon: Icons.menu_book_outlined,
-                label: 'Materias',
-                active: true,
-                onTap: () => _go(context, 1),
-              ),
-              _NavItem(
-                icon: Icons.checklist_outlined,
-                label: 'Tareas',
-                active: false,
-                onTap: () => _go(context, 2),
-              ),
-              _NavItem(
-                icon: Icons.track_changes_outlined,
-                label: 'Metas',
-                active: false,
-                onTap: () => _go(context, 3),
-              ),
-              _NavItem(
-                icon: Icons.person_outline,
-                label: 'Perfil',
-                active: false,
-                onTap: () => _go(context, 4),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color =
-        active ? _BottomNavMaterias.primary : _BottomNavMaterias.muted;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 23),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 11,
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ],
         ),
       ),
     );

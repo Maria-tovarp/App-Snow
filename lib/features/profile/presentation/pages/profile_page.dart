@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:snow/core/widgets/app_bottom_nav.dart';
 import 'package:snow/core/widgets/app_drawer.dart';
 import 'package:snow/core/widgets/app_section_header.dart';
 
@@ -345,7 +343,6 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
           ),
-          const AppBottomNav(currentRoute: '/perfil'),
         ],
       ),
     );
@@ -1064,145 +1061,6 @@ class _InfoRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ProfileBottomNav extends StatelessWidget {
-  const _ProfileBottomNav();
-
-  void _go(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        context.go('/home');
-        break;
-      case 1:
-        context.go('/materias');
-        break;
-      case 2:
-        context.go('/tareas');
-        break;
-      case 3:
-        context.go('/metas');
-        break;
-      case 4:
-        context.go('/perfil');
-        break;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const active = _ProfilePageState.primary;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final inactive = Theme.of(context).colorScheme.onSurfaceVariant;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: isDark ? const Color(0xFF393947) : const Color(0xFFE7E7EF),
-          ),
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                label: 'Inicio',
-                active: false,
-                activeColor: active,
-                inactiveColor: inactive,
-                onTap: () => _go(context, 0),
-              ),
-              _NavItem(
-                icon: Icons.menu_book_outlined,
-                label: 'Materias',
-                active: false,
-                activeColor: active,
-                inactiveColor: inactive,
-                onTap: () => _go(context, 1),
-              ),
-              _NavItem(
-                icon: Icons.checklist_outlined,
-                label: 'Tareas',
-                active: false,
-                activeColor: active,
-                inactiveColor: inactive,
-                onTap: () => _go(context, 2),
-              ),
-              _NavItem(
-                icon: Icons.track_changes_outlined,
-                label: 'Metas',
-                active: false,
-                activeColor: active,
-                inactiveColor: inactive,
-                onTap: () => _go(context, 3),
-              ),
-              _NavItem(
-                icon: Icons.person_outline,
-                label: 'Perfil',
-                active: true,
-                activeColor: active,
-                inactiveColor: inactive,
-                onTap: () => _go(context, 4),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-  final Color activeColor;
-  final Color inactiveColor;
-  final VoidCallback onTap;
-
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.active,
-    required this.activeColor,
-    required this.inactiveColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? activeColor : inactiveColor;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 23),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 11,
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

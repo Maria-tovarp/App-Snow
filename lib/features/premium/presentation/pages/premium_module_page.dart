@@ -270,11 +270,69 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
   }
 
   Widget _grades() {
-    final weighted = grades.fold<double>(0, (sum, g) {
-      final grade = double.tryParse('${g['calificacion']}') ?? 0;
-      final weight = double.tryParse('${g['porcentaje']}') ?? 0;
-      return sum + grade * weight / 100;
-    });
+    final subjectGrades = <String, List<Map<String, dynamic>>>{};
+
+    for (final grade in grades) {
+      final subjectId =
+          '${grade['materia_id'] ?? grade['materia_nombre'] ?? ''}';
+
+      if (subjectId.trim().isEmpty) continue;
+
+      subjectGrades.putIfAbsent(subjectId, () => []);
+      subjectGrades[subjectId]!.add(grade);
+    }
+
+    final subjectAverages = <double>[];
+
+    for (final subjectEntries in subjectGrades.values) {
+      double weightedSum = 0;
+      double totalWeight = 0;
+
+      for (final gradeEntry in subjectEntries) {
+        final grade = double.tryParse('${gradeEntry['calificacion']}') ?? 0;
+        final weight = double.tryParse('${gradeEntry['porcentaje']}') ?? 0;
+
+        weightedSum += grade * weight;
+        totalWeight += weight;
+      }
+
+      if (totalWeight > 0) {
+        subjectAverages.add(weightedSum / totalWeight);
+      }
+    }
+
+    final weighted = subjectAverages.isEmpty
+        ? 0.0
+        : subjectAverages.reduce((a, b) => a + b) / subjectAverages.length;
+    final subjectSummary = subjectGrades.values.map((subjectEntries) {
+      double weightedSum = 0;
+      double totalWeight = 0;
+
+      for (final gradeEntry in subjectEntries) {
+        final grade = double.tryParse('${gradeEntry['calificacion']}') ?? 0;
+        final weight = double.tryParse('${gradeEntry['porcentaje']}') ?? 0;
+
+        weightedSum += grade * weight;
+        totalWeight += weight;
+      }
+
+      final subjectName =
+          '${subjectEntries.first['materia_nombre'] ?? 'Sin materia'}';
+
+      final currentAverage = totalWeight > 0 ? weightedSum / totalWeight : 0.0;
+
+      final accumulated = weightedSum / 100;
+
+      return {
+        'nombre': subjectName,
+        'promedio': currentAverage,
+        'acumulado': accumulated,
+        'porcentaje': totalWeight,
+      };
+    }).toList()
+      ..sort(
+        (a, b) => '${a['nombre']}'.compareTo('${b['nombre']}'),
+      );
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
         padding: const EdgeInsets.all(20),
@@ -355,6 +413,106 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
         ),
       ),
       const SizedBox(height: 14),
+      if (subjectSummary.isNotEmpty) ...[
+        _sectionTitle(
+          'Acumulado por materia',
+          Icons.calculate_rounded,
+        ),
+        const SizedBox(height: 10),
+        ...subjectSummary.map((subject) {
+          final accumulated = (subject['acumulado'] as num).toDouble();
+
+          final average = (subject['promedio'] as num).toDouble();
+
+          final percentage = (subject['porcentaje'] as num).toDouble();
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5B4CF0).withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    accumulated.toStringAsFixed(2),
+                    style: const TextStyle(
+                      color: Color(0xFF5B4CF0),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${subject['nombre']}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${percentage.toStringAsFixed(0)}% evaluado',
+                        style: const TextStyle(
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text(
+                      'Promedio',
+                      style: TextStyle(
+                        fontSize: 10,
+                      ),
+                    ),
+                    Text(
+                      average.toStringAsFixed(2),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Acum. ${accumulated.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Color(0xFF5B4CF0),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
+        const SizedBox(height: 6),
+      ],
       if (grades.isEmpty)
         const _Empty('Todavía no has registrado notas.')
       else
@@ -383,8 +541,64 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
                     ),
                     IconButton(
                       tooltip: 'Eliminar nota',
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.red,
+                      ),
                       onPressed: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (dialogContext) => AlertDialog(
+                            icon: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFFFE8E8),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.delete_outline_rounded,
+                                color: Color(0xFFD32F2F),
+                              ),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                            title: const Text(
+                              'Eliminar nota',
+                              textAlign: TextAlign.center,
+                            ),
+                            content: Text(
+                              'Se eliminará la nota:\n\n'
+                              '“${g['nombre']}”\n'
+                              '${g['materia_nombre'] ?? 'Sin materia'} · '
+                              '${g['calificacion']}\n\n'
+                              'Esta acción no se puede deshacer.',
+                              textAlign: TextAlign.center,
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(dialogContext, false),
+                                child: const Text('Cancelar'),
+                              ),
+                              FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFFD32F2F),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: () =>
+                                    Navigator.pop(dialogContext, true),
+                                child: const Text('Eliminar'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed != true) return;
+
                         await store.deleteGrade('${g['id']}');
                         await _load();
                       },
@@ -733,10 +947,14 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
     if (message.isEmpty || assistantSending) return;
 
     assistantCtrl.clear();
+
     setState(() {
       assistantSending = true;
       assistantMessages.add(_AssistantMessage(message, true));
     });
+
+// Mostrar inmediatamente el mensaje que acaba de enviar el usuario.
+    _scrollAssistantToBottom();
 
     try {
       final result = await SnowAssistantService.instance.ask(
@@ -1616,17 +1834,53 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
   }
 
   String _gradesAnswer() {
-    if (grades.isEmpty) return 'Aún no tienes notas registradas en Mis notas.';
-    final totalWeight = grades.fold<double>(
-        0, (sum, g) => sum + (double.tryParse('${g['porcentaje']}') ?? 0));
-    final weighted = grades.fold<double>(
-        0,
-        (sum, g) =>
-            sum +
-            (double.tryParse('${g['calificacion']}') ?? 0) *
-                (double.tryParse('${g['porcentaje']}') ?? 0) /
-                100);
-    return 'Tu promedio ponderado registrado es ${weighted.toStringAsFixed(2)} con $totalWeight% evaluado.';
+    if (grades.isEmpty) {
+      return 'Aún no tienes notas registradas en Mis notas.';
+    }
+
+    final subjectGrades = <String, List<Map<String, dynamic>>>{};
+
+    for (final grade in grades) {
+      final subjectId =
+          '${grade['materia_id'] ?? grade['materia_nombre'] ?? ''}';
+
+      if (subjectId.trim().isEmpty) continue;
+
+      subjectGrades.putIfAbsent(subjectId, () => []);
+      subjectGrades[subjectId]!.add(grade);
+    }
+
+    if (subjectGrades.isEmpty) {
+      return 'Aún no tienes notas asociadas a materias.';
+    }
+
+    final subjectAverages = <double>[];
+
+    for (final subjectEntries in subjectGrades.values) {
+      double weightedSum = 0;
+      double totalWeight = 0;
+
+      for (final gradeEntry in subjectEntries) {
+        final grade = double.tryParse('${gradeEntry['calificacion']}') ?? 0;
+        final weight = double.tryParse('${gradeEntry['porcentaje']}') ?? 0;
+
+        weightedSum += grade * weight;
+        totalWeight += weight;
+      }
+
+      if (totalWeight > 0) {
+        subjectAverages.add(weightedSum / totalWeight);
+      }
+    }
+
+    if (subjectAverages.isEmpty) {
+      return 'No hay suficientes datos para calcular tu promedio.';
+    }
+
+    final weighted =
+        subjectAverages.reduce((a, b) => a + b) / subjectAverages.length;
+
+    return 'Tu promedio general actual es ${weighted.toStringAsFixed(2)}.';
   }
 
   String _normalize(String value) => value
@@ -1742,11 +1996,11 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
 
           return AnimatedPadding(
             duration: const Duration(milliseconds: 180),
-            padding: EdgeInsets.fromLTRB(
+            padding: const EdgeInsets.fromLTRB(
               16,
               24,
               16,
-              MediaQuery.viewInsetsOf(dialogContext).bottom + 24,
+              24,
             ),
             child: Dialog(
               insetPadding: EdgeInsets.zero,
@@ -1757,6 +2011,8 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 430),
                 child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.all(22),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
