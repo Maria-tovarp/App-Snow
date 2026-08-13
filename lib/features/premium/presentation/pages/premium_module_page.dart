@@ -1458,9 +1458,26 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
   }
 
   Map<String, dynamic> _buildAssistantContext() {
+    final now = DateTime.now();
+
+    const diasSemana = [
+      'lunes',
+      'martes',
+      'miércoles',
+      'jueves',
+      'viernes',
+      'sábado',
+      'domingo',
+    ];
+
+    final diaActual = diasSemana[now.weekday - 1];
+    final diaManana = diasSemana[now.weekday % 7];
+
     return {
       'nombre_estudiante': userName,
-      'fecha_actual': DateTime.now().toIso8601String(),
+      'fecha_actual': now.toIso8601String(),
+      'dia_semana_actual': diaActual,
+      'dia_semana_manana': diaManana,
       'materias': materias
           .map((materia) => {
                 'nombre': materia['nombre'],
@@ -2133,9 +2150,27 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
                         icon: const Icon(Icons.check_rounded),
                         label: const Text('Guardar nota'),
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(dialogContext, false),
-                        child: const Text('Cancelar'),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(dialogContext, false),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size.fromHeight(48),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text(
+                            'Cancelar',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),

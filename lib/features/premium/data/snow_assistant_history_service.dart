@@ -38,7 +38,9 @@ class SnowAssistantHistoryService {
     return List<Map<String, dynamic>>.from(data);
   }
 
-  Future<List<Map<String, dynamic>>> getMessages(String conversationId) async {
+  Future<List<Map<String, dynamic>>> getMessages(
+    String conversationId,
+  ) async {
     final data = await _supabase
         .from('snow_assistant_messages')
         .select(
@@ -46,28 +48,34 @@ class SnowAssistantHistoryService {
         )
         .eq('conversation_id', conversationId)
         .eq('user_id', _userId)
-        .order('id');
+        .order('created_at', ascending: true);
+
     return List<Map<String, dynamic>>.from(data);
   }
 
-  Future<void> saveExchange(
-      {required String conversationId,
-      required String userMessage,
-      required String assistantMessage}) async {
-    await _supabase.from('snow_assistant_messages').insert([
-      {
-        'conversation_id': conversationId,
-        'user_id': _userId,
-        'role': 'user',
-        'content': userMessage
-      },
-      {
-        'conversation_id': conversationId,
-        'user_id': _userId,
-        'role': 'assistant',
-        'content': assistantMessage
-      },
-    ]);
+  Future<void> saveExchange({
+    required String conversationId,
+    required String userMessage,
+    required String assistantMessage,
+  }) async {
+    final now = DateTime.now().toUtc();
+
+    await _supabase.from('snow_assistant_messages').insert({
+      'conversation_id': conversationId,
+      'user_id': _userId,
+      'role': 'user',
+      'content': userMessage,
+      'created_at': now.toIso8601String(),
+    });
+
+    await _supabase.from('snow_assistant_messages').insert({
+      'conversation_id': conversationId,
+      'user_id': _userId,
+      'role': 'assistant',
+      'content': assistantMessage,
+      'created_at': now.add(const Duration(milliseconds: 10)).toIso8601String(),
+    });
+
     await _supabase
         .from('snow_assistant_conversations')
         .update({
