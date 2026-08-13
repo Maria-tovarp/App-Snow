@@ -1,0 +1,74 @@
+﻿workflows:
+  ios-unsigned:
+    name: Snow iOS sin firma
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    environment:
+      groups:
+        - snow_env
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+
+    scripts:
+      - name: Crear archivo .env
+        script: |
+          set -e
+          cd "$CM_BUILD_DIR"
+
+          : "${SUPABASE_URL:?ERROR: falta SUPABASE_URL}"
+          : "${SUPABASE_ANON_KEY:?ERROR: falta SUPABASE_ANON_KEY}"
+
+          printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' \
+            "$SUPABASE_URL" \
+            "$SUPABASE_ANON_KEY" > .env
+
+          echo "Archivo .env creado correctamente"
+
+      - name: Preparar proyecto Flutter
+        script: |
+          set -e
+          cd "$CM_BUILD_DIR"
+
+          rm -f ios/Flutter/Generated.xcconfig
+          rm -f ios/Flutter/flutter_export_environment.sh
+          rm -rf ios/Flutter/ephemeral
+
+          flutter clean
+          flutter pub get
+          flutter precache --ios
+
+          echo "Proyecto preparado para macOS"
+
+      - name: Compilar iOS sin firma en Release
+        script: |
+          set -e
+          cd "$CM_BUILD_DIR"
+
+          flutter build ios --release --no-codesign
+
+      - name: Crear IPA sin firma
+        script: |
+          set -e
+          cd "$CM_BUILD_DIR/build/ios/iphoneos"
+
+          rm -rf Payload
+          rm -f Snow-unsigned.ipa
+
+          mkdir Payload
+          cp -R Runner.app Payload/
+
+          ditto -c -k \
+            --sequesterRsrc \
+            --keepParent \
+            Payload \
+            Snow-unsigned.ipa
+
+          test -f Snow-unsigned.ipa
+          echo "IPA sin firma creado correctamente"
+
+    artifacts:
+      - build/ios/iphoneos/Snow-unsigned.ipa
+      - build/ios/iphoneos/Runner.app
+      - /tmp/xcodebuild_logs/*.log
