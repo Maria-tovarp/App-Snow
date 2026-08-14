@@ -66,15 +66,14 @@ class _HomePageState extends State<HomePage> {
     tareasPorDia = List<int>.from(
       cached['tareasPorDia'] as List? ?? List<int>.filled(7, 0),
     );
-    proximasEntregas = (cached['proximasEntregas'] as List? ?? const [])
-        .map((item) {
-          final entrega = Map<String, dynamic>.from(item as Map);
-          entrega['fechaDate'] = DateTime.tryParse(
-            (entrega['fecha'] ?? '').toString(),
-          );
-          return entrega;
-        })
-        .toList();
+    proximasEntregas =
+        (cached['proximasEntregas'] as List? ?? const []).map((item) {
+      final entrega = Map<String, dynamic>.from(item as Map);
+      entrega['fechaDate'] = DateTime.tryParse(
+        (entrega['fecha'] ?? '').toString(),
+      );
+      return entrega;
+    }).toList();
     isLoading = false;
   }
 
@@ -336,6 +335,7 @@ class _HomePageState extends State<HomePage> {
               child: AppSectionHeader(
                 title: 'Hola, $primerNombre 👋',
                 subtitle: 'Organiza tu semestre universitario',
+                titleFontSize: 20,
               ),
             ),
             SliverPadding(
@@ -703,9 +703,7 @@ class _WeeklyPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final gridPaint = Paint()
-      ..color = isDark
-          ? const Color(0xFF3B3B49)
-          : const Color(0xFFDCDCE2)
+      ..color = isDark ? const Color(0xFF3B3B49) : const Color(0xFFDCDCE2)
       ..strokeWidth = 1.2;
 
     final barPaint = Paint()
@@ -982,9 +980,7 @@ class _ShortcutCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isDark
-                  ? const Color(0xFF343442)
-                  : _HomePageState._border,
+              color: isDark ? const Color(0xFF343442) : _HomePageState._border,
               width: 1.4,
             ),
           ),

@@ -700,91 +700,94 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
     ]);
   }
 
-  Widget _assistant() =>
-      Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-          decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(16)),
-          child: Row(children: [
-            const CircleAvatar(
-                radius: 19,
-                backgroundColor: Color(0xFF5B4CF0),
-                child: Text('🐰')),
-            const SizedBox(width: 10),
-            Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  const Text('Snow Assistant',
-                      style: TextStyle(fontWeight: FontWeight.w900)),
-                  Row(children: [
-                    Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                            color: Color(0xFF36C76C), shape: BoxShape.circle)),
-                    const SizedBox(width: 5),
-                    const Expanded(
-                        child: Text('Consultas sobre tus módulos de Snow',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 10)))
-                  ]),
-                  const SizedBox(height: 6),
+  Widget _assistant() {
+    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+        decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16)),
+        child: Row(children: [
+          const CircleAvatar(
+              radius: 19,
+              backgroundColor: Color(0xFF5B4CF0),
+              child: Text('🐰')),
+          const SizedBox(width: 10),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                const Text('Snow Assistant',
+                    style: TextStyle(fontWeight: FontWeight.w900)),
+                Row(children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF5B4CF0).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      assistantRemaining > 0
-                          ? '🐰 $assistantRemaining de $assistantLimit consultas disponibles'
-                          : '🐰 Límite mensual alcanzado',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: assistantRemaining > 0
-                            ? const Color(0xFF5B4CF0)
-                            : Colors.redAccent,
-                      ),
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                          color: Color(0xFF36C76C), shape: BoxShape.circle)),
+                  const SizedBox(width: 5),
+                  const Expanded(
+                      child: Text('Consultas sobre tus módulos de Snow',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 10)))
+                ]),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5B4CF0).withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    assistantRemaining > 0
+                        ? '🐰 $assistantRemaining de $assistantLimit consultas disponibles'
+                        : '🐰 Límite mensual alcanzado',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: assistantRemaining > 0
+                          ? const Color(0xFF5B4CF0)
+                          : Colors.redAccent,
                     ),
                   ),
-                ])),
-            IconButton(
-              tooltip: 'Historial',
-              onPressed: _showAssistantHistory,
-              icon: const Icon(Icons.history_rounded),
-            ),
-            IconButton(
-              tooltip: 'Nueva conversación',
-              onPressed: _startNewAssistantConversation,
-              icon: const Icon(Icons.add_comment_outlined),
-            ),
-          ]),
-        ),
-        const SizedBox(height: 10),
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: Theme.of(context).colorScheme.outlineVariant)),
-            child: ListView.builder(
-              controller: assistantScrollCtrl,
-              padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
-              itemCount: assistantMessages.length,
-              itemBuilder: (context, index) =>
-                  _ChatBubble(message: assistantMessages[index]),
-            ),
+                ),
+              ])),
+          IconButton(
+            tooltip: 'Historial',
+            onPressed: _showAssistantHistory,
+            icon: const Icon(Icons.history_rounded),
+          ),
+          IconButton(
+            tooltip: 'Nueva conversación',
+            onPressed: _startNewAssistantConversation,
+            icon: const Icon(Icons.add_comment_outlined),
+          ),
+        ]),
+      ),
+      const SizedBox(height: 10),
+      Expanded(
+        child: Container(
+          decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant)),
+          child: ListView.builder(
+            controller: assistantScrollCtrl,
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+            itemCount: assistantMessages.length,
+            itemBuilder: (context, index) =>
+                _ChatBubble(message: assistantMessages[index]),
           ),
         ),
-        const SizedBox(height: 9),
+      ),
+      const SizedBox(height: 9),
+      if (!keyboardOpen)
         Wrap(
           spacing: 6,
           runSpacing: 4,
@@ -813,83 +816,106 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
             );
           }).toList(),
         ),
-        const SizedBox(height: 8),
-        if (assistantRemaining <= 0)
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF5B4CF0).withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: const Color(0xFF5B4CF0).withValues(alpha: 0.18),
-              ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('🐰', style: TextStyle(fontSize: 18)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Has utilizado tus $assistantLimit consultas de Snow Assistant este mes.\n'
-                    'Se renovarán automáticamente el ${_assistantResetText()}.',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      height: 1.4,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
+      const SizedBox(height: 8),
+      if (assistantRemaining <= 0)
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF5B4CF0).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: const Color(0xFF5B4CF0).withValues(alpha: 0.18),
             ),
           ),
-        Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('🐰', style: TextStyle(fontSize: 18)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Has utilizado tus $assistantLimit consultas de Snow Assistant este mes.\n'
+                  'Se renovarán automáticamente el ${_assistantResetText()}.',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.4,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      Padding(
+        padding: EdgeInsets.only(
+          bottom: keyboardOpen ? 6 : 0,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
               child: TextField(
-            controller: assistantCtrl,
-            enabled: assistantRemaining > 0 && !assistantSending,
-            minLines: 1,
-            maxLines: 3,
-            textInputAction: TextInputAction.send,
-            onSubmitted: (_) => _generateAdvice(),
-            decoration: InputDecoration(
-              hintText: assistantRemaining > 0
-                  ? 'Pregúntale algo a Snow…'
-                  : 'Consultas agotadas hasta ${_assistantResetText()}',
-              prefixIcon:
-                  const Icon(Icons.chat_bubble_outline_rounded, size: 20),
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surface,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-              border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(24)),
-                  borderSide: BorderSide.none),
+                controller: assistantCtrl,
+                enabled: assistantRemaining > 0 && !assistantSending,
+                minLines: 1,
+                maxLines: 3,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _generateAdvice(),
+                decoration: InputDecoration(
+                  hintText: assistantRemaining > 0
+                      ? 'Pregúntale algo a Snow…'
+                      : 'Consultas agotadas hasta ${_assistantResetText()}',
+                  prefixIcon: const Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    size: 20,
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
+                  ),
+                  border: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(24),
+                    ),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
             ),
-          )),
-          const SizedBox(width: 9),
-          SizedBox(
+            const SizedBox(width: 9),
+            SizedBox(
               width: 50,
               height: 50,
               child: FilledButton(
-                  onPressed: assistantRemaining > 0 && !assistantSending
-                      ? _generateAdvice
-                      : null,
-                  style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF5B4CF0),
-                      padding: EdgeInsets.zero,
-                      shape: const CircleBorder()),
-                  child: assistantSending
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.send_rounded))),
-        ]),
-      ]);
+                onPressed: assistantRemaining > 0 && !assistantSending
+                    ? _generateAdvice
+                    : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF5B4CF0),
+                  padding: EdgeInsets.zero,
+                  shape: const CircleBorder(),
+                ),
+                child: assistantSending
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.send_rounded),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ]);
+  }
 
   String _friendlyDate(dynamic value) {
     final date = DateTime.tryParse('${value ?? ''}');
@@ -2013,11 +2039,12 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
 
           return AnimatedPadding(
             duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.fromLTRB(
-              16,
-              24,
-              16,
-              24,
+            curve: Curves.easeOut,
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 24,
+              bottom: MediaQuery.of(dialogContext).viewInsets.bottom + 16,
             ),
             child: Dialog(
               insetPadding: EdgeInsets.zero,
@@ -2030,7 +2057,7 @@ class _PremiumModulePageState extends State<PremiumModulePage> {
                 child: SingleChildScrollView(
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: const EdgeInsets.all(22),
+                  padding: const EdgeInsets.fromLTRB(22, 22, 22, 10),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2240,7 +2267,7 @@ class _ChatBubble extends StatelessWidget {
           message.fromUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.72,
+          maxWidth: MediaQuery.of(context).size.width * 0.86,
         ),
         margin: const EdgeInsets.only(bottom: 11),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
@@ -2260,8 +2287,8 @@ class _ChatBubble extends StatelessWidget {
                 message.text,
                 style: const TextStyle(
                   color: Colors.white,
-                  height: 1.4,
-                  fontSize: 13,
+                  height: 1.5,
+                  fontSize: 14,
                 ),
               )
             : MarkdownBody(

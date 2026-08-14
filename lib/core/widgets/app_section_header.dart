@@ -8,19 +8,20 @@ class AppSectionHeader extends StatelessWidget {
     this.actions = const [],
     this.menuEnabled = true,
     this.onMenuBlocked,
+    this.titleFontSize = 18,
   });
 
   static const Color backgroundColor = Color(0xFF5B4CF0);
   static const double height = 80;
-  static const TextStyle titleStyle = TextStyle(
-    inherit: false,
-    fontFamily: 'Roboto',
-    color: Colors.white,
-    fontSize: 18,
-    fontWeight: FontWeight.w700,
-    height: 1.15,
-    letterSpacing: 0,
-  );
+  TextStyle get titleStyle => TextStyle(
+        inherit: false,
+        fontFamily: 'Roboto',
+        color: Colors.white,
+        fontSize: titleFontSize,
+        fontWeight: FontWeight.w700,
+        height: 1.15,
+        letterSpacing: 0,
+      );
   static const TextStyle subtitleStyle = TextStyle(
     inherit: false,
     fontFamily: 'Roboto',
@@ -36,6 +37,7 @@ class AppSectionHeader extends StatelessWidget {
   final List<Widget> actions;
   final bool menuEnabled;
   final VoidCallback? onMenuBlocked;
+  final double titleFontSize;
 
   @override
   Widget build(BuildContext context) {
